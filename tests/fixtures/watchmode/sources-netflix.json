@@ -1,0 +1,15 @@
+[
+  {
+    "id": 203,
+    "name": "Netflix",
+    "type": "sub",
+    "logo_100px": "https://cdn.watchmode.com/logos/203_logo_100px.jpg",
+    "regions": ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"],
+    "ios_appstore_url": null,
+    "android_playstore_url": null,
+    "ios_scheme": null,
+    "android_scheme": null,
+    "host_source_id": null,
+    "host_source": null
+  }
+]

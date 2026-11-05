@@ -1,0 +1,28 @@
+[
+  {
+    "id": 10,
+    "title": "The Matrix",
+    "year": 1999,
+    "tmdbId": 603,
+    "imdbId": "tt0133093",
+    "path": "/movies/The Matrix (1999)",
+    "monitored": true,
+    "hasFile": true,
+    "isAvailable": true,
+    "sizeOnDisk": 8500000000,
+    "movieFile": { "id": 1, "relativePath": "The Matrix.mkv", "size": 8500000000 }
+  },
+  {
+    "id": 11,
+    "title": "Missing Movie",
+    "year": 2024,
+    "tmdbId": 999999,
+    "imdbId": "tt9999999",
+    "path": "/movies/Missing Movie (2024)",
+    "monitored": true,
+    "hasFile": false,
+    "isAvailable": true,
+    "sizeOnDisk": 0,
+    "movieFile": null
+  }
+]

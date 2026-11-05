@@ -1,0 +1,103 @@
+stages: [lint, test, package, release]
+
+variables:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget"
+  STORAGE_DRIVER: vfs
+  BUILDAH_FORMAT: docker
+
+default:
+  interruptible: true
+
+backend:lint:
+  stage: lint
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - dotnet restore PickArr.slnx
+    - dotnet format PickArr.slnx --verify-no-changes --no-restore
+    - dotnet list package --vulnerable --include-transitive || true
+  cache:
+    key: nuget-$CI_COMMIT_REF_SLUG
+    paths:
+      - .nuget/
+
+frontend:lint:
+  stage: lint
+  image: node:24-bookworm
+  script:
+    - cd src/PickArr.WebApp
+    - npm ci
+    - npm run lint
+    - npm run typecheck
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - src/PickArr.WebApp/node_modules/
+
+backend:test:
+  stage: test
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  script:
+    - dotnet test PickArr.slnx --configuration Release --logger "trx;LogFileName=test-results.trx"
+  artifacts:
+    when: always
+    paths:
+      - tests/**/TestResults/*.trx
+  cache:
+    key: nuget-$CI_COMMIT_REF_SLUG
+    paths:
+      - .nuget/
+
+frontend:test:
+  stage: test
+  image: node:24-bookworm
+  script:
+    - cd src/PickArr.WebApp
+    - npm ci
+    - npm run build
+  cache:
+    key: npm-$CI_COMMIT_REF_SLUG
+    paths:
+      - src/PickArr.WebApp/node_modules/
+
+docker:build:
+  stage: package
+  image: quay.io/buildah/stable
+  script:
+    - |
+      buildah bud \
+        --file src/PickArr.Api/Dockerfile \
+        --tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA" \
+        --build-arg VERSION="0.0.0-$CI_COMMIT_SHORT_SHA" \
+        .
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+
+docker:publish:
+  stage: release
+  image: quay.io/buildah/stable
+  before_script:
+    - buildah login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - |
+      if [ -n "$CI_COMMIT_TAG" ]; then
+        VERSION="${CI_COMMIT_TAG#v}"
+        TAGS="$CI_REGISTRY_IMAGE:$CI_COMMIT_TAG $CI_REGISTRY_IMAGE:latest"
+      else
+        VERSION="0.0.0-$CI_COMMIT_SHORT_SHA"
+        TAGS="$CI_REGISTRY_IMAGE:edge"
+      fi
+      buildah bud \
+        --file src/PickArr.Api/Dockerfile \
+        --tag "$CI_REGISTRY_IMAGE:build" \
+        --build-arg VERSION="$VERSION" \
+        .
+      for tag in $TAGS; do
+        buildah tag "$CI_REGISTRY_IMAGE:build" "$tag"
+        buildah push "$tag"
+      done
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

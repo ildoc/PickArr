@@ -1,0 +1,176 @@
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using PickArr.Core.Abstractions;
+using PickArr.Core.Catalog;
+using PickArr.Core.Domain;
+using PickArr.Core.Domain.Entities;
+using PickArr.Infrastructure.Catalog;
+using PickArr.Infrastructure.Persistence;
+using Shouldly;
+
+namespace PickArr.Infrastructure.Tests;
+
+public sealed class CatalogUpserterTests
+{
+    private sealed class FixedClock(DateTime utcNow) : IClock
+    {
+        public DateTime UtcNow { get; } = utcNow;
+    }
+
+    [Fact]
+    public async Task Upsert_is_idempotent_and_skips_Added_events_before_baseline()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: false);
+        var upserter = new CatalogUpserter(db, new FixedClock(new DateTime(2026, 11, 4, 12, 0, 0, DateTimeKind.Utc)));
+
+        var entries = new[]
+        {
+            new CatalogEntry("1000001", "Example Movie Alpha", 2024, CatalogEntryType.Movie, 900001, "movie", "tt9000001"),
+            new CatalogEntry("1000002", "Example Series Beta", 2023, CatalogEntryType.TvSeries, 900002, "tv", "tt9000002"),
+        };
+
+        var first = await upserter.UpsertPageAsync(source.Id, entries, Guid.NewGuid(), baselineCompleted: false);
+        first.TitlesAdded.ShouldBe(2);
+        first.AvailabilitiesAdded.ShouldBe(2);
+        (await db.AvailabilityEvents.CountAsync()).ShouldBe(0);
+
+        var second = await upserter.UpsertPageAsync(source.Id, entries, Guid.NewGuid(), baselineCompleted: false);
+        second.TitlesAdded.ShouldBe(0);
+        second.AvailabilitiesAdded.ShouldBe(0);
+        (await db.Titles.CountAsync()).ShouldBe(2);
+        (await db.Availabilities.CountAsync()).ShouldBe(2);
+    }
+
+    [Fact]
+    public async Task Upsert_ignores_placeholder_tmdb_ids()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: false);
+        var upserter = new CatalogUpserter(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+
+        var result = await upserter.UpsertPageAsync(
+            source.Id,
+            [
+                new CatalogEntry("100", "Unknown One", 2024, CatalogEntryType.Movie, 0, "", null),
+                new CatalogEntry("200", "Unknown Two", 2023, CatalogEntryType.Movie, 0, " ", null),
+            ],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        result.TitlesAdded.ShouldBe(2);
+        var titles = await db.Titles.OrderBy(t => t.WatchmodeId).ToListAsync();
+        titles.Count.ShouldBe(2);
+        titles.ShouldAllBe(t => t.TmdbId == null && t.TmdbType == null);
+    }
+
+    [Fact]
+    public async Task Upsert_reuses_one_title_when_page_shares_a_tmdb_id()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: false);
+        var upserter = new CatalogUpserter(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+
+        var entries = new[]
+        {
+            new CatalogEntry("100", "Shared Movie", 2024, CatalogEntryType.Movie, 555, "movie", "tt0000555"),
+            new CatalogEntry("200", "Shared Movie Again", 2024, CatalogEntryType.Movie, 555, "movie", "tt0000555"),
+        };
+
+        var result = await upserter.UpsertPageAsync(source.Id, entries, Guid.NewGuid(), baselineCompleted: false);
+
+        result.TitlesAdded.ShouldBe(1);
+        result.AvailabilitiesAdded.ShouldBe(1);
+        (await db.Titles.CountAsync()).ShouldBe(1);
+        (await db.Availabilities.CountAsync()).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Upsert_links_second_entry_when_first_tmdb_id_is_still_pending()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: false);
+        var clock = new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc));
+        var upserter = new CatalogUpserter(db, clock);
+
+        await upserter.UpsertPageAsync(
+            source.Id,
+            [new CatalogEntry("100", "No Tmdb Yet", 2020, CatalogEntryType.Movie, null, null, null)],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        var result = await upserter.UpsertPageAsync(
+            source.Id,
+            [
+                new CatalogEntry("100", "No Tmdb Yet", 2020, CatalogEntryType.Movie, 555, "movie", "tt0000555"),
+                new CatalogEntry("200", "Same Tmdb", 2020, CatalogEntryType.Movie, 555, "movie", "tt0000555"),
+            ],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        result.TitlesAdded.ShouldBe(0);
+        (await db.Titles.CountAsync()).ShouldBe(1);
+        (await db.Titles.SingleAsync()).TmdbId.ShouldBe(555);
+        (await db.Availabilities.CountAsync()).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Upsert_after_baseline_emits_Added_and_Readded_events()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: true);
+        var clock = new FixedClock(new DateTime(2026, 11, 4, 12, 0, 0, DateTimeKind.Utc));
+        var upserter = new CatalogUpserter(db, clock);
+
+        var entry = new CatalogEntry("42", "Gone Then Back", 2020, CatalogEntryType.Movie, 42, "movie", null);
+        await upserter.UpsertPageAsync(source.Id, [entry], Guid.NewGuid(), baselineCompleted: true);
+        (await db.AvailabilityEvents.CountAsync(e => e.Type == AvailabilityEventTypes.Added)).ShouldBe(1);
+
+        var availability = await db.Availabilities.SingleAsync();
+        availability.RemovedAt = clock.UtcNow;
+        await db.SaveChangesAsync();
+
+        var result = await upserter.UpsertPageAsync(source.Id, [entry], Guid.NewGuid(), baselineCompleted: true);
+        result.AvailabilitiesReadded.ShouldBe(1);
+        (await db.AvailabilityEvents.CountAsync(e => e.Type == AvailabilityEventTypes.Readded)).ShouldBe(1);
+        (await db.Availabilities.SingleAsync()).RemovedAt.ShouldBeNull();
+        (await db.Titles.SingleAsync()).MetadataStatus.ShouldBe(MetadataStatuses.Pending);
+    }
+
+    private static async Task<PickArrDbContext> CreateDbAsync()
+    {
+        var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
+        var db = new PickArrDbContext(options);
+        await db.Database.EnsureCreatedAsync();
+        return db;
+    }
+
+    private static async Task<CatalogSource> SeedSourceAsync(PickArrDbContext db, bool baselineCompleted)
+    {
+        var provider = new Provider
+        {
+            Key = "netflix",
+            DisplayName = "Netflix",
+            ProviderType = "watchmode",
+            ExternalId = "203",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        db.Providers.Add(provider);
+        await db.SaveChangesAsync();
+
+        var source = new CatalogSource
+        {
+            ProviderId = provider.Id,
+            CountryCode = "US",
+            MetadataLanguage = "en-US",
+            IsEnabled = true,
+            BaselineCompletedAt = baselineCompleted ? DateTime.UtcNow : null,
+        };
+        db.CatalogSources.Add(source);
+        await db.SaveChangesAsync();
+        return source;
+    }
+}

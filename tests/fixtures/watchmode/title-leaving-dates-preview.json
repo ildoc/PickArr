@@ -1,0 +1,27 @@
+{
+  "leaving_dates": [
+    {
+      "id": 1000001,
+      "title": "Example Movie Alpha",
+      "title_type": "movie",
+      "region": "US",
+      "type": "streaming_movie_leaving",
+      "leaving_date": "2026-11-15",
+      "provider_id": 203,
+      "season": null
+    },
+    {
+      "id": 1000002,
+      "title": "Example Series Beta",
+      "title_type": "tv_series",
+      "region": "IT",
+      "type": "streaming_season_leaving",
+      "leaving_date": "2026-11-20",
+      "provider_id": 203,
+      "season": 2
+    }
+  ],
+  "page": 1,
+  "total_pages": 1,
+  "total_results": 47
+}

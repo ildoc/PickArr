@@ -1,0 +1,6 @@
+{
+  "success": false,
+  "statusCode": 429,
+  "code": "MONTHLY_QUOTA_EXCEEDED",
+  "statusMessage": "Monthly API credit allowance exhausted. Wait for quota renewal or upgrade the plan."
+}

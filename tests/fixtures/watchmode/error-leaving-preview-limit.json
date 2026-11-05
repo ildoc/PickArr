@@ -1,0 +1,7 @@
+{
+  "success": false,
+  "statusCode": 403,
+  "code": "LEAVING_PREVIEW_LIMIT",
+  "statusMessage": "Free accounts get a preview of the next 10 departures starting today in their Free plan countries. Custom dates, more than 10 results and additional pages require a paid plan.",
+  "required_plan": "startup"
+}

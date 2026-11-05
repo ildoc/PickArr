@@ -1,0 +1,50 @@
+{
+  "id": 77,
+  "title": "Example Series",
+  "year": 2018,
+  "tvdbId": 121361,
+  "tmdbId": 1396,
+  "imdbId": "tt0903747",
+  "path": "/tv/Example Series",
+  "monitored": true,
+  "statistics": {
+    "seasonCount": 2,
+    "episodeFileCount": 0,
+    "episodeCount": 16,
+    "totalEpisodeCount": 20,
+    "sizeOnDisk": 0,
+    "percentOfEpisodes": 0
+  },
+  "seasons": [
+    {
+      "seasonNumber": 0,
+      "monitored": false,
+      "statistics": {
+        "episodeFileCount": 0,
+        "episodeCount": 0,
+        "totalEpisodeCount": 2,
+        "sizeOnDisk": 0
+      }
+    },
+    {
+      "seasonNumber": 1,
+      "monitored": true,
+      "statistics": {
+        "episodeFileCount": 0,
+        "episodeCount": 8,
+        "totalEpisodeCount": 8,
+        "sizeOnDisk": 0
+      }
+    },
+    {
+      "seasonNumber": 2,
+      "monitored": true,
+      "statistics": {
+        "episodeFileCount": 0,
+        "episodeCount": 8,
+        "totalEpisodeCount": 8,
+        "sizeOnDisk": 0
+      }
+    }
+  ]
+}

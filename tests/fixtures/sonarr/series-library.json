@@ -1,0 +1,82 @@
+[
+  {
+    "id": 55,
+    "title": "Example Series",
+    "year": 2018,
+    "tvdbId": 121361,
+    "tmdbId": 1396,
+    "imdbId": "tt0903747",
+    "path": "/tv/Example Series",
+    "monitored": true,
+    "statistics": {
+      "seasonCount": 2,
+      "episodeFileCount": 11,
+      "episodeCount": 16,
+      "totalEpisodeCount": 20,
+      "sizeOnDisk": 18253611008,
+      "percentOfEpisodes": 68.75
+    },
+    "seasons": [
+      {
+        "seasonNumber": 0,
+        "monitored": false,
+        "statistics": {
+          "episodeFileCount": 0,
+          "episodeCount": 0,
+          "totalEpisodeCount": 2,
+          "sizeOnDisk": 0
+        }
+      },
+      {
+        "seasonNumber": 1,
+        "monitored": true,
+        "statistics": {
+          "episodeFileCount": 8,
+          "episodeCount": 8,
+          "totalEpisodeCount": 8,
+          "sizeOnDisk": 9000000000
+        }
+      },
+      {
+        "seasonNumber": 2,
+        "monitored": true,
+        "statistics": {
+          "episodeFileCount": 3,
+          "episodeCount": 8,
+          "totalEpisodeCount": 8,
+          "sizeOnDisk": 9253611008
+        }
+      }
+    ]
+  },
+  {
+    "id": 56,
+    "title": "Missing Show",
+    "year": 2024,
+    "tvdbId": 999001,
+    "tmdbId": null,
+    "imdbId": null,
+    "path": "/tv/Missing Show",
+    "monitored": true,
+    "statistics": {
+      "seasonCount": 1,
+      "episodeFileCount": 0,
+      "episodeCount": 10,
+      "totalEpisodeCount": 10,
+      "sizeOnDisk": 0,
+      "percentOfEpisodes": 0
+    },
+    "seasons": [
+      {
+        "seasonNumber": 1,
+        "monitored": true,
+        "statistics": {
+          "episodeFileCount": 0,
+          "episodeCount": 10,
+          "totalEpisodeCount": 10,
+          "sizeOnDisk": 0
+        }
+      }
+    ]
+  }
+]

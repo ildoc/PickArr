@@ -1,0 +1,16 @@
+[
+  {
+    "country": "US",
+    "name": "USA",
+    "flag_url": "https://cdn.watchmode.com/misc_images/icons/usFlag2.png",
+    "data_tier": 1,
+    "supported": true
+  },
+  {
+    "country": "IT",
+    "name": "Italy",
+    "flag_url": "https://cdn.watchmode.com/misc_images/icons/itFlag2.png",
+    "data_tier": 1,
+    "supported": true
+  }
+]

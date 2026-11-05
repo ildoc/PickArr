@@ -1,0 +1,25 @@
+# .NET
+**/bin/
+**/obj/
+**/.data/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal
+
+# Node
+src/PickArr.WebApp/node_modules/
+src/PickArr.WebApp/dist/
+src/PickArr.WebApp/.vite/
+npm-debug.log*
+
+# IDE / OS
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local runtime
+/config/
+*.log

@@ -1,0 +1,47 @@
+{
+  "titles": [
+    {
+      "id": 1000001,
+      "title": "Example Movie Alpha",
+      "year": 2024,
+      "imdb_id": "tt9000001",
+      "tmdb_id": 900001,
+      "tmdb_type": "movie",
+      "type": "movie",
+      "popularity_percentile": 88.12
+    },
+    {
+      "id": 1000002,
+      "title": "Example Series Beta",
+      "year": 2023,
+      "imdb_id": "tt9000002",
+      "tmdb_id": 900002,
+      "tmdb_type": "tv",
+      "type": "tv_series",
+      "popularity_percentile": 76.4
+    },
+    {
+      "id": 1000003,
+      "title": "Example Special Gamma",
+      "year": 2022,
+      "imdb_id": "tt9000003",
+      "tmdb_id": 900003,
+      "tmdb_type": "tv",
+      "type": "tv_special",
+      "popularity_percentile": 41.0
+    },
+    {
+      "id": 1000004,
+      "title": "Example Miniseries Delta",
+      "year": 2021,
+      "imdb_id": null,
+      "tmdb_id": null,
+      "tmdb_type": null,
+      "type": "tv_miniseries",
+      "popularity_percentile": null
+    }
+  ],
+  "page": 1,
+  "total_results": 6120,
+  "total_pages": 25
+}

@@ -1,0 +1,16 @@
+{
+  "page": 1,
+  "pageSize": 50,
+  "totalRecords": 1,
+  "records": [
+    {
+      "id": 501,
+      "movieId": 11,
+      "title": "Missing Movie",
+      "status": "downloading",
+      "size": 9000000000,
+      "sizeleft": 4500000000,
+      "trackedDownloadState": "downloading"
+    }
+  ]
+}

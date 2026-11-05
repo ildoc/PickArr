@@ -1,0 +1,13 @@
+{
+  "version": "5.22.4.9898",
+  "buildTime": "2025-06-01T12:00:00Z",
+  "isDebug": false,
+  "isProduction": true,
+  "appName": "Radarr",
+  "instanceName": "Radarr",
+  "branch": "master",
+  "authentication": "none",
+  "urlBase": "",
+  "runtimeVersion": "8.0.0",
+  "runtimeName": "netcore"
+}

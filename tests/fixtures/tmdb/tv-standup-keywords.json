@@ -1,0 +1,27 @@
+{
+  "id": 900001,
+  "name": "Example Stand-Up Special",
+  "original_name": "Example Stand-Up Special",
+  "overview": "A stand-up comedy special.",
+  "tagline": null,
+  "first_air_date": "2024-01-01",
+  "number_of_seasons": 1,
+  "number_of_episodes": 1,
+  "episode_run_time": [60],
+  "vote_average": 7.1,
+  "vote_count": 100,
+  "popularity": 12.0,
+  "original_language": "en",
+  "poster_path": "/example-standup.jpg",
+  "backdrop_path": null,
+  "genres": [{ "id": 35, "name": "Comedy" }],
+  "external_ids": {
+    "imdb_id": "tt9000099",
+    "tvdb_id": null
+  },
+  "keywords": {
+    "results": [
+      { "id": 9715, "name": "stand-up comedy" }
+    ]
+  }
+}

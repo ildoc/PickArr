@@ -1,0 +1,17 @@
+{
+  "page": 1,
+  "pageSize": 50,
+  "totalRecords": 1,
+  "records": [
+    {
+      "id": 901,
+      "seriesId": 55,
+      "episodeId": 1202,
+      "title": "Example Series - S02E04",
+      "status": "downloading",
+      "size": 1500000000,
+      "sizeleft": 750000000,
+      "trackedDownloadState": "downloading"
+    }
+  ]
+}
