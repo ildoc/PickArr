@@ -27,4 +27,23 @@ public static class SettingsKeys
     public const string RadarrSyncIntervalMinutes = "radarr.syncIntervalMinutes";
     public const string WebhooksToken = "webhooks.token";
     public const string UiLanguage = "ui.language";
+    public const string RecoEnabled = "reco.enabled";
+    public const string RecoUseImplicit = "reco.useImplicit";
+    public const string RecoWeightLike = "reco.weights.like";
+    public const string RecoWeightDislike = "reco.weights.dislike";
+    public const string RecoWeightFavorite = "reco.weights.favorite";
+    public const string RecoWeightArrAdd = "reco.weights.arrAdd";
+    public const string RecoWeightDownloaded = "reco.weights.downloaded";
+    public const string RecoN0 = "reco.n0";
+    public const string RecoExcludeInLibrary = "reco.excludeInLibrary";
+    public const string RecoEmbeddingsEnabled = "reco.embeddings.enabled";
+    public const string RecoEmbeddingsModelId = "reco.embeddings.modelId";
+    public const string RecoEmbeddingsThreads = "reco.embeddings.threads";
+    public const string RecoEmbeddingsBatchSize = "reco.embeddings.batchSize";
+    public const string RecoEmbeddingsMinCoverage = "reco.embeddings.minCoverage";
+    public const string RecoEmbeddingsThrottle = "reco.embeddings.throttle";
+    public const string RecoMmrLambda = "reco.mmr.lambda";
+    public const string RecoExploreRate = "reco.explore.rate";
+    public const string RecoMlMinRatings = "reco.ml.minRatings";
+    public const string RecoEventsEnabled = "reco.events.enabled";
 }

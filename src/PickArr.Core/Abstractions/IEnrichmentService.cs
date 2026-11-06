@@ -19,4 +19,11 @@ public interface IEnrichmentService
         int limit = 50,
         int olderThanDays = 30,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Re-enrich Ready pool titles missing keywords, credits, or en-US localization (RecoFeatureJob).
+    /// </summary>
+    Task<EnrichmentBatchResult> EnrichFeatureBackfillBatchAsync(
+        int limit = 50,
+        CancellationToken cancellationToken = default);
 }

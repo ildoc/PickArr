@@ -80,7 +80,7 @@ export function CatalogSourcesPage() {
   }
 
   if (setup.isError || !setup.data || !draft || !estimate) {
-    return <p className="text-red-300">{t('settings.catalogSaveFailed')}</p>
+    return <p className="text-red-300">{t('settings.catalogLoadFailed')}</p>
   }
 
   const missingCountry = draft.some((provider) => provider.enabled && provider.countries.length === 0)

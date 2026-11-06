@@ -349,7 +349,7 @@ Voce **Per te** nell’intestazione, accanto a *La mia lista*. *Le mie valutazio
 | Voto medio e popolarità | `Title.VoteTmdb`, `VoteTmdbCount`, `Popularity` | Prior. |
 | Preferiti | `Favorite` (`TitleId` PK) | Segnale implicito e modello UI del toggle ottimistico (`FavoriteButton`). |
 | Libreria | `ArrLibraryItem.State`, `ArrAuditLog` (`Add` / `Delete`, `Success` / `Failed`) | Segnali e filtro «in libreria». |
-| Sorgente UI | `frontend/src/lib/sourcePreference.ts` (`pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
+| Sorgente UI | `src/PickArr.WebApp/src/` (`pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
 | Card | `TitleListItem` / `TitleListItemDto`, `places`, `TitleCard`, `TitleDialog` | Si aggiunge il campo `rating`. |
 | Job | Hangfire, code `default`, `sync`, `arr` (`HangfireBootstrap`), `SyncRun` + `SyncRunKinds` | Nuova coda `ml` e nuovi `Kind`. |
 | Impostazioni | `AppSetting`, `SettingsKeys` | Chiavi `reco.*`. |
@@ -861,9 +861,9 @@ Dopo un voto il client invalida le query `titles`, `title`, `recommendations`, `
 Si aggiungono feature accanto a quelle esistenti, senza una shell nuova.
 
 ```
-frontend/src/features/ratings/   RatingButtons, MyRatingsPage, import/export
-frontend/src/features/reco/      ForYouPage, LearningProgress, ReasonChips, SimilarRow, OnboardingTaste
-frontend/src/features/settings/  RecoSettingsPage
+src/PickArr.WebApp/src/features/ratings/   RatingButtons, MyRatingsPage, import/export
+src/PickArr.WebApp/src/features/reco/      ForYouPage, TastePage, LearningProgress, ReasonChips
+src/PickArr.WebApp/src/features/settings/  RecommendationsSettingsPage
 ```
 
 `RatingButtons` si monta in `TitleCard` e `TitleDialog`, accanto a `FavoriteButton`.

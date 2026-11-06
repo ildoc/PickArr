@@ -19,9 +19,17 @@
     "imdb_id": "tt9000099",
     "tvdb_id": null
   },
+  "origin_country": ["US"],
+  "created_by": [],
   "keywords": {
     "results": [
       { "id": 9715, "name": "stand-up comedy" }
     ]
+  },
+  "credits": {
+    "cast": [
+      { "id": 12345, "name": "Example Comic", "order": 0 }
+    ],
+    "crew": []
   }
 }

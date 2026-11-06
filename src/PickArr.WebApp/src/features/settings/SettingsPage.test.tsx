@@ -27,6 +27,22 @@ const emptySettings = {
   radarr: { url: null, apiKey: { isSet: false }, syncIntervalMinutes: 15, defaults: null },
   webhooks: { token: { isSet: false } },
   ui: { language: 'en' },
+  reco: {
+    enabled: true,
+    useImplicit: true,
+    embeddingsEnabled: true,
+    excludeInLibrary: true,
+    n0: 30,
+    weightLike: 1,
+    weightDislike: -1,
+    weightFavorite: 0.5,
+    weightArrAdd: 0.6,
+    weightDownloaded: 0.4,
+    mmrLambda: 0.7,
+    exploreRate: 0.1,
+    mlMinRatings: 100,
+    eventsEnabled: false,
+  },
 }
 
 function wrap(ui: ReactNode) {
@@ -94,6 +110,13 @@ describe('SettingsPage', () => {
       apiKey: 'secret-key',
     })
     expect(fetchArrOptions).not.toHaveBeenCalled()
+  })
+
+  it('shows recommendation toggles from settings', async () => {
+    wrap(<SettingsPage />)
+    expect(await screen.findByRole('heading', { name: 'Recommendations' })).toBeTruthy()
+    expect(screen.getByLabelText(/Enable recommendations and ratings/i)).toBeChecked()
+    expect(screen.getByLabelText(/Use favorites and library as taste signals/i)).toBeChecked()
   })
 
   it('keeps the lists empty when the connection test fails', async () => {

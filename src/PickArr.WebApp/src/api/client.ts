@@ -38,6 +38,21 @@ export async function apiDelete(path: string): Promise<void> {
   }
 }
 
+export async function apiPost<T>(path: string, body?: unknown): Promise<T | void> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) {
+    throw new ApiError(`POST ${path} failed`, response.status)
+  }
+  if (response.status === 204) {
+    return
+  }
+  return (await response.json()) as T
+}
+
 export function buildQuery(params: Record<string, string | number | boolean | undefined>): string {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {

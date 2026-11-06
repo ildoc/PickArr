@@ -8,6 +8,9 @@ import { categoryLabelKey, formatDate, formatRuntime, formatYear } from '../../l
 import { AddToArrDialog } from '../arr/AddToArrDialog'
 import { DeleteFromArrDialog } from '../arr/DeleteFromArrDialog'
 import { FavoriteButton } from '../favorites/FavoriteButton'
+import { RatingButtons } from '../ratings/RatingButtons'
+import { useRatingMutation } from '../ratings/useRatingMutation'
+import { SimilarRow } from '../reco/SimilarRow'
 import { ArrStatusBadge } from './ArrStatusBadge'
 import { SeasonTable } from './SeasonTable'
 import { SeriesSeasons } from './SeriesSeasons'
@@ -32,6 +35,8 @@ export function TitleDialog({
     queryKey: ['title', titleId, sourceId],
     queryFn: () => fetchTitle(titleId, sourceId ?? undefined),
   })
+
+  const ratingMutation = useRatingMutation(titleId)
 
   const invalidateTitle = async () => {
     await queryClient.invalidateQueries({ queryKey: ['title', titleId] })
@@ -62,6 +67,33 @@ export function TitleDialog({
       dialog.removeEventListener('close', onClose)
     }
   }, [navigate, params, pathname])
+
+  useEffect(() => {
+    if (!detail.data) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        return
+      }
+      const key = event.key.toLowerCase()
+      if (key !== 'l' && key !== 'd') return
+      event.preventDefault()
+      const current = detail.data.rating ?? null
+      if (key === 'l') {
+        ratingMutation.mutate(current === 'like' ? null : 'like')
+      } else {
+        ratingMutation.mutate(current === 'dislike' ? null : 'dislike')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [detail.data, ratingMutation])
 
   const close = () => dialogRef.current?.close()
 
@@ -131,10 +163,16 @@ export function TitleDialog({
                       </p>
                     )}
                 </div>
-                <FavoriteButton
-                  titleId={detail.data.id}
-                  isFavorite={detail.data.isFavorite}
-                />
+                <div className="flex items-center gap-1">
+                  <RatingButtons
+                    titleId={detail.data.id}
+                    rating={detail.data.rating ?? null}
+                  />
+                  <FavoriteButton
+                    titleId={detail.data.id}
+                    isFavorite={detail.data.isFavorite}
+                  />
+                </div>
               </div>
 
               {detail.data.genres.length > 0 && (
@@ -190,6 +228,8 @@ export function TitleDialog({
                   ))}
                 </ul>
               </section>
+
+              <SimilarRow titleId={detail.data.id} sourceId={sourceId} />
 
               <section className="space-y-3 rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">

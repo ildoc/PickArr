@@ -25,6 +25,44 @@ public sealed class SettingsServiceTests
 
         result.Watchmode.ApiKey.IsSet.ShouldBeTrue();
         result.Watchmode.Plan.ShouldBe("free");
+        result.Reco.Enabled.ShouldBeTrue();
+        result.Reco.N0.ShouldBe(30);
+        result.Reco.EmbeddingsEnabled.ShouldBeTrue();
+        result.Reco.ExploreRate.ShouldBe(0.10);
+        result.Reco.MmrLambda.ShouldBe(0.7);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_writes_reco_embeddings_and_explore()
+    {
+        var store = Substitute.For<ISettingsStore>();
+        var sut = new SettingsService(store);
+
+        await sut.UpdateAsync(new UpdateSettingsRequest
+        {
+            Reco = new RecoUpdateDto
+            {
+                EmbeddingsEnabled = false,
+                ExploreRate = 0,
+                MmrLambda = 0.5,
+            },
+        });
+
+        await store.Received(1).SetAsync(
+            SettingsKeys.RecoEmbeddingsEnabled,
+            Arg.Is<string>(v => v.Contains("false", StringComparison.OrdinalIgnoreCase)),
+            false,
+            Arg.Any<CancellationToken>());
+        await store.Received(1).SetAsync(
+            SettingsKeys.RecoExploreRate,
+            Arg.Is<string>(v => v.Contains('0')),
+            false,
+            Arg.Any<CancellationToken>());
+        await store.Received(1).SetAsync(
+            SettingsKeys.RecoMmrLambda,
+            Arg.Is<string>(v => v.Contains("0.5", StringComparison.Ordinal)),
+            false,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

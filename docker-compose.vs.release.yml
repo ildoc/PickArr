@@ -1,0 +1,6 @@
+# Applied by Visual Studio only when launching docker-compose.dcproj without
+# the debugger. Same port as debug: the Vite dev server proxies to localhost:5000.
+services:
+  pickarr:
+    ports:
+      - "5000:8080"

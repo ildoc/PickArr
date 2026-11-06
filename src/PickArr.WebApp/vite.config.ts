@@ -7,6 +7,8 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // dotnet run listens here. Debugging docker-compose.dcproj publishes the
+      // same host port (docker-compose.vs.debug.yml); the container itself stays on 8080.
       '/api': 'http://localhost:5000',
       '/health': 'http://localhost:5000',
     },

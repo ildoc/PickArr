@@ -20,6 +20,9 @@ export function SettingsLayout() {
           <NavLink to="/settings/catalogs" className={itemClass}>
             {t('settings.catalogs')}
           </NavLink>
+          <NavLink to="/settings/recommendations" className={itemClass}>
+            {t('settings.recommendations')}
+          </NavLink>
           <NavLink to="/settings/jobs" className={itemClass}>
             {t('settings.jobs')}
           </NavLink>

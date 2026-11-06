@@ -55,8 +55,12 @@ public sealed class TitleQueryService(
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize <= 0 ? 48 : request.PageSize, 1, 100);
         var arrFilter = await ResolveArrFilterAsync(cancellationToken);
+        var favoriteOnly = request.Favorite == true;
+        var ratingFilter = NormalizeRatingFilter(request.RatingValue);
+        var ratingsOnly = ratingFilter is not null;
 
-        if (arrFilter.AllowedMediaTypes.Count == 0)
+        // Ratings are global (FR-REC-RT-05); do not require Sonarr/Radarr to list them.
+        if (!ratingsOnly && arrFilter.AllowedMediaTypes.Count == 0)
         {
             return new PagedTitlesResult(
                 page,
@@ -69,8 +73,7 @@ public sealed class TitleQueryService(
 
         var source = await db.CatalogSources.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == sourceId, cancellationToken);
-        var favoriteOnly = request.Favorite == true;
-        if (source is null && !favoriteOnly)
+        if (source is null && !favoriteOnly && !ratingsOnly)
         {
             return new PagedTitlesResult(page, pageSize, 0, [], ArrFilter: arrFilter);
         }
@@ -84,43 +87,53 @@ public sealed class TitleQueryService(
         var newCutoff = now.AddDays(-newWindow);
         var removedCutoff = now.AddDays(-removedWindow);
         var view = (request.View ?? "all").Trim().ToLowerInvariant();
-        var includeRemoved = request.IncludeRemoved || view == "removed" || favoriteOnly;
+        var includeRemoved = request.IncludeRemoved || view == "removed" || favoriteOnly || ratingsOnly;
 
-        var query = db.Titles.AsNoTracking()
-            .Where(t => arrFilter.AllowedMediaTypes.Contains(t.MediaType));
+        var query = db.Titles.AsNoTracking();
+        if (!ratingsOnly)
+        {
+            query = query.Where(t => arrFilter.AllowedMediaTypes.Contains(t.MediaType));
+        }
 
         if (favoriteOnly)
         {
             query = query.Where(t => t.Favorite != null);
+        }
+        else if (ratingsOnly)
+        {
+            query = query.Where(t => t.Rating != null && t.Rating.Value == ratingFilter);
         }
         else
         {
             query = query.Where(t => t.Availabilities.Any(a => a.CatalogSourceId == sourceId));
         }
 
-        // Availability-scoped filters (except favorite-only orphans).
-        query = view switch
+        // Availability-scoped filters (except favorite/ratings orphans).
+        if (!favoriteOnly && !ratingsOnly)
         {
-            "new" => query.Where(t => t.Availabilities.Any(a =>
-                a.CatalogSourceId == sourceId
-                && a.RemovedAt == null
-                && !a.IsBaseline
-                && a.AddedAt != null
-                && a.AddedAt >= newCutoff)),
-            "leaving" => query.Where(t => t.Availabilities.Any(a =>
-                a.CatalogSourceId == sourceId
-                && a.RemovedAt == null
-                && a.LeavingDate != null
-                && a.LeavingDate >= today
-                && a.LeavingDate <= leavingUntil)),
-            "removed" => query.Where(t => t.Availabilities.Any(a =>
-                a.CatalogSourceId == sourceId
-                && a.RemovedAt != null
-                && a.RemovedAt >= removedCutoff)),
-            _ when !includeRemoved => query.Where(t => t.Availabilities.Any(a =>
-                a.CatalogSourceId == sourceId && a.RemovedAt == null)),
-            _ => query,
-        };
+            query = view switch
+            {
+                "new" => query.Where(t => t.Availabilities.Any(a =>
+                    a.CatalogSourceId == sourceId
+                    && a.RemovedAt == null
+                    && !a.IsBaseline
+                    && a.AddedAt != null
+                    && a.AddedAt >= newCutoff)),
+                "leaving" => query.Where(t => t.Availabilities.Any(a =>
+                    a.CatalogSourceId == sourceId
+                    && a.RemovedAt == null
+                    && a.LeavingDate != null
+                    && a.LeavingDate >= today
+                    && a.LeavingDate <= leavingUntil)),
+                "removed" => query.Where(t => t.Availabilities.Any(a =>
+                    a.CatalogSourceId == sourceId
+                    && a.RemovedAt != null
+                    && a.RemovedAt >= removedCutoff)),
+                _ when !includeRemoved => query.Where(t => t.Availabilities.Any(a =>
+                    a.CatalogSourceId == sourceId && a.RemovedAt == null)),
+                _ => query,
+            };
+        }
 
         if (request.Types is { Count: > 0 })
         {
@@ -207,7 +220,7 @@ public sealed class TitleQueryService(
             sort = "added";
         }
 
-        query = ApplySort(query, sort, desc, source?.Id ?? 0, searchTerm, favoriteOnly);
+        query = ApplySort(query, sort, desc, source?.Id ?? 0, searchTerm, favoriteOnly, ratingsOnly);
 
         var total = await query.CountAsync(cancellationToken);
         var pageIds = await query
@@ -219,6 +232,7 @@ public sealed class TitleQueryService(
         var titles = await db.Titles.AsNoTracking()
             .Where(t => pageIds.Contains(t.Id))
             .Include(t => t.Favorite)
+            .Include(t => t.Rating)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource!).ThenInclude(s => s.Provider)
@@ -233,7 +247,8 @@ public sealed class TitleQueryService(
                 byId[id],
                 source,
                 newCutoff,
-                arrByTitle.GetValueOrDefault(id)))
+                arrByTitle.GetValueOrDefault(id),
+                ratingsOnly))
             .ToList();
 
         string? emptyReason = null;
@@ -259,6 +274,7 @@ public sealed class TitleQueryService(
         string.IsNullOrWhiteSpace(request.Q)
         && (string.IsNullOrWhiteSpace(request.View) || string.Equals(request.View, "all", StringComparison.OrdinalIgnoreCase))
         && request.Favorite != true
+        && string.IsNullOrWhiteSpace(request.RatingValue)
         && request.Types is not { Count: > 0 }
         && request.Genres is not { Count: > 0 }
         && request.YearFrom is null
@@ -365,6 +381,7 @@ public sealed class TitleQueryService(
     {
         var title = await db.Titles.AsNoTracking()
             .Include(t => t.Favorite)
+            .Include(t => t.Rating)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)
@@ -417,6 +434,7 @@ public sealed class TitleQueryService(
                 string.IsNullOrWhiteSpace(title.ImdbId) ? null : $"https://www.imdb.com/title/{title.ImdbId}/",
                 title.TvdbId is { } tvdb ? $"https://thetvdb.com/?tab=series&id={tvdb}" : null),
             title.Favorite is not null,
+            RatingValues.ToApiOrNull(title.Rating?.Value),
             ToApiMetadataStatus(title.MetadataStatus),
             title.Availabilities
                 .OrderBy(a => a.CatalogSource?.CountryCode)
@@ -461,6 +479,20 @@ public sealed class TitleQueryService(
         return QueryTitlesAsync(0, favorites, cancellationToken);
     }
 
+    public Task<PagedTitlesResult> QueryRatingsAsync(
+        string ratingValue,
+        TitleQueryRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var ratings = request with
+        {
+            RatingValue = ratingValue,
+            IncludeRemoved = true,
+            View = "all",
+        };
+        return QueryTitlesAsync(0, ratings, cancellationToken);
+    }
+
     public Task<IReadOnlyList<GenreCountDto>> ListFavoriteGenresAsync(
         CancellationToken cancellationToken = default) =>
         ListGenresAsync(0, favoritesOnly: true, cancellationToken);
@@ -473,7 +505,8 @@ public sealed class TitleQueryService(
         Title title,
         CatalogSource? source,
         DateTime newCutoff,
-        ArrLibraryItem? arrItem)
+        ArrLibraryItem? arrItem,
+        bool ratingsOnly = false)
     {
         var language = source?.MetadataLanguage ?? LanguageFallback.English;
         var (name, _) = ResolveLocalization(title, language);
@@ -505,9 +538,10 @@ public sealed class TitleQueryService(
             title.VoteTmdb,
             RatingImdb: null,
             title.Favorite is not null,
+            RatingValues.ToApiOrNull(title.Rating?.Value),
             availabilityDto,
             BuildArrSummary(title.MediaType, arrItem),
-            MapPlaces(title));
+            ratingsOnly ? MapRatingPlaces(title) : MapPlaces(title));
     }
 
     private static IReadOnlyList<CatalogPlaceDto> MapPlaces(Title title) =>
@@ -519,6 +553,30 @@ public sealed class TitleQueryService(
                 a.CatalogSource!.Provider?.DisplayName ?? "",
                 a.CatalogSource.CountryCode))
             .ToList();
+
+    private static IReadOnlyList<CatalogPlaceDto> MapRatingPlaces(Title title) =>
+        title.Availabilities
+            .Where(a =>
+                a.CatalogSource is not null
+                && a.CatalogSource.IsEnabled
+                && a.CatalogSource.Provider is { IsEnabled: true })
+            .OrderBy(a => a.CatalogSource!.Provider?.DisplayName)
+            .ThenBy(a => a.CatalogSource!.CountryCode)
+            .Select(a => new CatalogPlaceDto(
+                a.CatalogSource!.Provider?.DisplayName ?? "",
+                a.CatalogSource.CountryCode,
+                a.RemovedAt))
+            .ToList();
+
+    private static string? NormalizeRatingFilter(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || !RatingValues.IsValid(value))
+        {
+            return null;
+        }
+
+        return RatingValues.Normalize(value);
+    }
 
     private static ArrSummaryDto BuildArrSummary(string mediaType, ArrLibraryItem? arrItem)
     {
@@ -656,8 +714,16 @@ public sealed class TitleQueryService(
         bool desc,
         int sourceId,
         string? searchTerm,
-        bool favoriteOnly)
+        bool favoriteOnly,
+        bool ratingsOnly = false)
     {
+        if (ratingsOnly && sort is not ("year" or "rating" or "title" or "relevance"))
+        {
+            return desc
+                ? query.OrderByDescending(t => t.Rating!.RatedAt).ThenBy(t => t.Id)
+                : query.OrderBy(t => t.Rating!.RatedAt).ThenBy(t => t.Id);
+        }
+
         if (favoriteOnly && sort is not ("year" or "rating" or "title" or "relevance"))
         {
             return desc

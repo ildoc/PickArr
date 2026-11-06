@@ -2,7 +2,7 @@
 
 Self-hosted catalog browser for Netflix (IT/US) with TMDB metadata and Sonarr/Radarr integration.
 
-MVP scope: Watchmode catalog sync (incremental + full + leaving preview), enrichment, UI grid/filters/favorites, Arr add/delete/status, admin jobs & credit quota, Docker amd64, GitLab CI (buildah).
+MVP scope: Watchmode catalog sync (incremental + full + leaving preview), enrichment, UI grid/filters/favorites, Arr add/delete/status, admin jobs & credit quota, Docker amd64, GitHub Actions.
 
 ## Prerequisites
 
@@ -62,16 +62,17 @@ Open `http://localhost:8080`, set API keys in Settings, then trigger catalog / l
 
 ## CI
 
-GitLab CI (`.gitlab-ci.yml`):
+GitHub Actions (`.github/workflows/ci.yml`) runs on pull requests, pushes to `main`, and tags.
 
-| Stage | Jobs |
+| Job | Checks |
 | --- | --- |
-| lint | `dotnet format`, frontend lint/typecheck |
-| test | `dotnet test`, frontend build |
-| package | `buildah bud` → `$CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA` (amd64) |
-| release | tag push to registry on default branch / tags |
+| Backend lint | `dotnet format --verify-no-changes`; NuGet vulnerability report (does not fail the job) |
+| Frontend lint | `npm run lint`, `npm run typecheck` |
+| Backend test | `dotnet test` (Release); TRX uploaded as an artifact |
+| Frontend test | `npm test`, `npm run build` |
+| Image | `linux/amd64` build of `src/PickArr.Api/Dockerfile` |
 
-Pipeline must run on a GitLab runner with buildah; local substitute is the Docker smoke above.
+The image is pushed to `ghcr.io/<owner>/<repo>` only from the default branch (`edge` and `sha-<commit>`) and from git tags (the tag, `latest`, and `sha-<commit>`). `VERSION` is `0.0.0-<short sha>` on branch builds and the tag name without a leading `v` on releases. The first push creates a private GHCR package; grant this repository write access on the package if the push is rejected.
 
 ## Ops notes
 

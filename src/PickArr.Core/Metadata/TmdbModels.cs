@@ -4,6 +4,9 @@ public sealed record TmdbGenre(int Id, string Name);
 
 public sealed record TmdbKeyword(int Id, string Name);
 
+/// <summary>Structured credit with TMDB person id (persist); distinct from <see cref="TmdbTitleDetails.Cast"/> name list.</summary>
+public sealed record TmdbCredit(int PersonId, string Name, string Role, int Order);
+
 public sealed record TmdbTitleDetails(
     int Id,
     string? Title,
@@ -26,7 +29,9 @@ public sealed record TmdbTitleDetails(
     IReadOnlyList<TmdbKeyword> Keywords,
     bool IsMovie,
     IReadOnlyList<string>? Cast = null,
-    IReadOnlyList<TmdbSeason>? Seasons = null);
+    IReadOnlyList<TmdbSeason>? Seasons = null,
+    IReadOnlyList<TmdbCredit>? Credits = null,
+    IReadOnlyList<string>? OriginCountries = null);
 
 public sealed record TmdbSeason(
     int Number,

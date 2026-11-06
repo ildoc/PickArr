@@ -39,6 +39,8 @@ export function SettingsPage() {
   const [radarr, setRadarr] = useState<ArrForm>(emptyArr())
   const [watchmodeKey, setWatchmodeKey] = useState('')
   const [tmdbToken, setTmdbToken] = useState('')
+  const [recoEnabled, setRecoEnabled] = useState(true)
+  const [recoUseImplicit, setRecoUseImplicit] = useState(true)
   const [saved, setSaved] = useState(false)
   const [sonarrTest, setSonarrTest] = useState<string | null>(null)
   const [radarrTest, setRadarrTest] = useState<string | null>(null)
@@ -81,6 +83,8 @@ export function SettingsPage() {
       qualityProfileId: settings.data.radarr.defaults?.qualityProfileId?.toString() ?? '',
       rootFolderPath: settings.data.radarr.defaults?.rootFolderPath ?? '',
     })
+    setRecoEnabled(settings.data.reco.enabled !== false)
+    setRecoUseImplicit(settings.data.reco.useImplicit !== false)
   }, [settings.data])
 
   useEffect(() => {
@@ -124,6 +128,10 @@ export function SettingsPage() {
         },
         watchmode: watchmodeKey.length > 0 ? { apiKey: watchmodeKey } : undefined,
         tmdb: tmdbToken.length > 0 ? { token: tmdbToken } : undefined,
+        reco: {
+          enabled: recoEnabled,
+          useImplicit: recoUseImplicit,
+        },
       }),
     onSuccess: async () => {
       setWatchmodeKey('')
@@ -278,6 +286,35 @@ export function SettingsPage() {
             className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
           />
           <p className="text-xs text-[var(--muted)]">{t('settings.tokenHint')}</p>
+        </label>
+      </section>
+
+      <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
+        <h2 className="text-lg font-medium">{t('settings.recommendations')}</h2>
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={recoEnabled}
+            onChange={(e) => setRecoEnabled(e.target.checked)}
+          />
+          <span>
+            <span className="block">{t('settings.recoEnabled')}</span>
+            <span className="block text-xs text-[var(--muted)]">{t('settings.recoEnabledHint')}</span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="mt-1"
+            checked={recoUseImplicit}
+            disabled={!recoEnabled}
+            onChange={(e) => setRecoUseImplicit(e.target.checked)}
+          />
+          <span>
+            <span className="block">{t('settings.recoUseImplicit')}</span>
+            <span className="block text-xs text-[var(--muted)]">{t('settings.recoUseImplicitHint')}</span>
+          </span>
         </label>
       </section>
 

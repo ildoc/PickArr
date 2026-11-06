@@ -1,5 +1,6 @@
 using System.Text.Json;
 using PickArr.Core.Abstractions;
+using PickArr.Core.Recommendations;
 
 namespace PickArr.Core.Settings;
 
@@ -48,6 +49,23 @@ public sealed class SettingsService(ISettingsStore store)
             Ui = new UiSettingsDto
             {
                 Language = await GetOrDefaultAsync(SettingsKeys.UiLanguage, "en", cancellationToken),
+            },
+            Reco = new RecoSettingsDto
+            {
+                Enabled = await GetOrDefaultAsync(SettingsKeys.RecoEnabled, true, cancellationToken),
+                UseImplicit = await GetOrDefaultAsync(SettingsKeys.RecoUseImplicit, true, cancellationToken),
+                EmbeddingsEnabled = await GetOrDefaultAsync(SettingsKeys.RecoEmbeddingsEnabled, true, cancellationToken),
+                ExcludeInLibrary = await GetOrDefaultAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken),
+                N0 = await GetOrDefaultAsync(SettingsKeys.RecoN0, 30, cancellationToken),
+                WeightLike = await GetOrDefaultAsync(SettingsKeys.RecoWeightLike, 1.0, cancellationToken),
+                WeightDislike = await GetOrDefaultAsync(SettingsKeys.RecoWeightDislike, -1.0, cancellationToken),
+                WeightFavorite = await GetOrDefaultAsync(SettingsKeys.RecoWeightFavorite, 0.5, cancellationToken),
+                WeightArrAdd = await GetOrDefaultAsync(SettingsKeys.RecoWeightArrAdd, 0.6, cancellationToken),
+                WeightDownloaded = await GetOrDefaultAsync(SettingsKeys.RecoWeightDownloaded, 0.4, cancellationToken),
+                MmrLambda = await GetOrDefaultAsync(SettingsKeys.RecoMmrLambda, 0.7, cancellationToken),
+                ExploreRate = await GetOrDefaultAsync(SettingsKeys.RecoExploreRate, RecoExplore.DefaultRate, cancellationToken),
+                MlMinRatings = await GetOrDefaultAsync(SettingsKeys.RecoMlMinRatings, RecoLevel3.DefaultMinRatings, cancellationToken),
+                EventsEnabled = await GetOrDefaultAsync(SettingsKeys.RecoEventsEnabled, false, cancellationToken),
             },
         };
     }
@@ -129,6 +147,79 @@ public sealed class SettingsService(ISettingsStore store)
         if (request.Ui is { } ui)
         {
             await store.SetAsync(SettingsKeys.UiLanguage, ToJson(ui.Language), isSecret: false, cancellationToken);
+        }
+
+        if (request.Reco is { } reco)
+        {
+            if (reco.Enabled is { } enabled)
+            {
+                await store.SetAsync(SettingsKeys.RecoEnabled, ToJson(enabled), isSecret: false, cancellationToken);
+            }
+
+            if (reco.UseImplicit is { } useImplicit)
+            {
+                await store.SetAsync(SettingsKeys.RecoUseImplicit, ToJson(useImplicit), isSecret: false, cancellationToken);
+            }
+
+            if (reco.EmbeddingsEnabled is { } embeddingsEnabled)
+            {
+                await store.SetAsync(SettingsKeys.RecoEmbeddingsEnabled, ToJson(embeddingsEnabled), isSecret: false, cancellationToken);
+            }
+
+            if (reco.ExcludeInLibrary is { } exclude)
+            {
+                await store.SetAsync(SettingsKeys.RecoExcludeInLibrary, ToJson(exclude), isSecret: false, cancellationToken);
+            }
+
+            if (reco.N0 is { } n0)
+            {
+                await store.SetAsync(SettingsKeys.RecoN0, ToJson(n0), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightLike is { } like)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightLike, ToJson(like), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightDislike is { } dislike)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightDislike, ToJson(dislike), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightFavorite is { } favorite)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightFavorite, ToJson(favorite), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightArrAdd is { } arrAdd)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightArrAdd, ToJson(arrAdd), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightDownloaded is { } downloaded)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightDownloaded, ToJson(downloaded), isSecret: false, cancellationToken);
+            }
+
+            if (reco.MmrLambda is { } mmrLambda)
+            {
+                await store.SetAsync(SettingsKeys.RecoMmrLambda, ToJson(mmrLambda), isSecret: false, cancellationToken);
+            }
+
+            if (reco.ExploreRate is { } exploreRate)
+            {
+                await store.SetAsync(SettingsKeys.RecoExploreRate, ToJson(exploreRate), isSecret: false, cancellationToken);
+            }
+
+            if (reco.MlMinRatings is { } minRatings)
+            {
+                await store.SetAsync(SettingsKeys.RecoMlMinRatings, ToJson(minRatings), isSecret: false, cancellationToken);
+            }
+
+            if (reco.EventsEnabled is { } eventsEnabled)
+            {
+                await store.SetAsync(SettingsKeys.RecoEventsEnabled, ToJson(eventsEnabled), isSecret: false, cancellationToken);
+            }
         }
     }
 

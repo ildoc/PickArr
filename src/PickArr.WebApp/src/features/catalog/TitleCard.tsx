@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next'
 import type { TitleListItem } from '../../api/types'
 import { categoryLabelKey, formatYear } from '../../lib/format'
 import { FavoriteButton } from '../favorites/FavoriteButton'
+import { RatingButtons } from '../ratings/RatingButtons'
+import { ReasonChips } from '../reco/ReasonChips'
 import { ArrStatusBadge } from '../title/ArrStatusBadge'
 
 export function TitleCard({
@@ -36,7 +38,8 @@ export function TitleCard({
             {title.name}
           </div>
         )}
-        <div className="absolute right-1 top-1">
+        <div className="absolute right-1 top-1 flex items-center gap-0.5 rounded-full bg-black/55">
+          <RatingButtons titleId={title.id} rating={title.rating ?? null} />
           <FavoriteButton titleId={title.id} isFavorite={title.isFavorite} />
         </div>
         <div className="absolute bottom-1 left-1 flex max-w-[70%] flex-wrap gap-1">
@@ -58,6 +61,15 @@ export function TitleCard({
           {title.name}
         </h3>
         <p className="text-xs text-[var(--muted)]">{formatYear(title.year)}</p>
+        {title.sourceStatus && (
+          <p className="text-xs text-[var(--muted)]">
+            {title.sourceStatus === 'present'
+              ? t('ratings.inSource')
+              : title.sourceStatus === 'removed'
+                ? t('ratings.removedFromSource')
+                : t('ratings.absentFromSource')}
+          </p>
+        )}
         {showPlaces && title.places && title.places.length > 0 && (
           <p className="text-xs text-[var(--muted)]">
             {title.places
@@ -67,6 +79,9 @@ export function TitleCard({
               )
               .join(', ')}
           </p>
+        )}
+        {title.reco?.reasons && title.reco.reasons.length > 0 && (
+          <ReasonChips reasons={title.reco.reasons} />
         )}
       </div>
     </Link>

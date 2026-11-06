@@ -18,6 +18,7 @@ internal sealed class TmdbMovieDto
     [JsonPropertyName("poster_path")] public string? PosterPath { get; set; }
     [JsonPropertyName("backdrop_path")] public string? BackdropPath { get; set; }
     [JsonPropertyName("imdb_id")] public string? ImdbId { get; set; }
+    [JsonPropertyName("origin_country")] public List<string> OriginCountry { get; set; } = [];
     [JsonPropertyName("genres")] public List<TmdbGenreDto> Genres { get; set; } = [];
     [JsonPropertyName("external_ids")] public TmdbExternalIdsDto? ExternalIds { get; set; }
     [JsonPropertyName("keywords")] public TmdbMovieKeywordsDto? Keywords { get; set; }
@@ -41,6 +42,8 @@ internal sealed class TmdbTvDto
     [JsonPropertyName("original_language")] public string? OriginalLanguage { get; set; }
     [JsonPropertyName("poster_path")] public string? PosterPath { get; set; }
     [JsonPropertyName("backdrop_path")] public string? BackdropPath { get; set; }
+    [JsonPropertyName("origin_country")] public List<string> OriginCountry { get; set; } = [];
+    [JsonPropertyName("created_by")] public List<TmdbCreatedByDto> CreatedBy { get; set; } = [];
     [JsonPropertyName("genres")] public List<TmdbGenreDto> Genres { get; set; } = [];
     [JsonPropertyName("external_ids")] public TmdbExternalIdsDto? ExternalIds { get; set; }
     [JsonPropertyName("keywords")] public TmdbTvKeywordsDto? Keywords { get; set; }
@@ -102,12 +105,28 @@ internal sealed class TmdbKeywordDto
 internal sealed class TmdbCreditsDto
 {
     [JsonPropertyName("cast")] public List<TmdbCastDto> Cast { get; set; } = [];
+    [JsonPropertyName("crew")] public List<TmdbCrewDto> Crew { get; set; } = [];
 }
 
 internal sealed class TmdbCastDto
 {
+    [JsonPropertyName("id")] public int Id { get; set; }
     [JsonPropertyName("name")] public string Name { get; set; } = "";
     [JsonPropertyName("order")] public int Order { get; set; }
+}
+
+internal sealed class TmdbCrewDto
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; } = "";
+    [JsonPropertyName("job")] public string? Job { get; set; }
+    [JsonPropertyName("department")] public string? Department { get; set; }
+}
+
+internal sealed class TmdbCreatedByDto
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+    [JsonPropertyName("name")] public string Name { get; set; } = "";
 }
 
 internal sealed class TmdbFindDto

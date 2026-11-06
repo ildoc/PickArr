@@ -5,8 +5,8 @@
 services:
   pickarr:
     image: pickarr:local
-    # For GitLab registry builds, e.g.:
-    # image: registry.gitlab.com/<namespace>/<project>:latest
+    # Published GHCR tags: edge (default branch), latest and the git tag (releases).
+    # image: ghcr.io/<owner>/<repo>:edge
     build:
       context: .
       dockerfile: src/PickArr.Api/Dockerfile

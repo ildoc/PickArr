@@ -23,6 +23,8 @@ export function FilterBar({
   onDirChange,
   hideSource = false,
   hideViews = false,
+  hideSearch = false,
+  hideSort = false,
 }: {
   q: string
   onQChange: (value: string) => void
@@ -44,6 +46,8 @@ export function FilterBar({
   onDirChange: (dir: 'asc' | 'desc') => void
   hideSource?: boolean
   hideViews?: boolean
+  hideSearch?: boolean
+  hideSort?: boolean
 }) {
   const { t } = useTranslation()
   const sortOptions = q.trim()
@@ -131,35 +135,39 @@ export function FilterBar({
             ))}
           </select>
         </label>
-        <input
-          type="search"
-          value={q}
-          onChange={(e) => onQChange(e.target.value)}
-          placeholder={t('catalog.searchPlaceholder')}
-          className="min-w-[280px] flex-1 rounded-md border border-white/10 bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] placeholder:text-[var(--muted)]"
-        />
-        <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
-          {t('sort.label')}
-          <select
-            className="rounded-md border border-white/10 bg-[var(--surface-2)] px-2 py-2 text-[var(--text)]"
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value)}
-          >
-            {sortOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {t(`sort.${opt}`)}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            className="rounded-md border border-white/10 bg-[var(--surface-2)] px-2 py-2 text-[var(--text)]"
-            aria-label={t('sort.direction')}
-            onClick={() => onDirChange(dir === 'asc' ? 'desc' : 'asc')}
-          >
-            {dir === 'asc' ? t('sort.asc') : t('sort.desc')}
-          </button>
-        </label>
+        {!hideSearch && (
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => onQChange(e.target.value)}
+            placeholder={t('catalog.searchPlaceholder')}
+            className="min-w-[280px] flex-1 rounded-md border border-white/10 bg-[var(--surface-2)] px-3 py-2 text-[var(--text)] placeholder:text-[var(--muted)]"
+          />
+        )}
+        {!hideSort && (
+          <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
+            {t('sort.label')}
+            <select
+              className="rounded-md border border-white/10 bg-[var(--surface-2)] px-2 py-2 text-[var(--text)]"
+              value={sort}
+              onChange={(e) => onSortChange(e.target.value)}
+            >
+              {sortOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {t(`sort.${opt}`)}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              className="rounded-md border border-white/10 bg-[var(--surface-2)] px-2 py-2 text-[var(--text)]"
+              aria-label={t('sort.direction')}
+              onClick={() => onDirChange(dir === 'asc' ? 'desc' : 'asc')}
+            >
+              {dir === 'asc' ? t('sort.asc') : t('sort.desc')}
+            </button>
+          </label>
+        )}
         {total != null && (
           <span className="text-sm text-[var(--muted)]">
             {t('catalog.total', { count: total })}

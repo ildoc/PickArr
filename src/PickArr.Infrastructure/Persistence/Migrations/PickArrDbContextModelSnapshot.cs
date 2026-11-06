@@ -420,6 +420,36 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("GenreLocalizations", (string)null);
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Keyword", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Keywords", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Person", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("People", (string)null);
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Property<int>("Id")
@@ -457,6 +487,180 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Providers", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Rating", b =>
+                {
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("RatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Value")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TitleId");
+
+                    b.ToTable("Ratings", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.RatingEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Origin")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Value")
+                        .HasMaxLength(16)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TitleId", "At");
+
+                    b.ToTable("RatingEvents", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoEventLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("At")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Event")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("Rank")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Scope")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("At");
+
+                    b.HasIndex("TitleId", "At");
+
+                    b.ToTable("RecoEventLog", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoState", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("BuiltAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CurrentVersion")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double>("EffectiveN")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("EmbeddingCoverage")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastEvalAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastEvalJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("Level3Active")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("ModelId")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ModelStatus")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ProfileJson")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RatingCount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RecoState", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Recommendation", b =>
+                {
+                    b.Property<int>("Version")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<double?>("Personal")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Prior")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ReasonsJson")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Score")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Version", "TitleId");
+
+                    b.HasIndex("TitleId");
+
+                    b.HasIndex("Version", "Score");
+
+                    b.ToTable("Recommendations", (string)null);
                 });
 
             modelBuilder.Entity("PickArr.Core.Domain.Entities.SyncRun", b =>
@@ -566,6 +770,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OriginCountries")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("OriginalLanguage")
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
@@ -641,6 +848,56 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Titles", (string)null);
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleCredit", b =>
+                {
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PersonId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("TitleId", "PersonId", "Role");
+
+                    b.HasIndex("PersonId");
+
+                    b.ToTable("TitleCredits", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleEmbedding", b =>
+                {
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ModelId")
+                        .HasMaxLength(128)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TextHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("Vector")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.HasKey("TitleId", "ModelId");
+
+                    b.HasIndex("ModelId");
+
+                    b.ToTable("TitleEmbeddings", (string)null);
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleGenre", b =>
                 {
                     b.Property<int>("TitleId")
@@ -654,6 +911,21 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.HasIndex("GenreId");
 
                     b.ToTable("TitleGenres", (string)null);
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleKeyword", b =>
+                {
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("KeywordId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("TitleId", "KeywordId");
+
+                    b.HasIndex("KeywordId");
+
+                    b.ToTable("TitleKeywords", (string)null);
                 });
 
             modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleLocalization", b =>
@@ -775,6 +1047,50 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Genre");
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Rating", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithOne("Rating")
+                        .HasForeignKey("PickArr.Core.Domain.Entities.Rating", "TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.RatingEvent", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoEventLog", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Recommendation", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.SyncRun", b =>
                 {
                     b.HasOne("PickArr.Core.Domain.Entities.CatalogSource", "CatalogSource")
@@ -783,6 +1099,36 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("CatalogSource");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleCredit", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Person", "Person")
+                        .WithMany("TitleCredits")
+                        .HasForeignKey("PersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany("TitleCredits")
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Person");
+
+                    b.Navigation("Title");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleEmbedding", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany()
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
                 });
 
             modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleGenre", b =>
@@ -800,6 +1146,25 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Genre");
+
+                    b.Navigation("Title");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleKeyword", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Keyword", "Keyword")
+                        .WithMany("TitleKeywords")
+                        .HasForeignKey("KeywordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithMany("TitleKeywords")
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Keyword");
 
                     b.Navigation("Title");
                 });
@@ -832,6 +1197,16 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("TitleGenres");
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Keyword", b =>
+                {
+                    b.Navigation("TitleKeywords");
+                });
+
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Person", b =>
+                {
+                    b.Navigation("TitleCredits");
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Navigation("CatalogSources");
@@ -845,7 +1220,13 @@ namespace PickArr.Infrastructure.Persistence.Migrations
 
                     b.Navigation("Localizations");
 
+                    b.Navigation("Rating");
+
+                    b.Navigation("TitleCredits");
+
                     b.Navigation("TitleGenres");
+
+                    b.Navigation("TitleKeywords");
                 });
 #pragma warning restore 612, 618
         }

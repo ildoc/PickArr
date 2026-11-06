@@ -2,6 +2,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using PickArr.Core.Abstractions;
+using PickArr.Core.Domain;
 using PickArr.Core.Metadata;
 
 namespace PickArr.Infrastructure.Metadata.Tmdb;
@@ -157,7 +158,10 @@ public sealed class TmdbMetadataProvider(
             dto.Genres.Select(g => new TmdbGenre(g.Id, g.Name)).ToList(),
             keywords,
             IsMovie: true,
-            CastNames(dto.Credits));
+            CastNames(dto.Credits),
+            Seasons: null,
+            MapMovieCredits(dto.Credits),
+            OriginCountries(dto.OriginCountry));
     }
 
     private static TmdbTitleDetails MapTv(TmdbTvDto dto)
@@ -188,7 +192,9 @@ public sealed class TmdbMetadataProvider(
             keywords,
             IsMovie: false,
             CastNames(dto.Credits),
-            MapSeasons(dto.Seasons));
+            MapSeasons(dto.Seasons),
+            MapTvCredits(dto.Credits, dto.CreatedBy),
+            OriginCountries(dto.OriginCountry));
     }
 
     private static IReadOnlyList<TmdbSeason> MapSeasons(IEnumerable<TmdbSeasonDto> seasons) =>
@@ -211,6 +217,69 @@ public sealed class TmdbMetadataProvider(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Take(12)
             .ToList() ?? [];
+
+    private static IReadOnlyList<TmdbCredit> MapMovieCredits(TmdbCreditsDto? credits)
+    {
+        var list = new List<TmdbCredit>();
+        if (credits is null)
+        {
+            return list;
+        }
+
+        foreach (var cast in credits.Cast
+                     .Where(c => c.Id > 0 && !string.IsNullOrWhiteSpace(c.Name))
+                     .OrderBy(c => c.Order)
+                     .Take(5))
+        {
+            list.Add(new TmdbCredit(cast.Id, cast.Name.Trim(), CreditRoles.Cast, cast.Order));
+        }
+
+        foreach (var crew in credits.Crew
+                     .Where(c =>
+                         c.Id > 0
+                         && !string.IsNullOrWhiteSpace(c.Name)
+                         && string.Equals(c.Job, "Director", StringComparison.OrdinalIgnoreCase)))
+        {
+            list.Add(new TmdbCredit(crew.Id, crew.Name.Trim(), CreditRoles.Director, Order: 0));
+        }
+
+        return list;
+    }
+
+    private static IReadOnlyList<TmdbCredit> MapTvCredits(
+        TmdbCreditsDto? credits,
+        IEnumerable<TmdbCreatedByDto> createdBy)
+    {
+        var list = new List<TmdbCredit>();
+        if (credits is not null)
+        {
+            foreach (var cast in credits.Cast
+                         .Where(c => c.Id > 0 && !string.IsNullOrWhiteSpace(c.Name))
+                         .OrderBy(c => c.Order)
+                         .Take(5))
+            {
+                list.Add(new TmdbCredit(cast.Id, cast.Name.Trim(), CreditRoles.Cast, cast.Order));
+            }
+        }
+
+        var order = 0;
+        foreach (var creator in createdBy.Where(c => c.Id > 0 && !string.IsNullOrWhiteSpace(c.Name)))
+        {
+            list.Add(new TmdbCredit(creator.Id, creator.Name.Trim(), CreditRoles.Creator, order++));
+        }
+
+        return list;
+    }
+
+    private static IReadOnlyList<string>? OriginCountries(IReadOnlyList<string> countries)
+    {
+        var cleaned = countries
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim().ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        return cleaned.Count == 0 ? null : cleaned;
+    }
 
     private static int? ParseYear(string? date)
     {

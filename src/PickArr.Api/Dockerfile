@@ -1,7 +1,14 @@
 # syntax=docker/dockerfile:1
 
 # Visual Studio fast mode uses this stage and copies a locally built app into it.
+# It never runs the final stage. The aspnet image defaults to the non-root app user,
+# and a named volume mounted on a path missing from the image is created as root
+# (mode 755), so the app cannot create /config/logs. Seed /config here; a new volume
+# copies this ownership. An existing root-owned volume is not reseeded.
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+USER root
+RUN mkdir -p /config \
+ && chown -R app:app /config
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080

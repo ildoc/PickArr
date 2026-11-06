@@ -19,9 +19,20 @@
     "imdb_id": "tt0903747",
     "tvdb_id": 81189
   },
+  "origin_country": ["US"],
+  "created_by": [
+    { "id": 66633, "name": "Vince Gilligan" }
+  ],
   "keywords": {
     "results": [
       { "id": 1415, "name": "gun" }
     ]
+  },
+  "credits": {
+    "cast": [
+      { "id": 17419, "name": "Bryan Cranston", "order": 0 },
+      { "id": 84497, "name": "Aaron Paul", "order": 1 }
+    ],
+    "crew": []
   }
 }

@@ -35,6 +35,11 @@ public sealed class MetadataJobRunTests
             CancellationToken cancellationToken = default) =>
             Task.FromResult(Next());
 
+        public Task<EnrichmentBatchResult> EnrichFeatureBackfillBatchAsync(
+            int limit = 50,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(Next());
+
         private EnrichmentBatchResult Next()
         {
             if (_index >= batches.Length)

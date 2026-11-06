@@ -67,6 +67,9 @@ try
     app.MapCatalogEndpoints();
     app.MapTitlesEndpoints();
     app.MapFavoritesEndpoints();
+    app.MapRatingsEndpoints();
+    app.MapRecommendationsEndpoints();
+    app.MapRecoAdminEndpoints();
     app.MapArrEndpoints();
     app.MapAdminEndpoints();
     app.MapFallbackToFile("index.html");

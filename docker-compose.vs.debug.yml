@@ -1,0 +1,7 @@
+# Applied by Visual Studio only when debugging docker-compose.dcproj (F5).
+# The Vite dev server proxies /api to http://localhost:5000. Fast mode does not
+# serve the built web app, so publish the API on that port in addition to 8080.
+services:
+  pickarr:
+    ports:
+      - "5000:8080"

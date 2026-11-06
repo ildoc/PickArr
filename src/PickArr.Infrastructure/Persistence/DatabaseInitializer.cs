@@ -100,6 +100,25 @@ public sealed class DatabaseInitializer(
         await EnsureSettingAsync(SettingsKeys.UiLanguage, "\"en\"", false, now, cancellationToken);
         await EnsureSettingAsync("sonarr.syncIntervalMinutes", "15", false, now, cancellationToken);
         await EnsureSettingAsync("radarr.syncIntervalMinutes", "15", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEnabled, "true", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoUseImplicit, "true", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoExcludeInLibrary, "true", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoN0, "30", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightLike, "1", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightDislike, "-1", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightFavorite, "0.5", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightArrAdd, "0.6", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightDownloaded, "0.4", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsEnabled, "true", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsModelId, "\"all-MiniLM-L6-v2@q8\"", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsThreads, "2", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsBatchSize, "16", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsMinCoverage, "0.8", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsThrottle, "true", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoMmrLambda, "0.7", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoExploreRate, "0.1", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoMlMinRatings, "100", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoEventsEnabled, "false", false, now, cancellationToken);
     }
 
     private async Task EnsureSettingAsync(

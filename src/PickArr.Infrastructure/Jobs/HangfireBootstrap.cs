@@ -32,6 +32,14 @@ public static class HangfireBootstrap
             server.WorkerCount = Math.Max(1, Environment.ProcessorCount / 2);
         });
 
+        // Isolated ML queue so long reco/embedding work does not occupy sync/arr workers (§11.1).
+        services.AddHangfireServer(server =>
+        {
+            server.Queues = ["ml"];
+            server.WorkerCount = 1;
+            server.ServerName = $"{Environment.MachineName}:ml";
+        });
+
         services.AddSingleton(new HangfireRuntimeInfo(options.Storage, ResolveSqlitePath(dataPath, options)));
         return services;
     }

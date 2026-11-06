@@ -104,6 +104,101 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Enrich_persists_keywords_credits_and_cast_names()
+    {
+        var movie = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-en.json"));
+        _server.Given(Request.Create().WithPath("/3/movie/550").UsingGet()).RespondWith(Json(movie));
+
+        var titleId = await SeedTitleAsync(550, "movie", "en-US");
+        await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var title = await db.Titles
+            .Include(t => t.TitleKeywords)
+            .Include(t => t.TitleCredits)
+            .SingleAsync(t => t.Id == titleId);
+
+        title.TitleKeywords.ShouldContain(tk => tk.KeywordId == 825);
+        title.TitleCredits.ShouldContain(tc => tc.PersonId == 819 && tc.Role == CreditRoles.Cast);
+        title.TitleCredits.ShouldContain(tc => tc.PersonId == 7467 && tc.Role == CreditRoles.Director);
+        JsonSerializer.Deserialize<List<string>>(title.OriginCountries!)!.ShouldContain("US");
+
+        var cast = JsonSerializer.Deserialize<List<string>>(title.CastJson!);
+        cast.ShouldNotBeNull();
+        cast.ShouldContain("Edward Norton");
+        cast.ShouldContain("Brad Pitt");
+    }
+
+    [Fact]
+    public async Task Enrich_tv_persists_created_by_as_creator()
+    {
+        var tv = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "tv-1396-en.json"));
+        _server.Given(Request.Create().WithPath("/3/tv/1396").UsingGet()).RespondWith(Json(tv));
+
+        var titleId = await SeedTitleAsync(1396, "tv", "en-US");
+        await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var credits = await db.TitleCredits.Where(c => c.TitleId == titleId).ToListAsync();
+        credits.ShouldContain(c => c.PersonId == 66633 && c.Role == CreditRoles.Creator);
+        credits.ShouldContain(c => c.PersonId == 17419 && c.Role == CreditRoles.Cast);
+    }
+
+    [Fact]
+    public async Task Enrich_fetches_en_US_even_when_source_overview_is_full()
+    {
+        var itFull = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-it-full.json"));
+        var en = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-en.json"));
+        _server.Given(Request.Create().WithPath("/3/movie/550").WithParam("language", "it-IT").UsingGet())
+            .RespondWith(Json(itFull));
+        _server.Given(Request.Create().WithPath("/3/movie/550").WithParam("language", "en-US").UsingGet())
+            .RespondWith(Json(en));
+
+        var titleId = await SeedTitleAsync(550, "movie", "it-IT");
+        await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var locs = await db.TitleLocalizations.Where(l => l.TitleId == titleId).ToListAsync();
+        locs.Count.ShouldBe(2);
+        locs.ShouldContain(l => l.Language == "it-IT" && !string.IsNullOrWhiteSpace(l.Overview));
+        locs.ShouldContain(l =>
+            l.Language == "en-US"
+            && l.Overview != null
+            && l.Overview.Contains("insomniac", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public async Task Feature_backfill_reenriches_ready_titles_missing_keywords()
+    {
+        var movie = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-en.json"));
+        _server.Given(Request.Create().WithPath("/3/movie/550").UsingGet()).RespondWith(Json(movie));
+
+        var titleId = await SeedTitleAsync(550, "movie", "en-US");
+        await using (var scope = _services!.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var title = await db.Titles.SingleAsync(t => t.Id == titleId);
+            title.MetadataStatus = MetadataStatuses.Ready;
+            title.MetadataFetchedAt = DateTime.UtcNow;
+            title.OriginalTitle = "Fight Club";
+            await db.SaveChangesAsync();
+        }
+
+        var result = await _services!.GetRequiredService<IEnrichmentService>()
+            .EnrichFeatureBackfillBatchAsync(10);
+        result.Processed.ShouldBe(1);
+        result.Ready.ShouldBe(1);
+
+        await using var verify = _services!.CreateAsyncScope();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        (await verifyDb.TitleKeywords.CountAsync(tk => tk.TitleId == titleId)).ShouldBeGreaterThan(0);
+        (await verifyDb.TitleCredits.CountAsync(tc => tc.TitleId == titleId)).ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
     public async Task Enrich_falls_back_to_en_US_when_overview_empty()
     {
         var itEmpty = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-it-empty-overview.json"));

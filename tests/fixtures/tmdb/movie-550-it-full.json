@@ -1,0 +1,36 @@
+{
+  "id": 550,
+  "title": "Fight Club",
+  "original_title": "Fight Club",
+  "overview": "Un impiegato insonne e un venditore di sapone canalizzano l'aggressività in una nuova forma di terapia.",
+  "tagline": "Caos. Sapone.",
+  "release_date": "1999-10-15",
+  "runtime": 139,
+  "vote_average": 8.433,
+  "vote_count": 26280,
+  "popularity": 61.416,
+  "original_language": "en",
+  "poster_path": "/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg",
+  "backdrop_path": "/hZkgoQYxECKIYO5TPVZAHG7OSj.jpg",
+  "imdb_id": "tt0137523",
+  "origin_country": ["US"],
+  "genres": [{ "id": 18, "name": "Drama" }, { "id": 53, "name": "Thriller" }],
+  "external_ids": {
+    "imdb_id": "tt0137523",
+    "tvdb_id": null
+  },
+  "keywords": {
+    "keywords": [
+      { "id": 825, "name": "support group" }
+    ]
+  },
+  "credits": {
+    "cast": [
+      { "id": 819, "name": "Edward Norton", "order": 0 },
+      { "id": 287, "name": "Brad Pitt", "order": 1 }
+    ],
+    "crew": [
+      { "id": 7467, "name": "David Fincher", "job": "Director", "department": "Directing" }
+    ]
+  }
+}

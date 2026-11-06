@@ -2,10 +2,10 @@
 
 | | |
 |---|---|
-| **Versione** | 0.1 (bozza per revisione) |
-| **Data** | 2026-11-04 |
+| **Versione** | 0.2 |
+| **Data** | 2026-11-06 |
 | **Lingua** | Italiano |
-| **Documento collegato** | `documento-funzionale.md` (i riferimenti FR-/BR-/D- rimandano a quel documento) |
+| **Documenti collegati** | `documento-funzionale.md` (FR-/BR-/D- catalogo); `raccomandazioni.md` (FR-REC-*, D-REC-*, BR-REC-*) |
 
 ---
 
@@ -64,6 +64,7 @@ Le versioni sono quelle stabili all'avvio del progetto, da fissare in `Directory
 | OpenAPI | `Microsoft.AspNetCore.OpenApi` (nativo) + UI Scalar su `/docs` |
 | Logging | Serilog (console JSON + file rotante) |
 | Segreti | ASP.NET Core Data Protection (key ring persistito) |
+| ML locale | `Microsoft.ML.OnnxRuntime` + `Microsoft.ML.Tokenizers` (embedding); `Microsoft.ML` (livello 3 logistico, opzionale/gated); `System.Numerics.Tensors` |
 | Test | xUnit, Shouldly o AwesomeAssertions, NSubstitute, WireMock.Net, `WebApplicationFactory` |
 
 ### Frontend
@@ -96,8 +97,10 @@ Un solo container, un solo processo:
 │   ├─ /api/v1/*    → Minimal API                                      │
 │   ├─ /docs        → OpenAPI + Scalar                                 │
 │   └─ /health      → health check                                     │
-│  Hangfire Server (in-process): code "default", "sync", "arr"         │
-│  SQLite: /config/PickArr.db   /config/jobs.db   /config/keys/     │
+│  Hangfire Server (in-process): code "default", "sync", "arr", "ml"   │
+│    (secondo server WorkerCount=1 solo coda "ml")                     │
+│  SQLite: /config/PickArr.db   /config/jobs.db   /config/keys/        │
+│  Modelli ONNX: /config/models (hash verificato al download)          │
 └──────────────────────────────────────────────────────────────────────┘
         │               │               │               │
      Watchmode         TMDB       Sonarr (v4)      Radarr (v5)
@@ -123,7 +126,7 @@ PickArr/
 ├─ docs/
 │  ├─ documento-funzionale.md
 │  └─ specifica-tecnica.md
-├─ .gitlab-ci.yml
+├─ .github/workflows/ci.yml
 ├─ CHANGELOG.md
 └─ README.md
 ```
@@ -135,20 +138,22 @@ PickArr/
 ```
 Core/
 ├─ Domain/            Entities, Enums, ValueObjects, Rules (BR-xx come funzioni pure)
-├─ Abstractions/      ICatalogProvider, IMetadataProvider, IArrClient, ICreditBudget, IClock, ISettingsStore
-├─ Catalog/           CatalogSyncService, AvailabilityDiffer, TitleQueryService
-├─ Metadata/          EnrichmentService, LanguageFallback
-├─ Arr/               ArrStatusCalculator, ArrAddService, ArrDeleteService, ArrLibrarySyncService, ArrMatcher
-├─ Settings/          SettingsService, modelli tipizzati
-└─ Common/            Result<T>, errori di dominio, paginazione
+├─ Abstractions/      ICatalogProvider, IMetadataProvider, IArrClient, ICreditBudget, IClock, ISettingsStore,
+│                     IRatingService, IRecoBuildService, IRecoQueryService, IRecoEvalService, …
+├─ Recommendations/   algoritmo puro: prior, segnali, sparse, kNN, MMR, explore, eval metrics, L3 features
+├─ Catalog/           TitleQueryModels (campo rating nei DTO), membership helpers
+├─ Metadata/          DTO TMDB (keywords, credits, created_by)
+├─ Settings/          SettingsService, RecoSettingsDto
+└─ …
 ```
 
-Gli endpoint di `Api` sono sottili: validano l'input, chiamano un servizio di `Core`, mappano su DTO.
+Persistenza EF, client HTTP, Hangfire, ONNX e training L3 (`Microsoft.ML`) stanno in **Infrastructure** (es. `EnrichmentService`, `RecoBuildService`).
+Gli endpoint di `Api` sono sottili: validano l'input, chiamano un servizio, mappano su DTO.
 
 ### 3.4 Registrazione e composizione
 
 - `Program.cs`: `AddPickArrCore()`, `AddPickArrInfrastructure(config)`, `AddPickArrApi()`.
-- Gli endpoint sono definiti in classi `static` con un metodo `MapXxxEndpoints(this IEndpointRouteBuilder)` per feature: `Catalog`, `Titles`, `Favorites`, `Arr`, `Settings`, `Admin`, `Webhooks`, `System`.
+- Gli endpoint sono definiti in classi `static` con un metodo `MapXxxEndpoints(this IEndpointRouteBuilder)` per feature: `Catalog`, `Titles`, `Favorites`, `Ratings`, `Recommendations`, `RecoAdmin`, `Arr`, `Settings`, `Admin`, `Webhooks`, `System`.
 - Il fallback SPA (`MapFallbackToFile("index.html")`) esclude `/api`, `/docs`, `/health`.
 
 ---
@@ -268,6 +273,22 @@ Indice univoco `(TitleId, CatalogSourceId)`; indice `(CatalogSourceId, RemovedAt
 
 **`Favorites`** — PK `TitleId`, `CreatedAt`.
 
+**`Ratings`** — PK `TitleId`; `Value` (`Like`/`Dislike`), `RatedAt`. Voto globale sul titolo (nessuna colonna `Origin` su `Titles`).
+
+**`RatingEvents`** — storico: `Id`, `TitleId`, `Value` (null = clear), `At`, `Origin` (`Ui`/`Onboarding`/`Import`).
+
+**`Keywords`** (PK = id TMDB, `Name`), **`TitleKeywords`** `(TitleId, KeywordId)`.
+
+**`People`** (PK = id TMDB, `Name`), **`TitleCredits`** `(TitleId, PersonId, Role, Order)` con `Role` ∈ `Cast`/`Director`/`Creator`.
+
+**`TitleEmbeddings`** — PK `(TitleId, ModelId)`; `Vector` BLOB (float32 LE), `TextHash`, `UpdatedAt`.
+
+**`Recommendations`** — PK `(Version, TitleId)`; `Score`, `Personal` null, `Prior`, `Rank`, `ReasonsJson`. Indice `(Version, Score DESC)`.
+
+**`RecoState`** — singleton `Id=1`: `CurrentVersion`, `BuiltAt`, `RatingCount`, `EffectiveN`, `Stage`, `ModelStatus`, `ModelId`, `EmbeddingCoverage`, `ProfileJson`, `LastError`, `LastEvalJson`, `LastEvalAt`, `Level3Active`.
+
+**`RecoEventLog`** (solo se `reco.events.enabled`): `Id`, `At`, `TitleId`, `Event` (`Shown`/`Opened`/`Liked`/`Disliked`/`AddedToArr`), `Version`, `Rank`, `Scope`.
+
 **`ArrLibraryItems`** — cache della libreria Sonarr/Radarr
 
 | Colonna | Tipo | Note |
@@ -301,7 +322,7 @@ Indice univoco `(Kind, ArrId)`; indici su `TmdbId`, `TvdbId`, `TitleId`.
 | Colonna | Tipo | Note |
 |---|---|---|
 | Id | guid PK | |
-| Kind | text | `CatalogIncremental`, `CatalogFull`, `Enrichment`, `ArrSync`, `Leaving` |
+| Kind | text | `CatalogIncremental`, `CatalogFull`, `Enrichment`, `ArrSync`, `Leaving`, `RecoFeature`, `RecoEmbedding`, `RecoBuild`, `RecoEval`, `RecoModelDownload` |
 | CatalogSourceId | int null | |
 | TriggeredBy | text | `Schedule` / `Manual` / `Resume` / `Webhook` |
 | StartedAt, FinishedAt | datetime / null | |
@@ -520,6 +541,13 @@ Configurati in Sonarr/Radarr (*Settings → Connect → Webhook*), metodo `POST`
 | `LeavingSyncJob(sourceId)` | giornaliero | sync | 1 per sorgente | 2 |
 | `ArrSyncJob(kind)` | intervallo (default 15 min) | arr | 1 per kind | 2 |
 | `ArrRefreshItemJob(kind, arrId)` | dopo add/delete/webhook | arr | per elemento | 3 |
+| `RecoFeatureJob` | dopo enrichment / orario | ml | 1 (`DisableConcurrentExecution`) | 2 |
+| `RecoEmbeddingJob` | dopo feature / manuale | ml | 1 | 2 |
+| `RecoBuildJob` | voto (debounce 30 s), dopo embedding, notturno, manuale | ml | 1 | 2 |
+| `RecoEvalJob` | manuale | ml | 1 | 1 |
+| `RecoModelDownloadJob` | manuale (download o detect) | ml | 1 | 1 |
+
+Coda `ml`: secondo `AddHangfireServer` con `WorkerCount = 1` e `Queues = ["ml"]`, così embedding/build lunghi non saturano `sync`/`arr`.
 
 Registrazione:
 
@@ -737,7 +765,9 @@ Prefisso `/api/v1`. JSON `camelCase`. Paginazione con `page` (da 1) e `pageSize`
 
 **`GET /catalog/sources/{sourceId}/titles`** — griglia/ricerca.
 
-Query: `q`, `view` (`all`|`new`|`leaving`|`removed`), `type` (multi: `movie`,`series`,`standup`), `genre` (multi, id), `yearFrom`, `yearTo`, `arrState` (multi: `notInLibrary`,`missing`,`downloading`,`downloaded`,`partial`), `favorite` (bool), `includeRemoved` (bool), `minRating`, `sort` (`relevance`|`added`|`year`|`rating`|`title`), `dir` (`asc`|`desc`), `page`, `pageSize`.
+Query: `q`, `view` (`all`|`new`|`leaving`|`removed`), `type` (multi: `movie`,`series`,`standup`), `genre` (multi, id), `yearFrom`, `yearTo`, `arrState` (multi: `notInLibrary`,`missing`,`downloading`,`downloaded`,`partial`), `includeRemoved` (bool), `minRating`, `sort` (`relevance`|`added`|`year`|`rating`|`title`), `dir` (`asc`|`desc`), `page`, `pageSize`.
+
+I preferiti non si filtrano sul catalogo: usare `GET /favorites` e la route UI `/list`. Un eventuale flag `favorite` sulla query catalogo è ignorato.
 
 ```json
 {
@@ -754,6 +784,7 @@ Query: `q`, `view` (`all`|`new`|`leaving`|`removed`), `type` (multi: `movie`,`se
       "ratingTmdb": 7.8,
       "ratingImdb": null,
       "isFavorite": true,
+      "rating": "like",
       "availability": { "addedAt": "2026-10-28T04:00:10Z", "removedAt": null, "leavingDate": null, "isNew": true },
       "arr": { "kind": "sonarr", "state": "downloading", "monitored": true, "progress": 42.5 }
     }
@@ -781,6 +812,7 @@ Query: `q`, `view` (`all`|`new`|`leaving`|`removed`), `type` (multi: `movie`,`se
   "ratings": { "tmdb": 7.8, "tmdbVotes": 1520, "imdb": null },
   "links": { "tmdb": "https://www.themoviedb.org/tv/987654", "imdb": "https://www.imdb.com/title/tt1234567/", "tvdb": null },
   "isFavorite": true,
+  "rating": "like",
   "metadataStatus": "ready",
   "availability": [
     { "sourceId": 1, "countryCode": "IT", "addedAt": "2026-10-28T04:00:10Z", "removedAt": null, "leavingDate": null }
@@ -880,7 +912,11 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
   "webhooks":  { "token": { "isSet": true } },
   "catalog":   { "newWindowDays": 14, "leavingWindowDays": 30, "removedWindowDays": 30,
                  "removalConfirmations": 2, "maxRemovalRatio": 0.10 },
-  "ui":        { "language": "en" }
+  "ui":        { "language": "en" },
+  "reco":      { "enabled": true, "useImplicit": true, "excludeInLibrary": true,
+                 "n0": 30, "weightLike": 1, "weightDislike": -1,
+                 "weightFavorite": 0.5, "weightArrAdd": 0.6, "weightDownloaded": 0.4,
+                 "mlMinRatings": 100, "eventsEnabled": false }
 }
 ```
 
@@ -906,6 +942,30 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 | `GET` | `/admin/titles/problems?kind=unmapped|failed` | Titoli non mappati / arricchimento fallito. |
 | `POST` | `/admin/titles/{id}/retry-metadata` | Riprova l'arricchimento. |
 | `GET` | `/admin/arr-audit` | Log eliminazioni/aggiunte (S). |
+| `POST` | `/admin/recommendations/rebuild` | Accoda `RecoBuildJob`. `202` + `hangfireJobId`. |
+| `POST` | `/admin/recommendations/embeddings/rebuild` | Query `all=true` opzionale. |
+| `POST` | `/admin/recommendations/model/download` | Download modello ONNX. |
+| `POST` | `/admin/recommendations/model/detect` | Rileva file in `/config/models`. |
+| `POST` | `/admin/recommendations/evaluate` | Accoda `RecoEvalJob`. |
+| `GET` | `/admin/recommendations/evaluations/latest` | Ultimo report leave-one-out. |
+| `POST` | `/admin/recommendations/reset` | Query obbligatoria `includeRatings=true\|false`. |
+
+### 8.5bis Ratings e raccomandazioni
+
+| Metodo | Percorso | Descrizione |
+|---|---|---|
+| `PUT` / `DELETE` | `/titles/{id}/rating` | Imposta o rimuove Like/Dislike. |
+| `GET` | `/ratings` | Elenco voti (pagina). |
+| `GET` | `/ratings/export` | Export JSON. |
+| `POST` | `/ratings/import` | Import; id TMDB sconosciuti → `unknown`. |
+| `POST` | `/ratings/onboarding` | Batch voto da `/taste`. |
+| `GET` | `/recommendations` | *Per te* (scope `source`\|`enabled`, filtri, `diversify`, pagina). |
+| `GET` | `/recommendations/status` | Stage, N_eff, modello, coverage, pool, version. |
+| `GET` | `/recommendations/onboarding` | 24 titoli pool per onboarding. |
+| `POST` | `/recommendations/events` | Log Shown/Opened/… se `reco.events.enabled`. |
+| `GET` | `/titles/{id}/similar` | Simili sul pool abilitato. |
+
+I DTO di elenco e dettaglio titolo espongono `rating` (`like`\|`dislike`\|null) e, dove applicabile, `reco` (score, reasons).
 
 `GET /admin/quota`:
 
@@ -933,31 +993,40 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 ```
 src/PickArr.WebApp/src/
 ├─ app/            App.tsx, router.tsx, providers.tsx (QueryClient, i18n, toasts)
-├─ api/            client.ts (openapi-fetch), schema.d.ts (generato), queries/*.ts (hook TanStack Query)
+├─ api/            client.ts, types.ts, recommendations.ts, ratings.ts, …
 ├─ features/
-│  ├─ catalog/     CatalogPage, TitleGrid, TitleCard, FilterBar, QuickFilters, SourceSwitcher
-│  ├─ title/       TitleDialog, SeasonTable, ArrStatusBadge, ExternalLinks
-│  ├─ arr/         AddToArrDialog, DeleteFromArrDialog, ArrActions
+│  ├─ catalog/     CatalogPage, TitleCard, FilterBar, QuickFilters
+│  ├─ list/        MyListPage
+│  ├─ title/       TitleDialog, SeasonTable, ArrStatusBadge, SimilarRow
+│  ├─ arr/         AddToArrDialog, DeleteFromArrDialog
 │  ├─ favorites/   FavoriteButton
-│  ├─ settings/    SettingsPage + sezioni (Sources, Sonarr, Radarr, Catalog, Credits, Webhooks, UI)
-│  └─ admin/       JobsPage, RunsTable, QuotaPanel, ProblemsPanel
-├─ components/     ui/ (Button, Dialog, Select, …), layout/ (Header, Footer, Attributions)
-├─ i18n/           index.ts, locales/en.json, locales/it.json
-├─ lib/            format.ts, url-state.ts, constants.ts
+│  ├─ ratings/     RatingButtons, MyRatingsPage
+│  ├─ reco/        ForYouPage, TastePage, LearningProgress, ReasonChips
+│  ├─ settings/    SettingsLayout, SettingsPage, CatalogSourcesPage, RecommendationsSettingsPage
+│  └─ admin/       JobsPage (anche sotto /settings/jobs)
+├─ components/     layout/ (Header, Footer, Attributions)
+├─ i18n/           index.ts, locales/en.json   # inglese = sorgente di verità (AGENTS.md)
 └─ main.tsx
 ```
+
+> Nota: il path `frontend/` citato in bozze precedenti è obsoleto; la SPA vive in `src/PickArr.WebApp`.
 
 ### 9.2 Routing
 
 | Percorso | Contenuto |
 |---|---|
 | `/` | Redirect a `/catalog` |
-| `/catalog` | Griglia della sorgente selezionata; filtri nei search params (`q`, `view`, `type`, `genre`, `arrState`, `sort`, …) |
-| `/catalog/title/:id` | Griglia sullo sfondo + `TitleDialog` (route modale; chiusura riporta ai filtri) |
-| `/settings` | Impostazioni |
-| `/admin/jobs` | Amministrazione job e crediti |
+| `/catalog` | Griglia della sorgente selezionata; filtri (`q`, `view=all\|new\|leaving\|removed`, `type`, `genre`, …). `view=favorites` reindirizza a `/list` |
+| `/list` | Preferiti globali (cross-provider / cross-country) |
+| `/for-you` | Raccomandazioni (*Per te*) |
+| `/taste` | Onboarding gusto |
+| `/ratings` | Le mie valutazioni + export/import |
+| `/settings` | Impostazioni generali |
+| `/settings/catalogs` | Sorgenti di catalogo |
+| `/settings/recommendations` | Stato/azioni raccomandazioni |
+| `/settings/jobs` | Job e crediti (`/admin/jobs` reindirizza qui) |
 
-La sorgente selezionata è salvata in `localStorage` (preferenza di sola UI) e inviata a ogni richiesta come parte del percorso API.
+La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usata da catalogo e *Per te*.
 
 ### 9.3 Gestione dello stato
 
@@ -965,6 +1034,7 @@ La sorgente selezionata è salvata in `localStorage` (preferenza di sola UI) e i
 - **Filtri/ricerca:** fonte di verità = URL (`useSearchParams`); il campo di ricerca ha debounce 300 ms.
 - **Griglia:** `useInfiniteQuery` + `@tanstack/react-virtual`. Le righe virtualizzate si calcolano dalla larghezza del contenitore (card 2:3). `placeholderData: keepPreviousData` per evitare sfarfallii al cambio filtro.
 - **Preferiti:** mutazione con aggiornamento ottimistico su `titles` e `title`, rollback in caso di errore.
+- **Voti:** `RatingButtons` con `onMutate` reale (non copiare il preferito as-is); dopo il voto si invalidano `titles`/`title`/`recommendations`/`ratings` e si rifà poll dello status finché cambia `version` (niente SSE obbligatorio).
 - **Stato libreria:** `refetchInterval` di 30 s per la scheda aperta e `refetchOnWindowFocus` per la griglia; dopo add/delete si invalida `['title', id]` e `['titles']`. Se SSE è attivo, gli eventi invalidano le stesse chiavi e il polling si spegne.
 - **Errori:** un interceptor trasforma i `problem+json` in errori tipizzati con `code`; la UI mappa il `code` su messaggi tradotti (`errors.ARR_UNREACHABLE`, …) e ricade su `detail`.
 
@@ -979,7 +1049,7 @@ La sorgente selezionata è salvata in `localStorage` (preferenza di sola UI) e i
 ### 9.5 i18n
 
 - `react-i18next` con `fallbackLng: 'en'`; namespace unico `translation` più `errors`.
-- `en.json` è la sorgente di verità. Una chiave mancante in `it.json` ricade su `en` senza errori; in sviluppo un test verifica che non esistano chiavi in `it` assenti in `en`.
+- `en.json` è la sorgente di verità per questo prodotto. Una eventuale lingua aggiuntiva ricade su `en` per chiavi mancanti.
 - Formattazione con `Intl.DateTimeFormat` / `Intl.NumberFormat` secondo la lingua corrente.
 - La lingua della UI è persistita nelle impostazioni del backend (`ui.language`) ed è indipendente dalla lingua dei metadati.
 
@@ -1011,6 +1081,7 @@ La sorgente selezionata è salvata in `localStorage` (preferenza di sola UI) e i
 | Azioni distruttive | L'API di eliminazione richiede parametri espliciti; la UI richiede conferma. Audit log. |
 | Accesso | v1 **senza login** (D-02): documentare l'uso in LAN o dietro reverse proxy con autenticazione. Predisporre un middleware di autenticazione opzionale (password singola con cookie, abilitabile da variabile d'ambiente) come evoluzione. |
 | Hangfire dashboard | **Disabilitata** di default (`Hangfire:Dashboard:Enabled=false`); la pagina Admin usa la propria API. Se abilitata, solo con autenticazione attiva. |
+| Modelli ONNX | File sotto `/config/models` (o `PickArr__Models__Path`); download con verifica hash; self-test prima di marcare `Ready`. Nessun dato di gusto esce dal container. |
 | Intestazioni | CSP con `img-src 'self' https://image.tmdb.org data:`, `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, nessun CORS (stessa origine). |
 | Container | Esecuzione come utente non root, filesystem scrivibile solo su `/config`. |
 | Dipendenze | Aggiornamenti periodici, `dotnet list package --vulnerable` e `npm audit` in CI. |
@@ -1041,12 +1112,15 @@ La sorgente selezionata è salvata in `localStorage` (preferenza di sola UI) e i
 | `Logging__Level` | `Information` | Livello di log. |
 | `PickArr__Auth__Password` | (vuoto) | Abilita l'autenticazione opzionale. |
 | `Hangfire__Dashboard__Enabled` | `false` | Dashboard Hangfire. |
+| `PickArr__Models__Path` | `/config/models` | Directory modelli ONNX. |
+| `PickArr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
+| `PickArr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
 
 Le chiavi API e gli URL delle istanze **non** si passano da variabili d'ambiente: si impostano dalla UI (FR-SET) e sono salvati cifrati nel DB.
 
 ### 12.2 Impostazioni applicative (tabella `Settings`)
 
-Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.token`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`.
+Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.token`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, più chiavi reco: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*`, `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (elenco completo in `raccomandazioni.md` §16).
 
 Alla modifica delle impostazioni rilevanti per le schedulazioni, `SettingsService` emette un evento che attiva `ScheduleReconciler`.
 
@@ -1122,7 +1196,7 @@ Note: il frontend e la pubblicazione .NET girano sull'architettura del builder (
 ```yaml
 services:
   PickArr:
-    image: registry.gitlab.com/<namespace>/PickArr:latest
+    image: ghcr.io/<owner>/pickarr:latest
     container_name: PickArr
     restart: unless-stopped
     ports:
@@ -1134,89 +1208,25 @@ services:
       - ./config:/config
 ```
 
-### 14.3 Pipeline GitLab CI (`.gitlab-ci.yml`)
+### 14.3 Pipeline (`.github/workflows/ci.yml`)
 
-Stadi: `lint` → `test` → `build` → `package` → `release`.
+Pull request, push sul branch predefinito e tag. Lint e test girano in parallelo; l'immagine viene costruita solo se sono verdi. Piattaforma pubblicata: `linux/amd64`.
 
-```yaml
-stages: [lint, test, build, package, release]
-
-variables:
-  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
-  NUGET_PACKAGES: "$CI_PROJECT_DIR/.nuget"
-
-backend:lint:
-  stage: lint
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  script:
-    - cd backend
-    - dotnet format --verify-no-changes
-    - dotnet list package --vulnerable --include-transitive
-
-frontend:lint:
-  stage: lint
-  image: node:24
-  script:
-    - cd frontend && npm ci && npm run lint && npm run typecheck
-
-backend:test:
-  stage: test
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  script:
-    - cd backend
-    - dotnet test --configuration Release --collect:"XPlat Code Coverage" --logger "junit;LogFilePath=../report.xml"
-  coverage: '/Total\s+Line:\s+(\d+(?:\.\d+)?)%/'
-  artifacts:
-    when: always
-    reports: { junit: report.xml }
-
-frontend:test:
-  stage: test
-  image: node:24
-  script:
-    - cd frontend && npm ci && npm run test -- --coverage --reporter=junit --outputFile=../fe-report.xml
-  artifacts:
-    when: always
-    reports: { junit: fe-report.xml }
-
-openapi:check:        # il client generato deve coincidere con il contratto del backend
-  stage: test
-  image: mcr.microsoft.com/dotnet/sdk:10.0
-  script:
-    - ./scripts/check-openapi.sh   # genera lo schema, rigenera schema.d.ts, fallisce se git diff non è vuoto
-
-docker:build:         # build di verifica su ogni merge request, senza push
-  stage: package
-  image: docker:27
-  services: [docker:27-dind]
-  script:
-    - docker buildx build -f src/PickArr.Api/Dockerfile --platform linux/amd64 .
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-
-docker:publish:       # push multi-arch su branch principale e tag
-  stage: release
-  image: docker:27
-  services: [docker:27-dind]
-  before_script:
-    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
-    - docker buildx create --use
-  script:
-    - |
-      if [ -n "$CI_COMMIT_TAG" ]; then TAGS="-t $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG -t $CI_REGISTRY_IMAGE:latest"; VERSION=${CI_COMMIT_TAG#v};
-      else TAGS="-t $CI_REGISTRY_IMAGE:edge"; VERSION="0.0.0-$CI_COMMIT_SHORT_SHA"; fi
-    - docker buildx build -f src/PickArr.Api/Dockerfile --platform linux/amd64,linux/arm64 --build-arg VERSION=$VERSION $TAGS --push .
-  rules:
-    - if: $CI_COMMIT_TAG
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-```
+| Job | Contenuto |
+| --- | --- |
+| Backend lint | `dotnet format --verify-no-changes`; report vulnerabilità NuGet non bloccante |
+| Frontend lint | `npm run lint`, `npm run typecheck` |
+| Backend test | `dotnet test` in Release; artefatto TRX |
+| Frontend test | `npm test`, `npm run build` |
+| Immagine | Build Dockerfile. Push su GHCR dal branch predefinito (`edge`, `sha-<commit>`) e dai tag (`<tag>`, `latest`, `sha-<commit>`). `VERSION` è `0.0.0-<sha breve>` oppure il tag senza `v` iniziale. |
 
 Dettagli:
 
 - **Versionamento:** SemVer con tag `vX.Y.Z`; la versione è iniettata nell'assembly e mostrata in `/system/status` e nel piè di pagina. `CHANGELOG.md` aggiornato a ogni release.
-- **Cache:** cache di NuGet e `node_modules` tra le pipeline.
-- **Documentazione (FR/NFR-08):** l'OpenAPI è generata dal backend e pubblicata come artefatto di pipeline (`openapi.json`); i documenti in `docs/` restano versionati con il codice. Pubblicazione su GitLab Pages come evoluzione.
-- **Immagine di test E2E (S):** job opzionale che avvia lo stack con WireMock ed esegue Playwright.
+- **Cache:** pacchetti NuGet e npm tramite le action di setup; layer Docker con la cache di GitHub Actions.
+- **Registry:** GitHub Container Registry (`ghcr.io`), autenticazione con `GITHUB_TOKEN`. Nessun secret di registry da configurare.
+- **Documentazione (FR/NFR-08):** l'OpenAPI è generata dal backend; i documenti in `docs/` restano versionati con il codice.
+- **Immagine di test E2E (S):** job opzionale, non presente nella pipeline attuale, che avvia lo stack con WireMock ed esegue Playwright.
 
 ---
 
@@ -1330,6 +1340,11 @@ Gli spike sono attività brevi da fare **prima** dell'implementazione, con uscit
 | **SP-4** | **Hangfire su SQLite** | Stabilità del pacchetto di storage con concorrenza e riavvii; in caso negativo, storage in memoria (gli schedule si ricreano) oppure altro storage. |
 | **SP-5** | **SQLite e container** | Prestazioni di ricerca e griglia con 10k titoli e join con `ArrLibraryItems`; comportamento WAL su volumi di rete/Docker; permessi del volume `/config` con utente non root. |
 | **SP-6** | **Frontend** | Fluidità della griglia virtualizzata; CSP con immagini TMDB; comportamento della route modale con filtri nell'URL. |
+| **SP-R1** | **TMDB reco** | Il payload già richiesto basta per keyword, person id, crew, `created_by`? Costo chiamata extra `en-US`. |
+| **SP-R2** | **ONNX** | Tokenizer .NET, pooling, vettori di riferimento, throughput x64/arm64, variante q8, RAM. |
+| **SP-R3** | **Latency reco** | Rebuild pool+≤500 segnali &lt;10 s; GET recommendations p95 &lt;300 ms (join availability + filtro libreria); impatto MMR/similar. |
+| **SP-R4** | **Taratura** | Con 30–50 voti: confronto livelli 0/1/2/(3) e defaults `a`/`b`/`N0`/`γ`/`K`/`m`. |
+| **SP-R5** | **Licenze** | Termini TMDB su inferenza locale; licenza modello. Controllo manuale pre-rilascio (nota rischio, non task bloccante). |
 
 Rischi residui rilevanti:
 
@@ -1352,8 +1367,9 @@ Rischi residui rilevanti:
 5. **Sonarr/Radarr:** `IArrClient`, `ArrSyncJob`, calcolo stati, match, badge e dettaglio per stagione.
 6. **Azioni:** dialog di aggiunta, eliminazione con conferma, audit.
 7. **Amministrazione:** pagina job, esecuzione manuale, crediti, titoli non mappati.
-8. **Rifiniture:** webhook, scadenze, OMDb, filtri in URL, SSE, traduzione italiana, E2E.
-9. **Nuovi servizi:** UI di gestione servizi/paesi e validazione con Amazon Prime/Disney+.
+8. **Raccomandazioni R1–R4:** voto + prior + *Per te*; enrichment keyword/crediti; sparse/simili; ONNX/kNN/MMR; eval + L3 gated + event log (vedi `raccomandazioni.md`).
+9. **Rifiniture:** webhook, scadenze, OMDb, filtri in URL, SSE, traduzione italiana, E2E.
+10. **Nuovi servizi:** UI di gestione servizi/paesi e validazione con Amazon Prime/Disney+.
 
 Ogni passo termina con test automatici e una pipeline verde.
 

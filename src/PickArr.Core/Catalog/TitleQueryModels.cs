@@ -9,6 +9,8 @@ public sealed record TitleQueryRequest(
     int? YearTo = null,
     IReadOnlyList<string>? ArrStates = null,
     bool? Favorite = null,
+    /// <summary>API rating filter: <c>like</c> or <c>dislike</c>.</summary>
+    string? RatingValue = null,
     bool IncludeRemoved = false,
     double? MinRating = null,
     string Sort = "added",
@@ -40,6 +42,7 @@ public sealed record TitleListItemDto(
     double? RatingTmdb,
     double? RatingImdb,
     bool IsFavorite,
+    string? Rating,
     AvailabilitySummaryDto? Availability,
     ArrSummaryDto? Arr,
     IReadOnlyList<CatalogPlaceDto> Places);
@@ -72,7 +75,7 @@ public sealed record GenreCountDto(int Id, string Name, int Count);
 
 public sealed record CatalogTypeCountDto(string Type, int Count);
 
-public sealed record CatalogPlaceDto(string ProviderName, string CountryCode);
+public sealed record CatalogPlaceDto(string ProviderName, string CountryCode, DateTime? RemovedAt = null);
 
 public sealed record TitleDetailDto(
     int Id,
@@ -90,6 +93,7 @@ public sealed record TitleDetailDto(
     TitleRatingsDto Ratings,
     TitleLinksDto Links,
     bool IsFavorite,
+    string? Rating,
     string MetadataStatus,
     IReadOnlyList<TitleAvailabilityDto> Availability,
     ArrDetailDto Arr,

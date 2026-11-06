@@ -8,6 +8,11 @@ public static class SyncRunKinds
     public const string MetadataRefresh = "MetadataRefresh";
     public const string ArrSync = "ArrSync";
     public const string Leaving = "Leaving";
+    public const string RecoBuild = "RecoBuild";
+    public const string RecoFeature = "RecoFeature";
+    public const string RecoEmbedding = "RecoEmbedding";
+    public const string RecoModelDownload = "RecoModelDownload";
+    public const string RecoEval = "RecoEval";
 }
 
 public static class SyncRunStatuses

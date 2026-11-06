@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using PickArr.Core.Abstractions;
 using PickArr.Core.Arr;
 using PickArr.Core.Domain;
+using PickArr.Core.Recommendations;
+using PickArr.Infrastructure.Catalog;
 using PickArr.Infrastructure.Persistence;
 
 namespace PickArr.Api.Endpoints;
@@ -11,6 +13,48 @@ public static class TitlesEndpoints
 {
     public static IEndpointRouteBuilder MapTitlesEndpoints(this IEndpointRouteBuilder endpoints)
     {
+        endpoints.MapPut("/api/v1/titles/{id:int}/rating", async (
+            int id,
+            SetRatingRequest body,
+            IRatingService ratings,
+            CancellationToken ct) =>
+        {
+            if (body?.Value is null || !RatingValues.IsValid(body.Value))
+            {
+                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be like or dislike." });
+            }
+
+            try
+            {
+                await ratings.SetAsync(id, RatingValues.Normalize(body.Value), RatingEventOrigins.Ui, ct);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+            catch (RecoDisabledException)
+            {
+                return Results.Json(new { code = "RECO_DISABLED", detail = "Recommendations feature is disabled." }, statusCode: StatusCodes.Status409Conflict);
+            }
+        });
+
+        endpoints.MapDelete("/api/v1/titles/{id:int}/rating", async (
+            int id,
+            IRatingService ratings,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                await ratings.ClearAsync(id, RatingEventOrigins.Ui, ct);
+                return Results.NoContent();
+            }
+            catch (RecoDisabledException)
+            {
+                return Results.Json(new { code = "RECO_DISABLED", detail = "Recommendations feature is disabled." }, statusCode: StatusCodes.Status409Conflict);
+            }
+        });
+
         endpoints.MapGet("/api/v1/titles/{id:int}", async (
             int id,
             int? sourceId,
@@ -19,6 +63,32 @@ public static class TitlesEndpoints
         {
             var detail = await titles.GetTitleAsync(id, sourceId, ct);
             return detail is null ? Results.NotFound() : Results.Ok(detail);
+        });
+
+        endpoints.MapGet("/api/v1/titles/{id:int}/similar", async (
+            int id,
+            int? sourceId,
+            int? limit,
+            IRecoQueryService reco,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                var result = await reco.QuerySimilarAsync(
+                    new SimilarTitlesQuery(id, sourceId, limit ?? 20),
+                    ct);
+                return Results.Ok(result);
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+            catch (RecoDisabledException)
+            {
+                return Results.Json(
+                    new { code = "RECO_DISABLED", detail = "Recommendations feature is disabled." },
+                    statusCode: StatusCodes.Status409Conflict);
+            }
         });
 
         endpoints.MapGet("/api/v1/titles/{id:int}/seasons", async (
@@ -182,3 +252,5 @@ public static class TitlesEndpoints
             new { code = ex.Code, detail = ex.Message, errors = ex.Errors },
             statusCode: ex.StatusCode);
 }
+
+public sealed record SetRatingRequest(string? Value);

@@ -30,6 +30,11 @@ public interface ITitleQueryService
         TitleQueryRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<PagedTitlesResult> QueryRatingsAsync(
+        string ratingValue,
+        TitleQueryRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<GenreCountDto>> ListFavoriteGenresAsync(
         CancellationToken cancellationToken = default);
 

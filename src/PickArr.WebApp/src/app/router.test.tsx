@@ -26,6 +26,45 @@ vi.mock('../api/favorites', () => ({
   removeFavorite: vi.fn(),
 }))
 
+vi.mock('../api/settings', () => ({
+  fetchSettings: vi.fn(async () => ({
+    reco: { enabled: true },
+  })),
+}))
+
+vi.mock('../api/recommendations', () => ({
+  fetchRecommendations: vi.fn(async () => ({
+    version: 1,
+    stage: 'cold',
+    page: 1,
+    pageSize: 48,
+    total: 0,
+    items: [],
+  })),
+  fetchRecoStatus: vi.fn(async () => ({
+    enabled: true,
+    stage: 'cold',
+    ratingCount: 0,
+    effectiveN: 0,
+    targetN: 30,
+    personalWeight: 0,
+    model: { status: 'absent', id: null, sizeBytes: null },
+    embeddings: { coverage: 0, count: 0, pending: 0 },
+    pool: { titles: 0 },
+    lastBuiltAt: null,
+    version: 1,
+    lastError: null,
+  })),
+}))
+
+vi.mock('../api/ratings', () => ({
+  fetchRatings: vi.fn(async () => ({ page: 1, pageSize: 48, total: 0, items: [] })),
+  setRating: vi.fn(),
+  clearRating: vi.fn(),
+  exportRatings: vi.fn(),
+  importRatings: vi.fn(),
+}))
+
 const emptyPage = { page: 1, pageSize: 48, total: 0, items: [] }
 
 function renderAt(path: string) {
@@ -85,7 +124,9 @@ describe('catalog and my list routes', () => {
     renderAt('/catalog')
 
     expect(screen.getByRole('link', { name: 'Catalog' })).toHaveAttribute('href', '/catalog')
+    expect(screen.getByRole('link', { name: 'For you' })).toHaveAttribute('href', '/for-you')
     expect(screen.getByRole('link', { name: 'My list' })).toHaveAttribute('href', '/list')
+    expect(screen.getByRole('link', { name: 'My ratings' })).toHaveAttribute('href', '/ratings')
     expect(await screen.findByLabelText('Provider')).toBeTruthy()
     expect(screen.getByRole('button', { name: 'All' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'My list' })).toBeNull()

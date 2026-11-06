@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using PickArr.Core.Abstractions;
 using PickArr.Core.Catalog;
+using PickArr.Core.Settings;
 using PickArr.Infrastructure.Persistence;
 using Shouldly;
 
@@ -43,5 +44,12 @@ public sealed class DatabaseInitializerTests
                 .ShouldBe(offer.Countries.Order());
             provider.CatalogSources.ShouldAllBe(source => source.IsEnabled == false);
         }
+
+        var recoEnabled = await db.Settings.SingleAsync(s => s.Key == SettingsKeys.RecoEnabled);
+        recoEnabled.ValueJson.ShouldBe("true");
+        var eventsEnabled = await db.Settings.SingleAsync(s => s.Key == SettingsKeys.RecoEventsEnabled);
+        eventsEnabled.ValueJson.ShouldBe("false");
+        var minRatings = await db.Settings.SingleAsync(s => s.Key == SettingsKeys.RecoMlMinRatings);
+        minRatings.ValueJson.ShouldBe("100");
     }
 }

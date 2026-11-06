@@ -11,6 +11,7 @@ public sealed class SettingsResponse
     public required ArrInstanceSettingsDto Radarr { get; init; }
     public required WebhookSettingsDto Webhooks { get; init; }
     public required UiSettingsDto Ui { get; init; }
+    public required RecoSettingsDto Reco { get; init; }
 }
 
 public sealed class WatchmodeSettingsDto
@@ -56,6 +57,24 @@ public sealed class UiSettingsDto
     public required string Language { get; init; }
 }
 
+public sealed class RecoSettingsDto
+{
+    public required bool Enabled { get; init; }
+    public required bool UseImplicit { get; init; }
+    public required bool EmbeddingsEnabled { get; init; }
+    public required bool ExcludeInLibrary { get; init; }
+    public required int N0 { get; init; }
+    public required double WeightLike { get; init; }
+    public required double WeightDislike { get; init; }
+    public required double WeightFavorite { get; init; }
+    public required double WeightArrAdd { get; init; }
+    public required double WeightDownloaded { get; init; }
+    public required double MmrLambda { get; init; }
+    public required double ExploreRate { get; init; }
+    public required int MlMinRatings { get; init; }
+    public required bool EventsEnabled { get; init; }
+}
+
 public sealed class UpdateSettingsRequest
 {
     public WatchmodeUpdateDto? Watchmode { get; init; }
@@ -64,6 +83,25 @@ public sealed class UpdateSettingsRequest
     public ArrInstanceUpdateDto? Sonarr { get; init; }
     public ArrInstanceUpdateDto? Radarr { get; init; }
     public UiSettingsDto? Ui { get; init; }
+    public RecoUpdateDto? Reco { get; init; }
+}
+
+public sealed class RecoUpdateDto
+{
+    public bool? Enabled { get; init; }
+    public bool? UseImplicit { get; init; }
+    public bool? EmbeddingsEnabled { get; init; }
+    public bool? ExcludeInLibrary { get; init; }
+    public int? N0 { get; init; }
+    public double? WeightLike { get; init; }
+    public double? WeightDislike { get; init; }
+    public double? WeightFavorite { get; init; }
+    public double? WeightArrAdd { get; init; }
+    public double? WeightDownloaded { get; init; }
+    public double? MmrLambda { get; init; }
+    public double? ExploreRate { get; init; }
+    public int? MlMinRatings { get; init; }
+    public bool? EventsEnabled { get; init; }
 }
 
 public sealed class WatchmodeUpdateDto

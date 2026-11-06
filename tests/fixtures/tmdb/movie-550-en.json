@@ -18,9 +18,20 @@
     "imdb_id": "tt0137523",
     "tvdb_id": null
   },
+  "origin_country": ["US"],
   "keywords": {
     "keywords": [
       { "id": 825, "name": "support group" }
+    ]
+  },
+  "credits": {
+    "cast": [
+      { "id": 819, "name": "Edward Norton", "order": 0 },
+      { "id": 287, "name": "Brad Pitt", "order": 1 },
+      { "id": 1283, "name": "Helena Bonham Carter", "order": 2 }
+    ],
+    "crew": [
+      { "id": 7467, "name": "David Fincher", "job": "Director", "department": "Directing" }
     ]
   }
 }

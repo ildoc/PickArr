@@ -71,6 +71,21 @@ public sealed class ScheduleReconciler(
             j => j.ExecuteAsync(false, CancellationToken.None),
             Cron.Daily());
 
+        recurringJobs.AddOrUpdate<RecoFeatureJob>(
+            RecoFeatureJob.RecurringJobId,
+            j => j.ExecuteAsync(false, CancellationToken.None),
+            Cron.Daily());
+
+        recurringJobs.AddOrUpdate<RecoBuildJob>(
+            RecoBuildJob.RecurringJobId,
+            j => j.ExecuteAsync(false, CancellationToken.None),
+            Cron.Hourly());
+
+        recurringJobs.AddOrUpdate<RecoEmbeddingJob>(
+            RecoEmbeddingJob.RecurringJobId,
+            j => j.ExecuteAsync(false, false, CancellationToken.None),
+            Cron.Hourly());
+
         var sonarrMinutes = await GetIntervalAsync(SettingsKeys.SonarrSyncIntervalMinutes, 15, cancellationToken);
         var radarrMinutes = await GetIntervalAsync(SettingsKeys.RadarrSyncIntervalMinutes, 15, cancellationToken);
         recurringJobs.AddOrUpdate<ArrSyncJob>(
@@ -83,7 +98,7 @@ public sealed class ScheduleReconciler(
             $"*/{Math.Clamp(radarrMinutes, 1, 1440)} * * * *");
 
         logger.LogInformation(
-            "ScheduleReconciler registered {Incremental} incremental, {Full} full, and leaving catalog jobs (+ resume/enrichment/refresh/arr)",
+            "ScheduleReconciler registered {Incremental} incremental, {Full} full, and leaving catalog jobs (+ resume/enrichment/refresh/arr/reco)",
             incrementalCount,
             fullCount);
     }

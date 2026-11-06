@@ -19,12 +19,7 @@ public sealed class EnrichmentService(
 
     public async Task EnrichTitleAsync(int titleId, CancellationToken cancellationToken = default)
     {
-        var title = await db.Titles
-            .Include(t => t.Localizations)
-            .Include(t => t.TitleGenres)
-            .Include(t => t.Availabilities)
-            .ThenInclude(a => a.CatalogSource)
-            .FirstOrDefaultAsync(t => t.Id == titleId, cancellationToken)
+        var title = await LoadTitleGraphAsync(titleId, cancellationToken)
             ?? throw new InvalidOperationException($"Title '{titleId}' was not found.");
 
         await EnrichCoreAsync(title, forceRefresh: false, cancellationToken);
@@ -37,6 +32,8 @@ public sealed class EnrichmentService(
         var batch = await db.Titles
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres)
+            .Include(t => t.TitleKeywords)
+            .Include(t => t.TitleCredits)
             .Include(t => t.Availabilities)
             .ThenInclude(a => a.CatalogSource)
             .Where(t =>
@@ -58,6 +55,8 @@ public sealed class EnrichmentService(
         var batch = await db.Titles
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres)
+            .Include(t => t.TitleKeywords)
+            .Include(t => t.TitleCredits)
             .Include(t => t.Availabilities)
             .ThenInclude(a => a.CatalogSource)
             .Where(t =>
@@ -71,6 +70,50 @@ public sealed class EnrichmentService(
 
         return await ProcessBatchAsync(batch, forceRefresh: true, cancellationToken);
     }
+
+    public async Task<EnrichmentBatchResult> EnrichFeatureBackfillBatchAsync(
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var english = LanguageFallback.English;
+        var batch = await db.Titles
+            .Include(t => t.Localizations)
+            .Include(t => t.TitleGenres)
+            .Include(t => t.TitleKeywords)
+            .Include(t => t.TitleCredits)
+            .Include(t => t.Availabilities)
+            .ThenInclude(a => a.CatalogSource)!
+            .ThenInclude(s => s!.Provider)
+            .Where(t =>
+                t.MetadataStatus == MetadataStatuses.Ready
+                && t.TmdbId != null
+                && t.TmdbType != null
+                && t.Availabilities.Any(a =>
+                    a.CatalogSource != null
+                    && a.CatalogSource.IsEnabled
+                    && a.CatalogSource.Provider != null
+                    && a.CatalogSource.Provider.IsEnabled)
+                && (
+                    !t.TitleKeywords.Any()
+                    || !t.TitleCredits.Any()
+                    || !t.Localizations.Any(l => l.Language == english)
+                    || t.OriginCountries == null))
+            .OrderBy(t => t.Id)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+
+        return await ProcessBatchAsync(batch, forceRefresh: true, cancellationToken);
+    }
+
+    private async Task<Title?> LoadTitleGraphAsync(int titleId, CancellationToken cancellationToken) =>
+        await db.Titles
+            .Include(t => t.Localizations)
+            .Include(t => t.TitleGenres)
+            .Include(t => t.TitleKeywords)
+            .Include(t => t.TitleCredits)
+            .Include(t => t.Availabilities)
+            .ThenInclude(a => a.CatalogSource)
+            .FirstOrDefaultAsync(t => t.Id == titleId, cancellationToken);
 
     private async Task<EnrichmentBatchResult> ProcessBatchAsync(
         IReadOnlyList<Title> batch,
@@ -110,6 +153,8 @@ public sealed class EnrichmentService(
 
     private async Task EnrichCoreAsync(Title title, bool forceRefresh, CancellationToken cancellationToken)
     {
+        _ = forceRefresh;
+
         if (!await EnsureTmdbIdsAsync(title, cancellationToken))
         {
             title.MetadataStatus = MetadataStatuses.Unmapped;
@@ -143,6 +188,17 @@ public sealed class EnrichmentService(
             }
         }
 
+        // BR-REC-09 / §11.2: ensure en-US row even when source language text is complete.
+        if (!HasEnglishLocalization(title))
+        {
+            var en = await FetchDetailsAsync(title, LanguageFallback.English, cancellationToken);
+            if (en is not null)
+            {
+                UpsertLocalization(title, LanguageFallback.English, en);
+                primary ??= en;
+            }
+        }
+
         if (primary is null)
         {
             title.MetadataAttempts++;
@@ -154,12 +210,18 @@ public sealed class EnrichmentService(
 
         ApplyDetails(title, primary);
         await UpsertGenresAsync(title, primary, languages[0], cancellationToken);
+        await UpsertKeywordsAsync(title, primary, cancellationToken);
+        await UpsertCreditsAsync(title, primary, cancellationToken);
         title.MetadataStatus = MetadataStatuses.Ready;
         title.MetadataFetchedAt = clock.UtcNow;
         title.MetadataAttempts = 0;
         title.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
     }
+
+    private static bool HasEnglishLocalization(Title title) =>
+        title.Localizations.Any(l =>
+            string.Equals(l.Language, LanguageFallback.English, StringComparison.OrdinalIgnoreCase));
 
     private async Task<bool> EnsureTmdbIdsAsync(Title title, CancellationToken cancellationToken)
     {
@@ -268,6 +330,11 @@ public sealed class EnrichmentService(
             title.CastJson = JsonSerializer.Serialize(details.Cast);
         }
 
+        if (details.OriginCountries is { Count: > 0 })
+        {
+            title.OriginCountries = JsonSerializer.Serialize(details.OriginCountries);
+        }
+
         if (details.Seasons is { Count: > 0 })
         {
             title.SeasonsJson = SeriesSeasonJson.Write(
@@ -313,6 +380,76 @@ public sealed class EnrichmentService(
             if (!title.TitleGenres.Any(tg => tg.GenreId == genre.Id))
             {
                 title.TitleGenres.Add(new TitleGenre { TitleId = title.Id, GenreId = genre.Id });
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertKeywordsAsync(
+        Title title,
+        TmdbTitleDetails details,
+        CancellationToken cancellationToken)
+    {
+        foreach (var keyword in details.Keywords.Where(k => k.Id > 0 && !string.IsNullOrWhiteSpace(k.Name)))
+        {
+            var entity = await db.Keywords.FindAsync([keyword.Id], cancellationToken);
+            if (entity is null)
+            {
+                db.Keywords.Add(new Keyword { Id = keyword.Id, Name = keyword.Name.Trim() });
+            }
+            else if (!string.Equals(entity.Name, keyword.Name.Trim(), StringComparison.Ordinal))
+            {
+                entity.Name = keyword.Name.Trim();
+            }
+
+            if (!title.TitleKeywords.Any(tk => tk.KeywordId == keyword.Id))
+            {
+                title.TitleKeywords.Add(new TitleKeyword { TitleId = title.Id, KeywordId = keyword.Id });
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task UpsertCreditsAsync(
+        Title title,
+        TmdbTitleDetails details,
+        CancellationToken cancellationToken)
+    {
+        if (details.Credits is null || details.Credits.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var credit in details.Credits.Where(c => c.PersonId > 0 && !string.IsNullOrWhiteSpace(c.Name)))
+        {
+            var person = await db.People.FindAsync([credit.PersonId], cancellationToken);
+            if (person is null)
+            {
+                db.People.Add(new Person { Id = credit.PersonId, Name = credit.Name.Trim() });
+            }
+            else if (!string.Equals(person.Name, credit.Name.Trim(), StringComparison.Ordinal))
+            {
+                person.Name = credit.Name.Trim();
+            }
+
+            var existing = title.TitleCredits.FirstOrDefault(tc =>
+                tc.PersonId == credit.PersonId
+                && string.Equals(tc.Role, credit.Role, StringComparison.Ordinal));
+            if (existing is null)
+            {
+                title.TitleCredits.Add(new TitleCredit
+                {
+                    TitleId = title.Id,
+                    PersonId = credit.PersonId,
+                    Role = credit.Role,
+                    Order = credit.Order,
+                });
+            }
+            else
+            {
+                existing.Order = credit.Order;
             }
         }
 

@@ -25,6 +25,25 @@ export type ArrSummary = {
   progress?: number | null
 }
 
+export type RecoReason = {
+  kind: string
+  titleId?: number | null
+  name?: string | null
+  similarity?: number | null
+  terms?: string[] | null
+}
+
+export type RecoItemScore = {
+  score: number
+  personalized: boolean
+  reasons: RecoReason[]
+  similarity?: number | null
+}
+
+export type SimilarTitlesPage = {
+  items: TitleListItem[]
+}
+
 export type TitleListItem = {
   id: number
   name: string
@@ -36,9 +55,37 @@ export type TitleListItem = {
   ratingTmdb: number | null
   ratingImdb: number | null
   isFavorite: boolean
+  rating?: 'like' | 'dislike' | null
   availability: AvailabilitySummary | null
   arr: ArrSummary | null
-  places?: Array<{ providerName: string; countryCode: string }>
+  places?: Array<{ providerName: string; countryCode: string; removedAt?: string | null }>
+  reco?: RecoItemScore
+  /** Client-only badge for My ratings vs selected catalog source. */
+  sourceStatus?: 'present' | 'removed' | 'absent'
+}
+
+export type RecommendationsPage = {
+  version: number
+  stage: string
+  page: number
+  pageSize: number
+  total: number
+  items: TitleListItem[]
+}
+
+export type RecoStatus = {
+  enabled: boolean
+  stage: string
+  ratingCount: number
+  effectiveN: number
+  targetN: number
+  personalWeight: number
+  model: { status: string; id: string | null; sizeBytes: number | null }
+  embeddings: { coverage: number; count: number; pending: number }
+  pool: { titles: number }
+  lastBuiltAt: string | null
+  version: number
+  lastError: string | null
 }
 
 export type ArrFilterInfo = {
@@ -72,6 +119,7 @@ export type TitleDetail = {
   ratings: { tmdb: number | null; tmdbVotes: number | null; imdb: number | null }
   links: { tmdb: string | null; imdb: string | null; tvdb: string | null }
   isFavorite: boolean
+  rating?: 'like' | 'dislike' | null
   metadataStatus: string
   availability: Array<{
     sourceId: number
@@ -132,6 +180,45 @@ export type SettingsResponse = {
   }
   webhooks: { token: SecretStatus }
   ui: { language: string }
+  reco: {
+    enabled: boolean
+    useImplicit: boolean
+    embeddingsEnabled: boolean
+    excludeInLibrary: boolean
+    n0: number
+    weightLike: number
+    weightDislike: number
+    weightFavorite: number
+    weightArrAdd: number
+    weightDownloaded: number
+    mmrLambda: number
+    exploreRate: number
+    mlMinRatings: number
+    eventsEnabled: boolean
+  }
+}
+
+export type RecoEvalLevelMetrics = {
+  auc: number
+  hitAt10: number
+  folds: number
+}
+
+export type RecoEvalReport = {
+  evaluatedAt: string
+  ratingCount: number
+  likeCount: number
+  dislikeCount: number
+  poolSize: number
+  lowSampleWarning: boolean
+  prior: RecoEvalLevelMetrics | null
+  level1: RecoEvalLevelMetrics | null
+  level2: RecoEvalLevelMetrics | null
+  combined: RecoEvalLevelMetrics | null
+  level3: RecoEvalLevelMetrics | null
+  likeVsDislikeAucCombined: number | null
+  level3Active: boolean
+  level3SkipReason: string | null
 }
 
 export type TitleQueryParams = {

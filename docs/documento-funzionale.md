@@ -2,11 +2,11 @@
 
 | | |
 |---|---|
-| **Versione** | 0.1 (bozza per revisione) |
-| **Data** | 2026-11-03 |
+| **Versione** | 0.2 |
+| **Data** | 2026-11-06 |
 | **Lingua** | Italiano |
 | **Nome progetto** | *PickArr* è un nome provvisorio (vedi D-08) |
-| **Documento collegato** | `specifica-tecnica.md` |
+| **Documenti collegati** | `specifica-tecnica.md`, `raccomandazioni.md` (feature voto e *Per te*) |
 
 ---
 
@@ -38,6 +38,7 @@ PickArr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 - Avere in un'unica interfaccia, simile alla homepage di Netflix, i titoli disponibili in un paese, con descrizione e voti.
 - Passare da "titolo che mi interessa" a "titolo monitorato e in ricerca su Sonarr/Radarr" in pochi click.
 - Vedere a colpo d'occhio cosa è già in libreria e in che stato, e poterlo eliminare.
+- Segnare *Mi piace* / *Non mi piace* sui titoli e ricevere consigli locali (*Per te*) filtrati sui cataloghi importati.
 - Funzionare entro i limiti del piano **gratuito** di Watchmode (2.500 crediti/mese, max 3 paesi).
 - Poter aggiungere altri servizi (Amazon Prime, Disney+, Hulu, ...) e altri paesi senza modificare l'architettura.
 
@@ -53,9 +54,10 @@ PickArr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 - Ricerca server-side con filtri, preferiti, scheda di dettaglio.
 - Integrazione con una istanza Sonarr e una istanza Radarr: aggiunta, stato, eliminazione.
 - Amministrazione: impostazioni, controllo dei job, consumo dei crediti Watchmode.
+- Raccomandazioni locali (R1–R4): voto sul titolo, pagina *Per te*, simili, embedding ONNX opzionale, valutazione offline, livello supervisionato gated (dettaglio in `raccomandazioni.md`).
 - Distribuzione come singola immagine Docker.
 
-**Escluso (v1)**: vedi §10.
+**Escluso (v1)**: vedi §10. I consigli personalizzati non sono più fuori ambito: sono specificati in `raccomandazioni.md` e rilasciati dopo l'MVP catalogo (fasi R1–R4 in §12).
 
 ### 1.4 Attori
 
@@ -78,6 +80,9 @@ PickArr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 | **Baseline** | Primo import completo di una sorgente. I titoli presenti in quel momento non sono considerati "novità". |
 | **Crediti** | Unità di consumo delle API Watchmode (2.500/mese nel piano free). |
 | **Stato libreria** | Stato di un titolo in Sonarr/Radarr: non in libreria, mancante, in download, scaricato, parziale. |
+| **Voto (rating)** | Preferenza esplicita sul titolo: *Mi piace* o *Non mi piace*. Globale come il preferito (non legato alla sorgente). |
+| **Per te** | Lista di raccomandazioni calcolata in locale sul pool dei cataloghi abilitati, filtrabile per sorgente o unione. |
+| **Pool** | Unione dei titoli con almeno una disponibilità su sorgenti (servizio+paese) abilitate. `RemovedAt` non esclude. |
 
 ---
 
@@ -106,10 +111,10 @@ Le verifiche sono state fatte sulla documentazione pubblica di Watchmode in data
 Watchmode ──(job schedulato)──► Catalogo locale ◄──(arricchimento)── TMDB
                                        │
                                        ▼
-                         UI: griglia, ricerca, preferiti, dettaglio
-                                       │  (conferma con opzioni)
+              UI: catalogo, lista, Per te, valutazioni, dettaglio
+                                       │  (voto locale + conferma Arr)
                                        ▼
-                              Backend ──► Sonarr / Radarr
+                    Backend ──► Sonarr / Radarr   (+ coda ml ONNX)
                                        ◄── stato (sync periodica + webhook)
 ```
 
@@ -118,11 +123,12 @@ Macro-funzioni:
 1. **Catalogo**: sincronizzazione, storico, budget crediti.
 2. **Metadati**: arricchimento da TMDB con lingua configurabile e fallback in inglese.
 3. **Esplorazione**: griglia, ricerca, filtri, dettaglio.
-4. **Preferiti**.
-5. **Integrazione Sonarr/Radarr**: aggiunta, stato, eliminazione.
-6. **Amministrazione**: impostazioni, job, crediti.
-7. **Internazionalizzazione** dell'interfaccia.
-8. **Multi-servizio e multi-paese** come requisito di architettura.
+4. **Preferiti** (`/list`) e **voti** (*Mi piace* / *Non mi piace*).
+5. **Raccomandazioni locali** (*Per te*, simili, embedding opzionale).
+6. **Integrazione Sonarr/Radarr**: aggiunta, stato, eliminazione.
+7. **Amministrazione**: impostazioni, job, crediti, azioni reco.
+8. **Internazionalizzazione** dell'interfaccia (inglese).
+9. **Multi-servizio e multi-paese** come requisito di architettura.
 
 ---
 
@@ -167,8 +173,8 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 |---|---|---|
 | FR-UI-01 | Interfaccia **solo desktop** (larghezza minima supportata 1280 px) con **tema scuro**. | M |
 | FR-UI-02 | Un selettore nell'intestazione permette di scegliere la sorgente di catalogo (servizio + paese). La scelta è ricordata tra una sessione e l'altra. | M |
-| FR-UI-03 | La home è una **vista a griglia** del catalogo della sorgente selezionata, con barra di ricerca e filtri rapidi: *Tutti*, *Novità*, *In scadenza*, *Rimossi di recente*, *La mia lista*. | M |
-| FR-UI-04 | Ogni card mostra poster, titolo, anno, badge del tipo (film/serie/stand-up), badge dello **stato libreria** e icona preferito. | M |
+| FR-UI-03 | La home è una **vista a griglia** del catalogo della sorgente selezionata, con barra di ricerca e filtri rapidi: *Tutti*, *Novità*, *In scadenza*, *Rimossi di recente*. *La mia lista* e *Per te* sono route dedicate (`/list`, `/for-you`), non viste del catalogo. | M |
+| FR-UI-04 | Ogni card mostra poster, titolo, anno, badge del tipo (film/serie/stand-up), badge dello **stato libreria**, icona preferito e controlli di **voto** (*Mi piace* / *Non mi piace*) quando le raccomandazioni sono abilitate. | M |
 | FR-UI-05 | La griglia usa scorrimento infinito con caricamento a pagine. Deve restare fluida con cataloghi di alcune migliaia di titoli. | M |
 | FR-UI-06 | Il clic su una card apre la **scheda di dettaglio** in una finestra modale, raggiungibile anche tramite URL diretto. | M |
 | FR-UI-07 | Un **hero banner** in cima alla home con un titolo in evidenza (es. ultima novità con backdrop). | C |
@@ -192,7 +198,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-DET-01 | La scheda mostra: backdrop/poster, titolo, titolo originale, anno, durata (film) o numero di stagioni (serie), generi, trama, voto TMDB (e IMDb se disponibile), link esterni. | M |
 | FR-DET-02 | Mostra le informazioni di **disponibilità** nella sorgente selezionata: disponibile dal, in scadenza il, rimosso il. | M |
 | FR-DET-03 | Mostra lo **stato libreria**; per le serie il dettaglio **stagione per stagione**. | M |
-| FR-DET-04 | Azioni: preferito, aggiungi a Sonarr/Radarr, elimina da Sonarr/Radarr, aggiorna stato. | M |
+| FR-DET-04 | Azioni: preferito, **voto** (*Mi piace* / *Non mi piace*), aggiungi a Sonarr/Radarr, elimina da Sonarr/Radarr, aggiorna stato. | M |
 | FR-DET-05 | Azione "Cerca ora" su un titolo già in libreria (lancia la ricerca in Sonarr/Radarr). | S |
 | FR-DET-06 | Link per aprire il titolo nell'interfaccia web di Sonarr/Radarr. | C |
 | FR-DET-07 | Se il titolo è disponibile in altre sorgenti configurate (es. anche su Netflix US), la scheda lo indica. | C |
@@ -202,8 +208,8 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | ID | Requisito | Pri |
 |---|---|---|
 | FR-FAV-01 | L'utente può aggiungere/rimuovere un titolo dai preferiti da card e da scheda. | M |
-| FR-FAV-02 | I preferiti sono **globali** (legati al titolo, non alla sorgente) e persistono sul backend. | M |
-| FR-FAV-03 | Il filtro *La mia lista* mostra tutti i preferiti, ciascuno con un badge che indica la sua disponibilità nella sorgente selezionata (disponibile / non disponibile / rimosso il ...). | M |
+| FR-FAV-02 | I preferiti sono **globali** (legati al titolo, non alla sorgente) e persistono sul backend. Il **voto** segue lo stesso modello di dato globale, con valori *Mi piace* / *Non mi piace* al posto del booleano. | M |
+| FR-FAV-03 | La pagina *La mia lista* (`/list`) mostra tutti i preferiti cross-provider e cross-country, ciascuno con un badge rispetto alla sorgente selezionata (presente / rimosso / assente). Non è una vista `view=favorites` del catalogo. | M |
 | FR-FAV-04 | Aggiunta in blocco dei preferiti a Sonarr/Radarr. | C |
 
 ### 4.7 Aggiunta a Sonarr/Radarr (FR-ADD)
@@ -293,6 +299,21 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-PRV-04 | L'applicazione avvisa se le sorgenti abilitate superano i **3 paesi** del piano free. | S |
 | FR-PRV-05 | L'architettura permette di aggiungere in futuro fonti dati diverse da Watchmode, implementando un'astrazione di provider. | M |
 
+### 4.14 Voto e raccomandazioni (FR-REC)
+
+Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi prodotto:
+
+| ID | Requisito | Pri |
+|---|---|---|
+| FR-REC-RT | L'utente può mettere *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; il voto è globale sul `Title`. Mutazione ottimistica in UI. | M |
+| FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
+| FR-REC-FY | Pagina *Per te* (`/for-you`) con scope sorgente o unione abilitata, motivi, diversità (MMR) ed esplorazione. | M |
+| FR-REC-SIM | Riga *Simili* in scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
+| FR-REC-ML | Embedding ONNX locali opzionali (modello scaricato o copiato); senza modello restano prior e livello sparse. | M |
+| FR-REC-AD | Impostazioni *Raccomandazioni*: stato, rebuild, embedding, download modello, valutazione offline, reset; eventi locali disattivabili (default off). | M |
+
+Decisioni D-REC-01…D-REC-13: vedi §11.3. Override rispetto a D-REC-12: il livello 3 supervisionato è implementato in R4 ma resta **gated** dalla valutazione offline.
+
 ---
 
 ## 5. Requisiti non funzionali
@@ -306,7 +327,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | NFR-05 | Portabilità | **Singola immagine Docker** (linux/amd64 e linux/arm64), configurazione via variabili d'ambiente e un unico volume `/config`. Avvio senza configurazione preliminare. |
 | NFR-06 | Persistenza | Tutti i dati in file SQLite nel volume `/config`: il backup è la copia della cartella. |
 | NFR-07 | Osservabilità | Log strutturati, endpoint di health, storico delle esecuzioni dei job. |
-| NFR-08 | Manutenibilità | Documentazione OpenAPI generata, test automatici, pipeline CI su GitLab. |
+| NFR-08 | Manutenibilità | Documentazione OpenAPI generata, test automatici, pipeline CI su GitHub Actions. |
 | NFR-09 | Conformità | Rispetto dei termini d'uso di Watchmode (non commerciale, attribuzione, cache 30 giorni) e TMDB (attribuzione). |
 | NFR-10 | Compatibilità | Sonarr v4 e Radarr v5 (API v3). Versioni minime da confermare (D-09). |
 | NFR-11 | Usabilità | UI desktop ≥ 1280 px, tema scuro, azioni distruttive sempre confermate. |
@@ -527,24 +548,29 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 Descrizione testuale (i mockup saranno prodotti in seguito).
 
-**Layout generale.** Intestazione con logo, selettore sorgente (es. "Netflix · Italia"), barra di ricerca, accesso a *La mia lista*, *Admin*, *Impostazioni*. Piè di pagina con attribuzioni Watchmode/TMDB e versione.
+**Layout generale.** Intestazione con logo, selettore sorgente (es. "Netflix · Italia"), barra di ricerca, link a *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*. Piè di pagina con attribuzioni Watchmode/TMDB e versione.
 
-**Home / Catalogo.**
-- Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi · La mia lista.
+**Home / Catalogo** (`/catalog`).
+- Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
 - Barra filtri: tipo, genere, anno, stato libreria, ordinamento, "includi rimossi".
 - Griglia di card poster 2:3 con scorrimento infinito.
-- Card: poster, tipo, titolo, anno, badge stato libreria (colore per stato), cuore.
-- Al passaggio del mouse: trama breve e azioni rapide.
+- Card: poster, tipo, titolo, anno, badge stato libreria, cuore, controlli *Mi piace* / *Non mi piace*.
 
-**Scheda di dettaglio (modale).** Backdrop in testata; colonna sinistra poster; a destra titolo, anno, durata/stagioni, generi, voti, trama, link esterni, disponibilità (dal / scade / rimosso). Sezione *Libreria*: stato, monitorato, percentuale download, tabella stagioni per le serie. Barra azioni: preferito, Aggiungi / Elimina, Cerca ora, Aggiorna stato.
+**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento, chip dei motivi e filtri tipo/genere. Onboarding su `/taste` se i voti sono pochi.
+
+**La mia lista** (`/list`). Preferiti globali; badge rispetto alla sorgente selezionata.
+
+**Le mie valutazioni** (`/ratings`). Elenco Like/Dislike con export/import.
+
+**Scheda di dettaglio (modale).** Backdrop in testata; colonna sinistra poster; a destra titolo, anno, durata/stagioni, generi, voti, trama, link esterni, disponibilità (dal / scade / rimosso). Sezione *Libreria*: stato, monitorato, percentuale download, tabella stagioni per le serie. Barra azioni: preferito, voto, Aggiungi / Elimina, Cerca ora, Aggiorna stato. Riga *Simili* quando le raccomandazioni sono attive.
 
 **Dialog Aggiungi.** Titolo, destinazione (Sonarr/Radarr), campi opzione, casella "Cerca subito", pulsanti Annulla / Aggiungi.
 
 **Dialog Elimina.** Riepilogo (percorso, dimensione, file), due caselle, pulsante rosso di conferma.
 
-**Impostazioni.** Sezioni: Fonti dati · Sonarr · Radarr · Catalogo (sorgenti, lingue, cron) · Crediti · Webhook · Interfaccia.
+**Impostazioni.** Sezioni: Fonti dati · Sonarr · Radarr · Cataloghi · Raccomandazioni (stato modello/embedding, azioni rebuild/eval/reset) · Job · Interfaccia.
 
-**Admin → Job.** Tabella job, pulsante Esegui ora, storico run, grafico/indicatore crediti, elenco titoli non mappati.
+**Job.** Tabella job (anche coda `ml` per embedding/build/eval), pulsante Esegui ora, storico run, grafico/indicatore crediti, elenco titoli non mappati.
 
 ---
 
@@ -559,9 +585,10 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 - Download/riproduzione di contenuti: l'app orchestra soltanto Sonarr/Radarr.
 - Servizi non coperti da Watchmode.
 - Notifiche (email, push) per novità o scadenze.
-- Raccomandazioni personalizzate.
+- Ordinamento *Per te* dentro la griglia del catalogo (la lista consigliata è solo `/for-you`).
+- Chiamate esterne con i dati di gusto (tutto il ML resta locale).
 
-**Evoluzioni possibili:** feed delle modifiche Watchmode (piano a pagamento), SSE per aggiornamenti in tempo reale, aggiunta in blocco dai preferiti, hero banner, più istanze arr, notifiche, autenticazione opzionale.
+**Evoluzioni possibili:** feed delle modifiche Watchmode (piano a pagamento), SSE per aggiornamenti in tempo reale, aggiunta in blocco dai preferiti, hero banner, più istanze arr, notifiche, autenticazione opzionale, taratura fine dei pesi su corpus di voti reali (SP-R4).
 
 ---
 
@@ -602,6 +629,19 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-08 | **Nome del progetto.** | "PickArr" provvisorio. |
 | D-09 | **Versioni minime** di Sonarr (v4) e Radarr (v5). | Da confermare con le istanze in uso. |
 | D-10 | **Storage di Hangfire su SQLite** (pacchetto di comunità). | Spike SP-4; in alternativa storage in memoria, dato che le schedulazioni si ricreano dal DB all'avvio. |
+| D-REC-01 | Scope predefinito di *Per te*. | Sorgente selezionata (`source`). |
+| D-REC-02 | Altro scope. | Unione delle sorgenti abilitate; nessuno scope oltre i cataloghi importati. |
+| D-REC-03 | Profilo. | Unico; il filtro di catalogo si applica alla lista, non all'apprendimento. |
+| D-REC-04 | Simili. | Sempre sull'unione delle sorgenti abilitate; mostrano `places`. |
+| D-REC-05 | `RemovedAt`. | Non esclude dal pool raccomandazioni. |
+| D-REC-06 | Valori di voto. | Solo *Mi piace* e *Non mi piace*. |
+| D-REC-07 | Superficie UI. | Pagina dedicata `/for-you` (non ordinamento in griglia catalogo). |
+| D-REC-08 | Valutazioni e onboarding. | `/ratings` globale; onboarding `/taste` sul pool abilitato. |
+| D-REC-09 | Libreria Arr. | Esclusa di default in *Per te*, con interruttore. |
+| D-REC-10 | Default feature. | Attiva (`reco.enabled`); modello ONNX su richiesta. |
+| D-REC-11 | Modello. | `all-MiniLM-L6-v2` quantizzato (`@q8`), rivisto dopo SP-R2/SP-R4. |
+| D-REC-12 | Livello 3. | Originariamente fuori MVP; **override prodotto**: implementato in R4, attivo solo se batte L2 nella valutazione offline. |
+| D-REC-13 | Segnali impliciti. | Attivi di default, disattivabili. |
 
 ---
 
@@ -609,7 +649,11 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 
 | Fase | Contenuto |
 |---|---|
-| **MVP** | Sync catalogo Netflix IT/US con budget crediti e baseline; arricchimento TMDB; griglia, ricerca e filtri, dettaglio; preferiti; impostazioni; aggiunta a Sonarr/Radarr con dialog; stato con sync periodica; eliminazione; admin job; i18n con inglese; immagine Docker; CI. |
+| **MVP** | Sync catalogo Netflix IT/US con budget crediti e baseline; arricchimento TMDB; griglia, ricerca e filtri, dettaglio; preferiti (`/list`); impostazioni; aggiunta a Sonarr/Radarr con dialog; stato con sync periodica; eliminazione; admin job; i18n con inglese; immagine Docker; CI. |
+| **R1** | Voto globale, prior, *Per te* L0, API/status, UI card/scheda, `/ratings`. |
+| **R2** | Keyword/crediti/en-US, segnali impliciti, sparse L1, simili, reasons. |
+| **R3** | Modello ONNX, embedding, kNN L2, MMR/explore, `/taste`, settings/admin reco. |
+| **R4** | Valutazione offline, livello 3 gated, registro eventi (default off), taratura SP-R4. |
 | **v1.1** | Webhook Sonarr/Radarr, stato per stagione completo, voto IMDb (OMDb), date di scadenza, traduzione italiana, filtri in URL, log di audit. |
 | **v1.2** | Aggiornamenti in tempo reale, hero banner, aggiunta in blocco dai preferiti, ricordo delle ultime opzioni. |
 | **v2** | Nuovi servizi (Amazon Prime, Disney+), feed delle modifiche per piani a pagamento, autenticazione opzionale. |
