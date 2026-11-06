@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using System.Reflection;
 using System.Text.Json;
 using Shouldly;
 
@@ -20,6 +21,24 @@ public sealed class SettingsAndHealthTests
     {
         (await _client.GetAsync("/health")).StatusCode.ShouldBe(HttpStatusCode.OK);
         (await _client.GetAsync("/health/ready")).StatusCode.ShouldBe(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task System_status_reports_product_version()
+    {
+        var response = await _client.GetAsync("/api/v1/system/status");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var informational = typeof(PickArr.Api.Endpoints.SystemEndpoints).Assembly
+            .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+            ?.InformationalVersion ?? "";
+        var plus = informational.IndexOf('+', StringComparison.Ordinal);
+        var expected = plus >= 0 ? informational[..plus] : informational;
+
+        var version = body.GetProperty("version").GetString().ShouldNotBeNull();
+        version.ShouldBe(expected);
+        version.ShouldNotContain("+");
     }
 
     [Fact]

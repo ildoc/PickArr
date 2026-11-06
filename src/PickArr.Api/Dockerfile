@@ -40,6 +40,7 @@ RUN arch="$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)" \
 COPY src/PickArr.Api/ src/PickArr.Api/
 COPY src/PickArr.Core/ src/PickArr.Core/
 COPY src/PickArr.Infrastructure/ src/PickArr.Infrastructure/
+# X.Y.Z on a release tag, X.Y.Z.N for N commits after it. Local builds stay 0.0.0.
 ARG VERSION=0.0.0
 RUN arch="$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)" \
  && dotnet publish "src/PickArr.Api/PickArr.Api.csproj" \
@@ -51,7 +52,9 @@ RUN arch="$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)" \
       -p:UseAppHost=false \
       -p:DebugType=none \
       -p:DebugSymbols=false \
-      -p:Version="$VERSION"
+      -p:Version="$VERSION" \
+      -p:InformationalVersion="$VERSION" \
+      -p:IncludeSourceRevisionInInformationalVersion=false
 
 # Static binary. The runtime image does not gain a package manager or curl.
 FROM busybox:1.37.0-musl AS wget

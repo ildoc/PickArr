@@ -1,7 +1,8 @@
 # Lint and test on pull requests, pushes to the default branch, and tags.
 # The image is built on those events and pushed to GHCR only from the default
-# branch (edge) and from tags (the git tag and latest). A sha tag is included
-# on every publish so a release can be traced to a commit.
+# branch and from tags. A tag vX.Y.Z (or X.Y.Z) sets the version to X.Y.Z and
+# is published as X.Y.Z and latest. Later builds use X.Y.Z.N, where N is the
+# number of commits after that tag, and the default branch is also tagged edge.
 name: CI
 
 on:
@@ -165,20 +166,63 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
 
       - name: Image version
         id: version
         env:
           REF_TYPE: ${{ github.ref_type }}
           REF_NAME: ${{ github.ref_name }}
-          SHA: ${{ github.sha }}
         run: |
-          if [ "$REF_TYPE" = "tag" ]; then
-            version="${REF_NAME#v}"
-          else
-            version="0.0.0-${SHA:0:8}"
+          set -euo pipefail
+
+          base=""
+          distance=""
+          while IFS= read -r name; do
+            case "$name" in
+              v*) stripped="${name#v}" ;;
+              *) stripped="$name" ;;
+            esac
+            if [[ ! "$stripped" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              continue
+            fi
+            if ! git merge-base --is-ancestor "refs/tags/$name" HEAD; then
+              continue
+            fi
+            count="$(git rev-list --count "refs/tags/$name..HEAD")"
+            if [ -z "$base" ] || [ "$count" -lt "$distance" ]; then
+              base="$stripped"
+              distance="$count"
+            elif [ "$count" -eq "$distance" ]; then
+              base="$(printf '%s\n%s\n' "$base" "$stripped" | sort -V | tail -n 1)"
+            fi
+          done < <(git for-each-ref --format='%(refname:short)' 'refs/tags')
+
+          if [ -z "$base" ]; then
+            base="0.0.0"
+            distance="$(git rev-list --count HEAD)"
           fi
+
+          release=false
+          if [ "$REF_TYPE" = "tag" ]; then
+            tagged="${REF_NAME#v}"
+            if [[ "$tagged" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              base="$tagged"
+              distance=0
+              release=true
+            fi
+          fi
+
+          if [ "$distance" -eq 0 ]; then
+            version="$base"
+          else
+            version="${base}.${distance}"
+          fi
+
           echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "release=${release}" >> "$GITHUB_OUTPUT"
+          echo "Image version ${version} (release=${release})"
 
       - name: Decide whether to publish
         id: publish
@@ -204,10 +248,9 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=sha,prefix=sha-
+            type=raw,value=${{ steps.version.outputs.version }}
             type=raw,value=edge,enable={{is_default_branch}}
-            type=ref,event=tag
-            type=raw,value=latest,enable=${{ github.ref_type == 'tag' }}
+            type=raw,value=latest,enable=${{ steps.version.outputs.release == 'true' }}
 
       - name: Set up Buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1

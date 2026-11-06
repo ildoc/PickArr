@@ -5,7 +5,7 @@
 services:
   pickarr:
     image: pickarr:local
-    # Published GHCR tags: edge (default branch), latest and the git tag (releases).
+    # Published GHCR tags: edge and X.Y.Z.N (default branch), X.Y.Z and latest (tag vX.Y.Z).
     # image: ghcr.io/<owner>/<repo>:edge
     build:
       context: .

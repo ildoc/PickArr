@@ -1191,11 +1191,11 @@ Pull request, push sul branch predefinito e tag. Lint e test girano in parallelo
 | Frontend lint | `npm run lint`, `npm run typecheck` |
 | Backend test | `dotnet test` in Release; artefatto TRX |
 | Frontend test | `npm test`, `npm run build` |
-| Immagine | Build Dockerfile. Push su GHCR dal branch predefinito (`edge`, `sha-<commit>`) e dai tag (`<tag>`, `latest`, `sha-<commit>`). `VERSION` è `0.0.0-<sha breve>` oppure il tag senza `v` iniziale. |
+| Immagine | Build Dockerfile. Push su GHCR dal branch predefinito (`X.Y.Z.N` e `edge`) e dai tag SemVer (`X.Y.Z` e `latest`). |
 
 Dettagli:
 
-- **Versionamento:** SemVer con tag `vX.Y.Z`; la versione è iniettata nell'assembly e mostrata in `/system/status` e nel piè di pagina. `CHANGELOG.md` aggiornato a ogni release.
+- **Versionamento:** un tag `vX.Y.Z` o `X.Y.Z` fissa la versione `X.Y.Z` (immagine `X.Y.Z` e `latest`). Le build successive usano `X.Y.Z.N`, dove N è il numero di commit dopo quel tag, fino al tag successivo. Senza tag la versione è `0.0.0.N`. Il branch predefinito pubblica anche `edge`. La stringa è `Version` e `InformationalVersion` dell'assembly; `/system/status` riporta la versione senza l'eventuale suffisso di commit. `CHANGELOG.md` aggiornato a ogni release.
 - **Cache:** pacchetti NuGet e npm tramite le action di setup; layer Docker con la cache di GitHub Actions.
 - **Registry:** GitHub Container Registry (`ghcr.io`), autenticazione con `GITHUB_TOKEN`. Nessun secret di registry da configurare.
 - **Documentazione (FR/NFR-08):** l'OpenAPI è generata dal backend; i documenti in `docs/` restano versionati con il codice.

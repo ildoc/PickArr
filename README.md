@@ -27,7 +27,7 @@ Open `http://localhost:8080`. To use a published image instead of a local build,
 image: ghcr.io/<owner>/<repo>:edge
 ```
 
-Tags from the default branch are `edge` and `sha-<commit>`. A git tag `vX.Y.Z` is published as that tag (without the `v`), as `latest`, and as `sha-<commit>`.
+Tags from the default branch are `edge` and the build version `X.Y.Z.N` (`N` commits after the latest `vX.Y.Z` tag). A git tag `vX.Y.Z` is published as `X.Y.Z` and `latest`. Before the first tag, branch images are `0.0.0.N`.
 
 ### Prebuilt image without Compose
 
@@ -192,4 +192,4 @@ GitHub Actions (`.github/workflows/ci.yml`) runs on pull requests, pushes to `ma
 | Frontend test | `npm test`, `npm run build` |
 | Image | `linux/amd64` build of `src/PickArr.Api/Dockerfile` |
 
-The image is pushed to `ghcr.io/<owner>/<repo>` only from the default branch (`edge` and `sha-<commit>`) and from git tags (the tag, `latest`, and `sha-<commit>`). `VERSION` is `0.0.0-<short sha>` on branch builds and the tag name without a leading `v` on releases. The first push creates a private GHCR package; grant this repository write access on the package if the push is rejected.
+The image is pushed to `ghcr.io/<owner>/<repo>` only from the default branch and from git tags. A tag `vX.Y.Z` or `X.Y.Z` sets the version to `X.Y.Z` and publishes `X.Y.Z` and `latest`. Each later build uses `X.Y.Z.N`, where `N` is the number of commits after that tag, until the next tag. The default branch is also tagged `edge`. With no tag yet, the version is `0.0.0.N` (`N` is the commit count). The same string is the image's `VERSION`. The first push creates a private GHCR package; grant this repository write access on the package if the push is rejected.
