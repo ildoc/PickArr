@@ -44,7 +44,11 @@ public static class DependencyInjection
             .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
             .SetApplicationName("PickArr");
 
-        services.AddScoped<ISettingsStore, ProtectedSettingsStore>();
+        services.AddSingleton<EnvironmentSettingSource>();
+        services.AddScoped<ProtectedSettingsStore>();
+        services.AddScoped<ISettingsStore>(sp => new EnvironmentSettingsStore(
+            sp.GetRequiredService<ProtectedSettingsStore>(),
+            sp.GetRequiredService<EnvironmentSettingSource>()));
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
         services.AddScoped<ICatalogUpserter, CatalogUpserter>();

@@ -19,10 +19,17 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - PickArr__DataPath=/config
       - PickArr__BaseUrl=http://localhost:8080
+      # Impostazioni applicative: vincono sul database. I punti della chiave diventano __.
+      # - PickArr__Settings__watchmode__apiKey=
+      # - PickArr__Settings__tmdb__token=
+      # - PickArr__Settings__sonarr__url=http://sonarr:8989
+      # - PickArr__Settings__sonarr__apiKey=
+      # - PickArr__Settings__radarr__url=http://radarr:7878
+      # - PickArr__Settings__radarr__apiKey=
     volumes:
       - pickarr-config:/config
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8080/health"]
+      test: ["CMD", "/usr/local/bin/wget", "-q", "-O", "-", "http://127.0.0.1:8080/health"]
       interval: 30s
       timeout: 5s
       retries: 3

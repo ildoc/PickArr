@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace PickArr.Integration.Tests;
 
-public sealed class ApiFactory : WebApplicationFactory<Program>
+public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "PickArr-tests", Guid.NewGuid().ToString("N"));
 
@@ -14,6 +14,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("PickArr:DataPath", _dataPath);
         builder.UseSetting("Hangfire:Storage", "Memory");
         builder.UseSetting("PickArr:Catalog:AutoInitialImport", "false");
+        ConfigureApplication(builder);
+    }
+
+    protected virtual void ConfigureApplication(IWebHostBuilder builder)
+    {
     }
 
     protected override void Dispose(bool disposing)

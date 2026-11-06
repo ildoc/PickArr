@@ -27,6 +27,10 @@ README.md
 docs
 tests
 _skill_memory
+.github
+**/*.md
+**/dist
+*.slnx
 !**/.gitignore
 !.git/HEAD
 !.git/config

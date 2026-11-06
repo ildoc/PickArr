@@ -1116,7 +1116,9 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 | `PickArr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
 | `PickArr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
 
-Le chiavi API e gli URL delle istanze **non** si passano da variabili d'ambiente: si impostano dalla UI (FR-SET) e sono salvati cifrati nel DB.
+Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con `PickArr__Settings__` e la chiave in cui ogni `.` è sostituito da `__`. Esempi: `PickArr__Settings__watchmode__apiKey`, `PickArr__Settings__watchmode__quota`, `PickArr__Settings__reco__enabled`, `PickArr__Settings__reco__weights__like`, `PickArr__Settings__sonarr__url`. I default di Sonarr e Radarr si passano annidati (`PickArr__Settings__sonarr__defaults__qualityProfileId`, `PickArr__Settings__sonarr__defaults__rootFolderPath`) oppure come oggetto JSON in `PickArr__Settings__sonarr__defaults`.
+
+Se la variabile è impostata e non vuota, quel valore è quello effettivo per tutta l'esecuzione: vince sul valore salvato e un aggiornamento dalla UI non lo sostituisce. I segreti dichiarati così non vengono scritti nel database e le API continuano a esporre solo `isSet`. Un numero o un booleano non interpretabile, o una chiave sconosciuta, impedisce l'avvio. I booleani sono `true` o `false`; i numeri usano il punto decimale. Senza la variabile resta il valore nel database (o il default).
 
 ### 12.2 Impostazioni applicative (tabella `Settings`)
 
@@ -1153,43 +1155,14 @@ Alla modifica delle impostazioni rilevanti per le schedulazioni, `SettingsServic
 
 ### 14.1 Dockerfile (singola immagine)
 
-```dockerfile
-# syntax=docker/dockerfile:1
+Il Dockerfile in `src/PickArr.Api/Dockerfile` è quello eseguito dalla pipeline. In sintesi:
 
-FROM --platform=$BUILDPLATFORM node:24 AS web
-WORKDIR /web
-COPY src/PickArr.WebApp/package*.json ./
-RUN npm ci
-COPY src/PickArr.WebApp/ ./
-RUN npm run build
+- `npm ci` e `dotnet restore` stanno su layer propri, prima dei sorgenti. Un cambiamento di codice non riscarica i pacchetti; un cambiamento solo del frontend non ripubblica l'API, e viceversa.
+- La pubblicazione è framework-dependent (`--no-self-contained`) per `linux-x64` o `linux-arm64`, senza simboli di debug e senza un secondo runtime. Il frontend e `dotnet publish` girano sull'architettura del builder (`$BUILDPLATFORM`) per evitare l'emulazione QEMU; l'immagine finale è quella della piattaforma target.
+- L'immagine di runtime resta `aspnet:10.0`: ONNX ha bisogno di `libgomp`, che le immagini chiseled non contengono. Non si installa `curl`. L'healthcheck usa un `wget` statico copiato da BusyBox.
+- Lo stage `base` prepara `/config` di proprietà di `app` per la fast mode di Visual Studio e per i volumi nuovi. Un volume già esistente e di proprietà di root non viene riscritto.
 
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-ARG TARGETARCH
-ARG VERSION=0.0.0
-WORKDIR /src
-COPY . ./
-RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64) \
- && dotnet publish src/PickArr.Api/PickArr.Api.csproj \
-      -c Release -a $ARCH --no-self-contained -o /out \
-      -p:UseAppHost=false -p:Version=$VERSION
-COPY --from=web /web/dist /out/wwwroot
-
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
-RUN apt-get update && apt-get install -y --no-install-recommends curl \
- && rm -rf /var/lib/apt/lists/*
-ENV ASPNETCORE_URLS=http://+:8080 \
-    PickArr__DataPath=/config \
-    TZ=UTC
-WORKDIR /app
-COPY --from=build /out ./
-VOLUME /config
-EXPOSE 8080
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
-  CMD curl -fsS http://localhost:8080/health || exit 1
-ENTRYPOINT ["dotnet", "PickArr.Api.dll"]
-```
-
-Note: il frontend e la pubblicazione .NET girano sull'architettura del builder (`$BUILDPLATFORM`) per evitare emulazione QEMU; l'immagine finale è multi-arch. L'utente non root e i permessi sul volume `/config` vanno verificati (SP-5); l'immagine `aspnet` usa l'utente `app`, quindi la cartella montata deve essere scrivibile da esso (o si imposta `user:` nel compose).
+L'utente non root e i permessi sul volume `/config` vanno verificati (SP-5); l'immagine `aspnet` usa l'utente `app`, quindi la cartella montata deve essere scrivibile da esso (o si imposta `user:` nel compose).
 
 ### 14.2 `docker-compose.yml`
 

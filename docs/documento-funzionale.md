@@ -266,6 +266,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-SET-08 | Lingua dell'interfaccia. | M |
 | FR-SET-09 | Le chiavi e i token non sono mai mostrati in chiaro dopo il salvataggio: la UI indica solo se sono impostati. | M |
 | FR-SET-10 | Autenticazione opzionale con password (vedi D-02). | C |
+| FR-SET-11 | Le stesse impostazioni (chiavi, URL, quote, default Sonarr/Radarr, finestre, lingua, raccomandazioni) si possono **dichiarare con variabili d'ambiente**. Se la variabile è impostata, quel valore è effettivo e non viene sostituito dal salvataggio in UI. I segreti dichiarati così non sono mostrati e non sono scritti nel database. | M |
 
 ### 4.11 Amministrazione dei job (FR-ADM)
 

@@ -4,22 +4,43 @@
 **/.data/
 *.user
 *.suo
+*.rsuser
+*.userosscache
+*.sln.docstates
 *.db
 *.db-shm
 *.db-wal
+*.binlog
+
+# Test and coverage output
+# dotnet test --logger trx writes tests/**/TestResults/*.trx (see CI).
+# coverlet.collector writes coverage.cobertura.xml under the same directory.
+**/TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+coverage.json
 
 # Node
 src/PickArr.WebApp/node_modules/
 src/PickArr.WebApp/dist/
 src/PickArr.WebApp/.vite/
+src/PickArr.WebApp/coverage/
+*.tsbuildinfo
 npm-debug.log*
 
 # IDE / OS
 .vs/
 .idea/
+*.DotSettings.user
 .DS_Store
 Thumbs.db
 
 # Local runtime
 /config/
 *.log
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
