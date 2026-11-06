@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.InMemory;
+using Hangfire.Server;
 using Hangfire.Storage.SQLite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,9 +21,26 @@ public static class HangfireBootstrap
         var options = configuration.GetSection(HangfireOptions.SectionName).Get<HangfireOptions>()
                       ?? new HangfireOptions();
 
+        // Hangfire's AddHangfire stores JobStorage.Current and JobActivator.Current in statics.
+        // Parallel WebApplicationFactory hosts would otherwise share one storage and run each
+        // other's jobs. Register the in-memory instances first so TryAdd keeps them per host.
+        if (options.Storage == HangfireStorageKind.Memory)
+        {
+            services.AddSingleton<InMemoryStorage>(_ => new InMemoryStorage());
+            services.AddSingleton<JobStorage>(sp => sp.GetRequiredService<InMemoryStorage>());
+            services.AddSingleton<JobActivator, HostJobActivator>();
+        }
+
         services.AddHangfire((sp, global) =>
         {
             var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("PickArr.Hangfire");
+            if (options.Storage == HangfireStorageKind.Memory)
+            {
+                global.UseStorage(sp.GetRequiredService<InMemoryStorage>());
+                logger.LogInformation("Hangfire storage: InMemory (configured)");
+                return;
+            }
+
             ConfigureStorage(global, options, dataPath, logger);
         });
 
@@ -81,3 +99,26 @@ public static class HangfireBootstrap
 
 /// <summary>Probeable runtime choice for tests and readiness.</summary>
 public sealed record HangfireRuntimeInfo(HangfireStorageKind RequestedStorage, string? SqlitePath);
+
+/// <summary>
+/// Resolves jobs from this host's container. Hangfire's default activator is process-wide,
+/// so a second host started in the same process would steal it.
+/// </summary>
+internal sealed class HostJobActivator(IServiceScopeFactory scopeFactory) : JobActivator
+{
+    public override JobActivatorScope BeginScope(JobActivatorContext context) => CreateScope();
+
+    public override JobActivatorScope BeginScope(PerformContext context) => CreateScope();
+
+    [Obsolete("Please use the BeginScope(JobActivatorContext) method instead. Will be removed in 2.0.0.")]
+    public override JobActivatorScope BeginScope() => CreateScope();
+
+    private JobActivatorScope CreateScope() => new DependencyScope(scopeFactory.CreateScope());
+
+    private sealed class DependencyScope(IServiceScope scope) : JobActivatorScope
+    {
+        public override object Resolve(Type type) => scope.ServiceProvider.GetRequiredService(type);
+
+        public override void DisposeScope() => scope.Dispose();
+    }
+}

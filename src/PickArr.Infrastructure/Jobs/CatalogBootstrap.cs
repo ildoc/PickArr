@@ -48,6 +48,7 @@ public sealed class CatalogBootstrap(
             return null;
         }
 
+        await EnableDefaultCatalogsAsync(cancellationToken);
         await reconciler.ReconcileAsync(cancellationToken);
         var jobId = backgroundJobs.Enqueue<CatalogBootstrapJob>(j => j.ExecuteAsync(CancellationToken.None));
         if (!force)
@@ -105,6 +106,32 @@ public sealed class CatalogBootstrap(
                 source.CountryCode,
                 sourceId);
         }
+    }
+
+    private async Task EnableDefaultCatalogsAsync(CancellationToken cancellationToken)
+    {
+        if (await db.CatalogSources.AnyAsync(s => s.IsEnabled, cancellationToken))
+        {
+            return;
+        }
+
+        var netflix = await db.Providers.FirstOrDefaultAsync(p => p.Key == "netflix", cancellationToken);
+        if (netflix is null)
+        {
+            return;
+        }
+
+        netflix.IsEnabled = true;
+        var defaults = await db.CatalogSources
+            .Where(s => s.ProviderId == netflix.Id && (s.CountryCode == "IT" || s.CountryCode == "US"))
+            .ToListAsync(cancellationToken);
+        foreach (var source in defaults)
+        {
+            source.IsEnabled = true;
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Enabled the default Netflix IT and US catalogs");
     }
 
     private async Task RecoverInterruptedRunsAsync(CancellationToken cancellationToken)

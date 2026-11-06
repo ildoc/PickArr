@@ -63,7 +63,6 @@ public static class RecoAdminEndpoints
         group.MapPost("/reset", async (
             bool includeRatings,
             PickArrDbContext db,
-            IBackgroundJobClient jobs,
             CancellationToken ct) =>
         {
             await using var tx = await db.Database.BeginTransactionAsync(ct);
@@ -94,7 +93,6 @@ public static class RecoAdminEndpoints
 
             await db.SaveChangesAsync(ct);
             await tx.CommitAsync(ct);
-            jobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(true, CancellationToken.None));
             return Results.Accepted(null, new { includeRatings });
         });
 

@@ -80,6 +80,21 @@ public sealed class CatalogBootstrapTests
     }
 
     [Fact]
+    public async Task StartAsync_enables_netflix_it_and_us_when_nothing_is_selected()
+    {
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true);
+        var jobId = await fixture.Bootstrap.StartAsync(force: false);
+        jobId.ShouldNotBeNull();
+
+        var enabled = await fixture.Db.CatalogSources
+            .Where(s => s.IsEnabled)
+            .Select(s => s.CountryCode)
+            .Order()
+            .ToListAsync();
+        enabled.ShouldBe(["IT", "US"]);
+    }
+
+    [Fact]
     public async Task StartAsync_does_nothing_until_a_watchmode_key_exists()
     {
         await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: false);
