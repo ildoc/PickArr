@@ -16,9 +16,8 @@ export function AppShell() {
         <Outlet />
       </main>
       <footer className="border-t border-white/10 px-8 py-4">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
+        <div className="mx-auto max-w-[1600px]">
           <Attributions />
-          <span className="text-xs text-[var(--muted)]">{t('app.version')}</span>
         </div>
       </footer>
     </div>

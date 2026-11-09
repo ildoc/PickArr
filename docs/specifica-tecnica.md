@@ -1062,7 +1062,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 
 - Solo tema scuro: `class="dark"` fissa su `<html>`, token colore in Tailwind (`surface`, `surface-2`, `accent`, `muted`).
 - Larghezza minima 1280 px: sotto la soglia compare un avviso non bloccante.
-- `Header` sticky in cima (`sticky top-0`) con sfondo semitrasparente e blur, così il menu resta raggiungibile durante lo scroll.
+- `Header` sticky in cima (`sticky top-0`) con sfondo semitrasparente e blur, così il menu resta raggiungibile durante lo scroll. A destra: versione da `GET /api/v1/system/status` (stessa stringa `VERSION` dell’immagine Docker / `InformationalVersion`) con link a `https://github.com/ildoc/PickArr`, e icona Ko-fi verso `https://ko-fi.com/pheeleeppo`.
 - Griglia con colonne `repeat(auto-fill, minmax(180px, 1fr))`.
 - Accessibilità di base: dialog con focus trap (Radix), alternative testuali sui poster, contrasto adeguato nei badge.
 

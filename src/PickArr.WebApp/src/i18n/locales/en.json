@@ -2,7 +2,8 @@
   "app": {
     "title": "PickArr",
     "tagline": "Browse streaming catalogs and send titles to Sonarr/Radarr.",
-    "version": "v0.1"
+    "repoLink": "PickArr on GitHub",
+    "kofiLink": "Support on Ko-fi"
   },
   "nav": {
     "catalog": "Catalog",

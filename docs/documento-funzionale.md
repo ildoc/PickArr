@@ -549,7 +549,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 Descrizione testuale (i mockup saranno prodotti in seguito).
 
-**Layout generale.** Intestazione fissa in cima (sticky) con logo e link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*). Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB e versione.
+**Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
 
 **Home / Catalogo** (`/catalog`).
 - Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
