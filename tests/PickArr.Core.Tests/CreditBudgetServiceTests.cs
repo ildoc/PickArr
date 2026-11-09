@@ -1,12 +1,12 @@
 using System.Text.Json;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class CreditBudgetServiceTests
 {

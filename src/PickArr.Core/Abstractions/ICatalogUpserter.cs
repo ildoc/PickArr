@@ -1,6 +1,6 @@
-using PickArr.Core.Catalog;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public sealed record UpsertPageResult(int TitlesAdded, int TitlesUpdated, int AvailabilitiesAdded, int AvailabilitiesReadded);
 

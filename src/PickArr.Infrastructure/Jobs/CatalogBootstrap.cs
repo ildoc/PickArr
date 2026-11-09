@@ -2,21 +2,21 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Admin;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Admin;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 /// <summary>
 /// Enables the seeded country catalogs and queues a first import so the grid is not empty
 /// after the Watchmode API key is saved.
 /// </summary>
 public sealed class CatalogBootstrap(
-    PickArrDbContext db,
+    PickarrDbContext db,
     ISettingsStore settings,
     IBackgroundJobClient backgroundJobs,
     ScheduleReconciler reconciler,

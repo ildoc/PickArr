@@ -1,4 +1,4 @@
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public enum HangfireStorageKind
 {

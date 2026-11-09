@@ -1,17 +1,17 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Core.Recommendations;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Metadata.Reco;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Core.Recommendations;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Metadata.Reco;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RecoEvalServiceTests : IAsyncLifetime
 {
@@ -57,12 +57,12 @@ public sealed class RecoEvalServiceTests : IAsyncLifetime
         report.Level3SkipReason.ShouldBe("below_min_ratings");
     }
 
-    private async Task<(PickArrDbContext Db, RecoEvalService Eval)> SeedAsync(int ratingCount, int minRatings)
+    private async Task<(PickarrDbContext Db, RecoEvalService Eval)> SeedAsync(int ratingCount, int minRatings)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(_connection).Options;
-        var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(_connection).Options;
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var now = new DateTime(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);

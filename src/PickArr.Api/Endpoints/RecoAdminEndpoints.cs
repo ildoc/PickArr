@@ -1,12 +1,12 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class RecoAdminEndpoints
 {
@@ -62,7 +62,7 @@ public static class RecoAdminEndpoints
 
         group.MapPost("/reset", async (
             bool includeRatings,
-            PickArrDbContext db,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
             await using var tx = await db.Database.BeginTransactionAsync(ct);

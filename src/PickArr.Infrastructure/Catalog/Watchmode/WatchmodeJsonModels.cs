@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 internal sealed class WatchmodeListTitlesResponse
 {

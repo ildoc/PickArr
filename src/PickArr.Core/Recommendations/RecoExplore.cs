@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Exploration slot injection (§12.8–12.9).</summary>
 public static class RecoExplore

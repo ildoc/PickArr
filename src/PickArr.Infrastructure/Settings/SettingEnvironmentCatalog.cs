@@ -1,7 +1,7 @@
 using System.Text;
-using PickArr.Core.Settings;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Settings;
+namespace Pickarr.Infrastructure.Settings;
 
 internal enum SettingValueKind
 {
@@ -15,12 +15,12 @@ internal enum SettingValueKind
 
 /// <summary>
 /// Settings that can be declared with flat names (<c>WATCHMODE_API_KEY</c>, <c>SONARR_URL</c>)
-/// or the legacy <c>PickArr__Settings__…</c> form.
+/// or the legacy <c>Pickarr__Settings__…</c> form.
 /// <c>catalog.initialImportStarted</c> is runtime state and is not included.
 /// </summary>
 internal static class SettingEnvironmentCatalog
 {
-    public const string SectionName = "PickArr:Settings";
+    public const string SectionName = "Pickarr:Settings";
 
     private static readonly Dictionary<string, SettingValueKind> Keys = new(StringComparer.OrdinalIgnoreCase)
     {

@@ -23,7 +23,7 @@ Auth: header `X-API-Key` (preferito) o `Authorization: Bearer`. Query `apiKey` l
 | Param | Note |
 | --- | --- |
 | `source_ids` | es. `203` (Netflix) |
-| `regions` | ISO alpha-2; **una regione per chiamata** nel sync PickArr → 1 credito/pagina |
+| `regions` | ISO alpha-2; **una regione per chiamata** nel sync Pickarr → 1 credito/pagina |
 | `types` | `movie,tv_series,tv_miniseries,tv_special` (+ `tv_movie`,`short_film` se utili) |
 | `sort_by` | default `relevance_desc`; valori: `relevance_*`, `popularity_*`, `release_date_*`, **`title_asc` / `title_desc`** |
 | `page` | ≥ 1 |

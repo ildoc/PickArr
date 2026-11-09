@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PickArr.Infrastructure.Metadata.Tmdb;
+namespace Pickarr.Infrastructure.Metadata.Tmdb;
 
 internal sealed class TmdbMovieDto
 {

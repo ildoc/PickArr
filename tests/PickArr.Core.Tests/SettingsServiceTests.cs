@@ -1,9 +1,9 @@
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class SettingsServiceTests
 {

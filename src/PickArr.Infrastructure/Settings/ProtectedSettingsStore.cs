@@ -1,18 +1,18 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Settings;
+namespace Pickarr.Infrastructure.Settings;
 
 public sealed class ProtectedSettingsStore(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IDataProtectionProvider dataProtectionProvider,
     IClock clock) : ISettingsStore
 {
-    private readonly IDataProtector _protector = dataProtectionProvider.CreateProtector("PickArr.Settings.v1");
+    private readonly IDataProtector _protector = dataProtectionProvider.CreateProtector("Pickarr.Settings.v1");
 
     public async Task<string?> GetRawAsync(string key, CancellationToken cancellationToken = default)
     {

@@ -1,6 +1,6 @@
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Time;
+namespace Pickarr.Infrastructure.Time;
 
 public sealed class SystemClock : IClock
 {

@@ -1,4 +1,4 @@
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 /// <summary>
 /// Process-wide last Watchmode quota headers. Scoped <see cref="CreditBudgetService"/>

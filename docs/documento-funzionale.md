@@ -1,11 +1,11 @@
-# PickArr — Documento funzionale
+# Pickarr — Documento funzionale
 
 | | |
 |---|---|
 | **Versione** | 0.2 |
 | **Data** | 2026-11-06 |
 | **Lingua** | Italiano |
-| **Nome progetto** | *PickArr* è un nome provvisorio (vedi D-08) |
+| **Nome progetto** | *Pickarr* è un nome provvisorio (vedi D-08) |
 | **Documenti collegati** | `specifica-tecnica.md`, `raccomandazioni.md` (feature voto e *Per te*) |
 
 ---
@@ -31,7 +31,7 @@
 
 ### 1.1 Scopo
 
-PickArr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo aggiornato dei contenuti disponibili su un servizio di streaming (inizialmente **Netflix**) in un dato **paese** e permette di sfogliarlo, cercarlo e salvarlo tra i preferiti. Da qui l'utente può inviare un titolo a **Sonarr** (serie) o **Radarr** (film), vedere lo stato della sua libreria e rimuoverlo.
+Pickarr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo aggiornato dei contenuti disponibili su un servizio di streaming (inizialmente **Netflix**) in un dato **paese** e permette di sfogliarlo, cercarlo e salvarlo tra i preferiti. Da qui l'utente può inviare un titolo a **Sonarr** (serie) o **Radarr** (film), vedere lo stato della sua libreria e rimuoverlo.
 
 ### 1.2 Obiettivi
 
@@ -235,7 +235,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-ST-02 | Lo stato è visibile su card e scheda ed è usabile come filtro. | M |
 | FR-ST-03 | Per le serie, la scheda mostra per ogni stagione: monitorata sì/no, episodi scaricati su totali e stato. | M |
 | FR-ST-04 | Lo stato proviene da una **cache** aggiornata da una sync periodica (default: ogni 15 minuti) e, se configurati, dai **webhook** di Sonarr/Radarr per aggiornamenti quasi in tempo reale. | M |
-| FR-ST-05 | Il match tra titolo del catalogo e libreria avviene per **id TMDB / TVDB**, quindi vale anche per elementi presenti in Sonarr/Radarr ma non aggiunti da PickArr. | M |
+| FR-ST-05 | Il match tra titolo del catalogo e libreria avviene per **id TMDB / TVDB**, quindi vale anche per elementi presenti in Sonarr/Radarr ma non aggiunti da Pickarr. | M |
 | FR-ST-06 | L'utente può forzare l'aggiornamento dello stato di un titolo. | M |
 | FR-ST-07 | Se l'istanza è irraggiungibile, resta l'ultimo stato noto e la UI segnala che è obsoleto (con ora dell'ultimo aggiornamento). | M |
 | FR-ST-08 | Aggiornamento in tempo reale della UI (senza ricaricare) alla variazione di stato. | C |
@@ -248,8 +248,8 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-DEL-02 | L'azione apre un dialog di **conferma esplicita** che riassume titolo, percorso, dimensione su disco e numero di file. | M |
 | FR-DEL-03 | Il dialog offre due opzioni: **"Elimina anche i file scaricati"** e **"Aggiungi alle esclusioni di importazione"** (impedisce che il titolo sia riaggiunto da liste esterne). Entrambe disattivate di default (D-04). | M |
 | FR-DEL-04 | Se si seleziona l'eliminazione dei file, il pulsante di conferma cambia aspetto e il testo avvisa che l'operazione non è reversibile. | M |
-| FR-DEL-05 | L'eliminazione rimuove l'elemento solo da Sonarr/Radarr: il titolo resta nel catalogo e nei preferiti di PickArr. | M |
-| FR-DEL-06 | L'eliminazione è consentita anche per elementi non aggiunti da PickArr (vedi FR-ST-05). | M |
+| FR-DEL-05 | L'eliminazione rimuove l'elemento solo da Sonarr/Radarr: il titolo resta nel catalogo e nei preferiti di Pickarr. | M |
+| FR-DEL-06 | L'eliminazione è consentita anche per elementi non aggiunti da Pickarr (vedi FR-ST-05). | M |
 | FR-DEL-07 | Le eliminazioni sono registrate in un log di audit (titolo, istanza, opzioni, data, esito). | S |
 
 ### 4.10 Impostazioni (FR-SET)
@@ -627,7 +627,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-05 | **Costo reale per chiamata** Watchmode (e parametri esatti dell'elenco titoli). | Da misurare nello spike SP-1; il design usa un budget parametrico. |
 | D-06 | **Classificazione stand-up.** | Preferenza per il genere Watchmode se presente, altrimenti keyword TMDB; verifica nello spike. |
 | D-07 | **Sezione "In scadenza" sul piano free** (solo anteprima dei prossimi 10 per paese). | Mostrata quando i dati ci sono, con nota sulla limitazione. Calendario completo con piano a pagamento. |
-| D-08 | **Nome del progetto.** | "PickArr" provvisorio. |
+| D-08 | **Nome del progetto.** | "Pickarr" provvisorio. |
 | D-09 | **Versioni minime** di Sonarr (v4) e Radarr (v5). | Da confermare con le istanze in uso. |
 | D-10 | **Storage di Hangfire su SQLite** (pacchetto di comunità). | Spike SP-4; in alternativa storage in memoria, dato che le schedulazioni si ricreano dal DB all'avvio. |
 | D-REC-01 | Scope predefinito di *Per te*. | Sorgente selezionata (`source`). |

@@ -4,21 +4,21 @@ using System.Text.Json.Nodes;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Arr;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Time;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Arr;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Time;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class ArrAddDeleteTests : IAsyncLifetime
 {
@@ -230,7 +230,7 @@ public sealed class ArrAddDeleteTests : IAsyncLifetime
         added.TmdbId.ShouldBe(603);
     }
 
-    private Services CreateServices(PickArrDbContext db, MemorySettingsStore settings)
+    private Services CreateServices(PickarrDbContext db, MemorySettingsStore settings)
     {
         var http = new HttpClient { BaseAddress = new Uri(_server.Urls[0]) };
         var sonarr = new SonarrClient(http, settings, NullLogger<SonarrClient>.Instance);
@@ -246,7 +246,7 @@ public sealed class ArrAddDeleteTests : IAsyncLifetime
 
     private sealed record Services(IArrAddService Add, IArrDeleteService Delete);
 
-    private static async Task<Title> SeedSeriesAsync(PickArrDbContext db)
+    private static async Task<Title> SeedSeriesAsync(PickarrDbContext db)
     {
         var title = new Title
         {
@@ -317,12 +317,12 @@ public sealed class ArrAddDeleteTests : IAsyncLifetime
             .RespondWith(Response.Create().WithStatusCode(200));
     }
 
-    private static async Task<PickArrDbContext> CreateDbAsync()
+    private static async Task<PickarrDbContext> CreateDbAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
         return db;
     }

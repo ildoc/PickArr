@@ -1,14 +1,14 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class CatalogUpserterTests
 {
@@ -137,17 +137,17 @@ public sealed class CatalogUpserterTests
         (await db.Titles.SingleAsync()).MetadataStatus.ShouldBe(MetadataStatuses.Pending);
     }
 
-    private static async Task<PickArrDbContext> CreateDbAsync()
+    private static async Task<PickarrDbContext> CreateDbAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
         return db;
     }
 
-    private static async Task<CatalogSource> SeedSourceAsync(PickArrDbContext db, bool baselineCompleted)
+    private static async Task<CatalogSource> SeedSourceAsync(PickarrDbContext db, bool baselineCompleted)
     {
         var provider = new Provider
         {

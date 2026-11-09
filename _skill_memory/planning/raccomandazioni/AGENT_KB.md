@@ -20,7 +20,7 @@ Workflow canonico nella skill `incremental-dev-planning`, non duplicato qui.
 1. Fonte prodotto: `docs/raccomandazioni.md` v0.2 (ID `FR-REC-*`, `BR-REC-*`, `D-REC-*`, `SP-R*`). Non inventare scope oltre quel documento, `AGENTS.md` e i documenti collegati.
 2. Ordine di rilascio: spike → R1 → R2 → R3 → R4 → docs prodotto → verifica finale indipendente. Non saltare le dipendenze spike (SP-R1 prima di R2 enrichment; SP-R2 prima di R3 ONNX).
 3. Predicato di appartenenza raccomandazioni ≠ filtro griglia catalogo: `RemovedAt` non esclude (BR-REC-07 / RR-06). Un solo helper di query dedicato.
-4. Core resta puro: algoritmo in `PickArr.Core`; ONNX, EF, Hangfire, TMDB in Infrastructure. UI in `src/PickArr.WebApp` (non nel path `frontend/` citato nel doc §15).
+4. Core resta puro: algoritmo in `Pickarr.Core`; ONNX, EF, Hangfire, TMDB in Infrastructure. UI in `src/Pickarr.WebApp` (non nel path `frontend/` citato nel doc §15).
 
 ---
 
@@ -36,7 +36,7 @@ Workflow canonico nella skill `incremental-dev-planning`, non duplicato qui.
 | V-REC-06 | Perimetro piano = R1→R4 + tutti i requisiti M/S/C del documento; livello 3 da implementare in R4; eventi (FR-REC-AD-05) in R4 default off | utente 2026-11-06 |
 | V-REC-07 | SP-R5 (licenze TMDB/modello) = nota rischio in ANALYSIS, non task di roadmap | utente 2026-11-06 |
 | V-REC-08 | Aggiornare `documento-funzionale.md` e `specifica-tecnica.md` (§21) in tranche docs prima della verifica finale | utente 2026-11-06 |
-| V-REC-09 | Layout repo: `src/PickArr.*`, `tests/*`, comandi in `AGENTS.md` (non i path `backend/`/`frontend/` dello AGENT_KB comune CONV-04 se divergono) | AGENTS.md |
+| V-REC-09 | Layout repo: `src/Pickarr.*`, `tests/*`, comandi in `AGENTS.md` (non i path `backend/`/`frontend/` dello AGENT_KB comune CONV-04 se divergono) | AGENTS.md |
 
 ---
 

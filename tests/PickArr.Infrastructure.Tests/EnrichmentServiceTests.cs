@@ -4,21 +4,21 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Metadata;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Metadata;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class EnrichmentServiceTests : IAsyncLifetime
 {
@@ -60,7 +60,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await enrichment.EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = await db.Titles.Include(t => t.Localizations).Include(t => t.TitleGenres)
             .SingleAsync(t => t.Id == titleId);
         title.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
@@ -93,7 +93,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await enrichment.EnrichTitleAsync(standupId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var series = await db.Titles.SingleAsync(t => t.Id == seriesId);
         series.TvdbId.ShouldBe(81189);
         series.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
@@ -113,7 +113,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = await db.Titles
             .Include(t => t.TitleKeywords)
             .Include(t => t.TitleCredits)
@@ -140,7 +140,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var credits = await db.TitleCredits.Where(c => c.TitleId == titleId).ToListAsync();
         credits.ShouldContain(c => c.PersonId == 66633 && c.Role == CreditRoles.Creator);
         credits.ShouldContain(c => c.PersonId == 17419 && c.Role == CreditRoles.Cast);
@@ -160,7 +160,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var locs = await db.TitleLocalizations.Where(l => l.TitleId == titleId).ToListAsync();
         locs.Count.ShouldBe(2);
         locs.ShouldContain(l => l.Language == "it-IT" && !string.IsNullOrWhiteSpace(l.Overview));
@@ -179,7 +179,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         var titleId = await SeedTitleAsync(550, "movie", "en-US");
         await using (var scope = _services!.CreateAsyncScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             var title = await db.Titles.SingleAsync(t => t.Id == titleId);
             title.MetadataStatus = MetadataStatuses.Ready;
             title.MetadataFetchedAt = DateTime.UtcNow;
@@ -193,7 +193,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         result.Ready.ShouldBe(1);
 
         await using var verify = _services!.CreateAsyncScope();
-        var verifyDb = verify.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var verifyDb = verify.ServiceProvider.GetRequiredService<PickarrDbContext>();
         (await verifyDb.TitleKeywords.CountAsync(tk => tk.TitleId == titleId)).ShouldBeGreaterThan(0);
         (await verifyDb.TitleCredits.CountAsync(tc => tc.TitleId == titleId)).ShouldBeGreaterThan(0);
     }
@@ -212,7 +212,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var locs = await db.TitleLocalizations.Where(l => l.TitleId == titleId).ToListAsync();
         locs.Count.ShouldBe(2);
         locs.ShouldContain(l => l.Language == "it-IT");
@@ -231,7 +231,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = await db.Titles.SingleAsync(t => t.Id == titleId);
         title.TmdbId.ShouldBe(550);
         title.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
@@ -254,7 +254,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         result.Ready.ShouldBe(0);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = await db.Titles.SingleAsync(t => t.Id == titleId);
         title.MetadataStatus.ShouldBe(MetadataStatuses.Unmapped);
     }
@@ -271,7 +271,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = await db.Titles.SingleAsync(t => t.Id == titleId);
         title.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
         title.TmdbType.ShouldBe("tv");
@@ -295,7 +295,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         }
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var provider = await db.Providers.FirstOrDefaultAsync(p => p.Key == "netflix");
         if (provider is null)
         {
@@ -364,17 +364,17 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-enrich-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-enrich-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["PickArr:DataPath"] = dataPath,
-                ["PickArr:Tmdb:BaseUrl"] = _server.Urls[0] + "/3/",
-                ["PickArr:Tmdb:RequestsPerSecond"] = "1000",
-                ["PickArr:Tmdb:DisableResilience"] = "true",
-                ["PickArr:Hangfire:Storage"] = "Memory",
+                ["Pickarr:DataPath"] = dataPath,
+                ["Pickarr:Tmdb:BaseUrl"] = _server.Urls[0] + "/3/",
+                ["Pickarr:Tmdb:RequestsPerSecond"] = "1000",
+                ["Pickarr:Tmdb:DisableResilience"] = "true",
+                ["Pickarr:Hangfire:Storage"] = "Memory",
             })
             .Build();
 
@@ -386,15 +386,15 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         services.AddSingleton<IClock, FixedClock>();
         services.AddSingleton<IApiUsageSyncRunAccessor, ApiUsageSyncRunAccessor>();
         services.AddDataProtection().UseEphemeralDataProtectionProvider();
-        services.AddDbContext<PickArrDbContext>(o => o.UseSqlite(_connection));
+        services.AddDbContext<PickarrDbContext>(o => o.UseSqlite(_connection));
         services.AddScoped<ISettingsStore, ProtectedSettingsStore>();
         services.AddScoped<IEnrichmentService, EnrichmentService>();
         services.AddScoped<ITmdbImageUrlBuilder, TmdbImageUrlBuilder>();
-        services.AddPickArrTmdb(config);
+        services.AddPickarrTmdb(config);
         _services = services.BuildServiceProvider();
 
         await using var scope = _services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         await db.Database.EnsureCreatedAsync();
         var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
         await store.SetAsync(SettingsKeys.TmdbApiKey, JsonSerializer.Serialize("test-tmdb-api-key"), true);

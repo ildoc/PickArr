@@ -4,13 +4,13 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace PickArr.Infrastructure.Persistence.Migrations
+namespace Pickarr.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(PickArrDbContext))]
+    [DbContext(typeof(PickarrDbContext))]
     [Migration("20261104165220_AddApiUsage")]
     partial class AddApiUsage
     {
@@ -20,7 +20,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ApiUsage", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ApiUsage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -61,7 +61,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("ApiUsage", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.AppSetting", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.AppSetting", b =>
                 {
                     b.Property<string>("Key")
                         .HasMaxLength(128)
@@ -82,7 +82,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Settings", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.CatalogSource", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.CatalogSource", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -137,7 +137,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("CatalogSources", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -176,9 +176,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Providers", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.CatalogSource", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.CatalogSource", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Provider", "Provider")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Provider", "Provider")
                         .WithMany("CatalogSources")
                         .HasForeignKey("ProviderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -187,7 +187,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Provider");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Navigation("CatalogSources");
                 });

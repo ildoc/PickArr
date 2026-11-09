@@ -7,7 +7,7 @@ using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("env-initial-import", DisableParallelization = true)]
 public sealed class EnvInitialImportCollection;
@@ -100,23 +100,23 @@ public sealed class EnvInitialCatalogImportTests
 
     private sealed class Factory(string watchmodeBaseUrl) : WebApplicationFactory<Program>
     {
-        private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "PickArr-env-import-cold", Guid.NewGuid().ToString("N"));
+        private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-env-import-cold", Guid.NewGuid().ToString("N"));
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             Directory.CreateDirectory(_dataPath);
             builder.UseEnvironment("Development");
-            builder.UseSetting("PickArr:DataPath", _dataPath);
+            builder.UseSetting("Pickarr:DataPath", _dataPath);
             builder.UseSetting("Hangfire:Storage", "Memory");
-            builder.UseSetting("PickArr:Catalog:AutoInitialImport", "true");
-            builder.UseSetting("PickArr:Settings:watchmode:apiKey", "wm-env-initial-import");
-            builder.UseSetting("PickArr:Settings:sonarr:url", "http://sonarr.local");
-            builder.UseSetting("PickArr:Settings:sonarr:apiKey", "sonarr-key");
-            builder.UseSetting("PickArr:Settings:radarr:url", "http://radarr.local");
-            builder.UseSetting("PickArr:Settings:radarr:apiKey", "radarr-key");
-            builder.UseSetting("PickArr:Watchmode:BaseUrl", watchmodeBaseUrl);
-            builder.UseSetting("PickArr:Watchmode:RequestsPerSecond", "1000");
-            builder.UseSetting("PickArr:Watchmode:DisableResilience", "true");
+            builder.UseSetting("Pickarr:Catalog:AutoInitialImport", "true");
+            builder.UseSetting("Pickarr:Settings:watchmode:apiKey", "wm-env-initial-import");
+            builder.UseSetting("Pickarr:Settings:sonarr:url", "http://sonarr.local");
+            builder.UseSetting("Pickarr:Settings:sonarr:apiKey", "sonarr-key");
+            builder.UseSetting("Pickarr:Settings:radarr:url", "http://radarr.local");
+            builder.UseSetting("Pickarr:Settings:radarr:apiKey", "radarr-key");
+            builder.UseSetting("Pickarr:Watchmode:BaseUrl", watchmodeBaseUrl);
+            builder.UseSetting("Pickarr:Watchmode:RequestsPerSecond", "1000");
+            builder.UseSetting("Pickarr:Watchmode:DisableResilience", "true");
         }
 
         public override async ValueTask DisposeAsync()

@@ -3,10 +3,10 @@ using Hangfire.Common;
 using Hangfire.States;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
-using PickArr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Jobs;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RecoRebuildSchedulerTests
 {

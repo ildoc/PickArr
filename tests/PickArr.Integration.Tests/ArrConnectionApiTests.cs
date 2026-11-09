@@ -2,14 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [Collection("api")]
 public sealed class ArrConnectionApiTests : IAsyncLifetime

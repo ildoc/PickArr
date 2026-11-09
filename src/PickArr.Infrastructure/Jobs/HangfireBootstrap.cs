@@ -7,11 +7,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public static class HangfireBootstrap
 {
-    public static IServiceCollection AddPickArrHangfire(
+    public static IServiceCollection AddPickarrHangfire(
         this IServiceCollection services,
         IConfiguration configuration,
         string dataPath)
@@ -33,7 +33,7 @@ public static class HangfireBootstrap
 
         services.AddHangfire((sp, global) =>
         {
-            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("PickArr.Hangfire");
+            var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Pickarr.Hangfire");
             if (options.Storage == HangfireStorageKind.Memory)
             {
                 global.UseStorage(sp.GetRequiredService<InMemoryStorage>());

@@ -19,7 +19,7 @@ Requisiti: ANALYSIS.md §1; specifiche dettagliate in `docs/raccomandazioni.md` 
 
 ### T02 — Migrazione Ratings/RatingEvents + Settings reco base
 
-- Scope: entity Core; EF configurations/migration; `PickArrDbContext`; `SettingsKeys` (`reco.enabled`, pesi base, `n0`, `excludeInLibrary`, … minimi R1); DI
+- Scope: entity Core; EF configurations/migration; `PickarrDbContext`; `SettingsKeys` (`reco.enabled`, pesi base, `n0`, `excludeInLibrary`, … minimi R1); DI
 - Requisiti: R-RT, R-ST; §10.2 Ratings/RatingEvents; §16 subset
 - Acceptance: migrazione applicabile; tabella Ratings PK TitleId; RatingEvents con Origin; setting `reco.enabled` default true leggibile da SettingsService; test persistenza smoke
 - Verifica: `dotnet test` su Infrastructure (initializer/migration) filtrato — **PASS 2026-11-06** (DatabaseInitializerTests + migrazione `20261106093517_AddRatings`)
@@ -44,7 +44,7 @@ Requisiti: ANALYSIS.md §1; specifiche dettagliate in `docs/raccomandazioni.md` 
 - Scope: helper appartenenza (source/enabled, RemovedAt ignorato); prior bayes+pop §12.2; test unit sintetici
 - Requisiti: R-CD, R-RC; BR-REC-07; RR-06
 - Acceptance: test: titolo con RemovedAt ∈ scope; sorgente disabled esclusa; zero Availability escluso; ordine prior deterministico su dataset sintetico
-- Verifica: `dotnet test tests/PickArr.Core.Tests --filter FullyQualifiedName~Reco` — **PASS 2026-11-06** (8 test)
+- Verifica: `dotnet test tests/Pickarr.Core.Tests --filter FullyQualifiedName~Reco` — **PASS 2026-11-06** (8 test)
 - Contesto: A-001, K-002, K-003
 - Assunzioni: nessuna
 - Rollback: rimuovere modulo Core reco
@@ -64,7 +64,7 @@ Requisiti: ANALYSIS.md §1; specifiche dettagliate in `docs/raccomandazioni.md` 
 - Scope: endpoints recommendations; mapping item con availability o places (places con removedAt se valorizzato — estendere DTO place lato reco); filtri type/genre/year/includeInLibrary; esclusione votati
 - Requisiti: FR-REC-RC-01..08; NFR-REC-01 (precalc)
 - Acceptance: scope=source richiede sourceId; enabled dedupe+places; votati assenti; RemovedAt non esclude; status espone stage/N_eff; integration test due scope + voto cross-provider stesso TitleId
-- Verifica: `dotnet test tests/PickArr.Integration.Tests --filter FullyQualifiedName~Reco` — **PASS 2026-11-06** (`RecommendationsApiTests`)
+- Verifica: `dotnet test tests/Pickarr.Integration.Tests --filter FullyQualifiedName~Reco` — **PASS 2026-11-06** (`RecommendationsApiTests`)
 - Contesto: A-004
 - Assunzioni: nessuna
 - Rollback: rimuovere endpoints
@@ -161,7 +161,7 @@ Requisiti: ANALYSIS.md §1; specifiche dettagliate in `docs/raccomandazioni.md` 
 
 ### T15 — Download modello + detect + self-test
 
-- Scope: path `PickArr__Models__Path`; RecoModelDownloadJob; hash; self-test; stato RecoState.ModelStatus; admin POST model/download|detect
+- Scope: path `Pickarr__Models__Path`; RecoModelDownloadJob; hash; self-test; stato RecoState.ModelStatus; admin POST model/download|detect
 - Requisiti: FR-REC-ML-01..03,05; UC-REC-05
 - Acceptance: Absent→Downloading→Ready|Error; Error non spegne L0/L1; copia manuale+detect; test condizionale skip se no file
 - Verifica: test condizionali + manual checklist

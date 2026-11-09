@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Persistence;
+namespace Pickarr.Infrastructure.Persistence;
 
 public sealed class DatabaseInitializer(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IClock clock,
     ILogger<DatabaseInitializer> logger)
 {

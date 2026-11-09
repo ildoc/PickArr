@@ -1,6 +1,6 @@
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class ApiUsageSyncRunAccessor : IApiUsageSyncRunAccessor
 {

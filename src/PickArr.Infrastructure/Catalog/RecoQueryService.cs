@@ -1,20 +1,20 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Core.Recommendations;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Metadata.Reco;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Core.Recommendations;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Metadata.Reco;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class RecoQueryService(
-    PickArrDbContext db,
+    PickarrDbContext db,
     ISettingsStore settings,
     IClock clock) : IRecoQueryService
 {

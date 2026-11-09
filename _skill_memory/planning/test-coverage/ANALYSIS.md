@@ -27,10 +27,10 @@ Richiesta originale (fedelmente): analisi approfondita del codice e dei test; au
 ### 1.2 Fonti analizzate
 
 - `AGENTS.md`, `docs/documento-funzionale.md` / `docs/specifica-tecnica.md` (riferimento prodotto, non riletti interamente)
-- Endpoint: `src/PickArr.Api/Endpoints/*.cs` (11 file)
+- Endpoint: `src/Pickarr.Api/Endpoints/*.cs` (11 file)
 - Servizi Infrastructure rilevanti: `CatalogConfigurationService`, `TitleQueryService`, `FavoriteService`, `RatingService`, `AdminJobService`, `SeriesGuideService`, sync Watchmode/Leaving/Enrichment
-- Test: `tests/PickArr.{Core,Infrastructure,Integration}.Tests/**`
-- Frontend: `src/PickArr.WebApp/src/**` + `*.test.ts(x)`, `vite.config.ts`, `package.json`
+- Test: `tests/Pickarr.{Core,Infrastructure,Integration}.Tests/**`
+- Frontend: `src/Pickarr.WebApp/src/**` + `*.test.ts(x)`, `vite.config.ts`, `package.json`
 - Package: `Directory.Packages.props` (coverlet.collector), csproj test
 
 ### 1.3 Stato as-is (sintesi)
@@ -43,7 +43,7 @@ Suite già ampia su dominio catalog sync, reco, settings env, ratings. Punti cie
 
 | Componente | Ruolo | File | Accoppiamento |
 | --- | --- | --- | --- |
-| Minimal API endpoints | Contratti HTTP | `src/PickArr.Api/Endpoints/*` | medio (DI servizi) |
+| Minimal API endpoints | Contratti HTTP | `src/Pickarr.Api/Endpoints/*` | medio (DI servizi) |
 | `TitleQueryService` | Query catalogo/lista/filtri/emptyReason | `Infrastructure/Catalog/TitleQueryService.cs` | alto (EF) |
 | `CatalogConfigurationService` | Enable provider/country + limiti free plan | `Infrastructure/Catalog/CatalogConfigurationService.cs` | alto |
 | `FavoriteService` | Preferiti idempotenti | `Infrastructure/Catalog/FavoriteService.cs` | basso |

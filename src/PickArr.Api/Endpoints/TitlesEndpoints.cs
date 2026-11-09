@@ -1,13 +1,13 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class TitlesEndpoints
 {
@@ -197,7 +197,7 @@ public static class TitlesEndpoints
             int id,
             IArrClientFactory factory,
             IArrLibrarySync sync,
-            PickArrDbContext db,
+            PickarrDbContext db,
             ITitleQueryService titles,
             CancellationToken ct) =>
         {

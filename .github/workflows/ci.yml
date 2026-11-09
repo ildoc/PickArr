@@ -46,15 +46,15 @@ jobs:
             **/*.csproj
 
       - name: Restore
-        run: dotnet restore PickArr.slnx
+        run: dotnet restore Pickarr.slnx
 
       - name: Verify formatting
-        run: dotnet format PickArr.slnx --verify-no-changes --no-restore
+        run: dotnet format Pickarr.slnx --verify-no-changes --no-restore
 
       # Informational. Restore already enforces NuGetAuditMode=direct.
       - name: Report vulnerable packages
         continue-on-error: true
-        run: dotnet list PickArr.slnx package --vulnerable --include-transitive
+        run: dotnet list Pickarr.slnx package --vulnerable --include-transitive
 
   frontend-lint:
     name: Frontend lint
@@ -64,7 +64,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: src/PickArr.WebApp
+        working-directory: src/Pickarr.WebApp
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -76,7 +76,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/PickArr.WebApp/package-lock.json
+          cache-dependency-path: src/Pickarr.WebApp/package-lock.json
 
       - name: Install
         run: npm ci
@@ -109,7 +109,7 @@ jobs:
             **/*.csproj
 
       - name: Test
-        run: dotnet test PickArr.slnx --configuration Release --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test Pickarr.slnx --configuration Release --logger "trx;LogFileName=test-results.trx"
 
       - name: Upload test results
         if: ${{ !cancelled() }}
@@ -128,7 +128,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: src/PickArr.WebApp
+        working-directory: src/Pickarr.WebApp
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -140,7 +140,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: src/PickArr.WebApp/package-lock.json
+          cache-dependency-path: src/Pickarr.WebApp/package-lock.json
 
       - name: Install
         run: npm ci
@@ -267,7 +267,7 @@ jobs:
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
-          file: src/PickArr.Api/Dockerfile
+          file: src/Pickarr.Api/Dockerfile
           platforms: linux/amd64
           push: ${{ steps.publish.outputs.push == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}

@@ -4,7 +4,7 @@
 
 ### T01 — Scaffold backend .NET 10
 
-- Scope: `backend/PickArr.slnx`, `Directory.Packages.props`, `Directory.Build.props`, progetti `PickArr.Core`, `PickArr.Infrastructure`, `PickArr.Api`, test `PickArr.Core.Tests` / `Infrastructure.Tests` / `Integration.Tests`; `Program.cs` minimo
+- Scope: `backend/Pickarr.slnx`, `Directory.Packages.props`, `Directory.Build.props`, progetti `Pickarr.Core`, `Pickarr.Infrastructure`, `Pickarr.Api`, test `Pickarr.Core.Tests` / `Infrastructure.Tests` / `Integration.Tests`; `Program.cs` minimo
 - Requisiti: ANALYSIS R-01; specifica §2–§3
 - Acceptance: soluzione compila; test vuoto/verde; dipendenze `Api→Core/Infra`, `Infra→Core`, Core senza EF/HTTP
 - Verifica: `dotnet build` / `dotnet test` in `backend/`
@@ -27,7 +27,7 @@
 - Scope: DbContext, migrazioni, seed Provider netflix + CatalogSources IT/US, tabella Settings, Data Protection key ring path, SettingsService base
 - Requisiti: R-01, R-10; FR-SET-01..09 Must; NFR-04/06; specifica §4, §10, §12
 - Acceptance: migrate all'avvio; seed idempotente; segreti cifrati e API settings espone solo `isSet`
-- Verifica: test integrazione DB temp; avvio Api crea `PickArr.db`
+- Verifica: test integrazione DB temp; avvio Api crea `Pickarr.db`
 - Contesto pertinente: nessuno
 - Assunzioni: nessuna
 - Rollback: revert migrazioni/progetti toccati

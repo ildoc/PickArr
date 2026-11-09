@@ -1,11 +1,11 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Metadata;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Metadata;
 
-namespace PickArr.Infrastructure.Metadata.Tmdb;
+namespace Pickarr.Infrastructure.Metadata.Tmdb;
 
 public sealed class TmdbMetadataProvider(
     HttpClient httpClient,

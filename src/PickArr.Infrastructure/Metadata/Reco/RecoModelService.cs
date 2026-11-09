@@ -3,16 +3,16 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Recommendations;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Recommendations;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Metadata.Reco;
+namespace Pickarr.Infrastructure.Metadata.Reco;
 
 public sealed class RecoModelService(
-    PickArrDbContext db,
+    PickarrDbContext db,
     ISettingsStore settings,
     IConfiguration configuration,
     IHttpClientFactory httpClientFactory,
@@ -163,7 +163,7 @@ public sealed class RecoModelService(
 
     public string ResolveModelDirectory(string modelId)
     {
-        var configured = configuration["PickArr:Models:Path"];
+        var configured = configuration["Pickarr:Models:Path"];
         var root = string.IsNullOrWhiteSpace(configured)
             ? Path.Combine(ResolveDataPath(), "models")
             : configured;
@@ -172,9 +172,9 @@ public sealed class RecoModelService(
 
     private string ResolveDataPath()
     {
-        var configured = configuration["PickArr:DataPath"];
+        var configured = configuration["Pickarr:DataPath"];
         return string.IsNullOrWhiteSpace(configured)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PickArr")
+            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Pickarr")
             : configured;
     }
 

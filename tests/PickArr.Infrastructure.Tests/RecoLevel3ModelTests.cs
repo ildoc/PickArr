@@ -1,8 +1,8 @@
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Metadata.Reco;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Metadata.Reco;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RecoLevel3ModelTests
 {

@@ -7,16 +7,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class CatalogConfigurationServiceTests
 {
@@ -157,7 +157,7 @@ public sealed class CatalogConfigurationServiceTests
     {
         private readonly SqliteConnection _connection;
 
-        public required PickArrDbContext Db { get; init; }
+        public required PickarrDbContext Db { get; init; }
         public required CatalogConfigurationService Sut { get; init; }
 
         private Fixture(SqliteConnection connection) => _connection = connection;
@@ -169,8 +169,8 @@ public sealed class CatalogConfigurationServiceTests
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
-            var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-            var db = new PickArrDbContext(options);
+            var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+            var db = new PickarrDbContext(options);
             await db.Database.EnsureCreatedAsync();
 
             var netflix = new Provider

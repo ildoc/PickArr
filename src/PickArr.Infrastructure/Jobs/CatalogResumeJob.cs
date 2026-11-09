@@ -1,17 +1,17 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 /// <summary>
 /// Resumes Paused catalog sync runs (budget/quota) by re-queuing full/incremental work.
 /// </summary>
 public sealed class CatalogResumeJob(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IBackgroundJobClient backgroundJobs,
     ILogger<CatalogResumeJob> logger)
 {

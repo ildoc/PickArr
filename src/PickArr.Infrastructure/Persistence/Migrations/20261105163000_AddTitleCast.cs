@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace PickArr.Infrastructure.Persistence.Migrations
+namespace Pickarr.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(PickArrDbContext))]
+    [DbContext(typeof(PickarrDbContext))]
     [Migration("20261105163000_AddTitleCast")]
     public partial class AddTitleCast : Migration
     {

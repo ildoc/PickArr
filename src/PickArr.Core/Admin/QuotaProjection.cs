@@ -1,4 +1,4 @@
-namespace PickArr.Core.Admin;
+namespace Pickarr.Core.Admin;
 
 public static class QuotaProjection
 {

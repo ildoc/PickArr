@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "PickArr.Api": {
+    "Pickarr.Api": {
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "PickArr__DataPath": "../../.data"
+        "Pickarr__DataPath": "../../.data"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5000"

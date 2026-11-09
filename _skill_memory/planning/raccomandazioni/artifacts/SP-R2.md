@@ -52,7 +52,7 @@ Se manca il file modello: stato `Absent`, L0/L1 restano attivi (FR-REC-ML-03).
 | Throughput CPU (ordine) | ~20–80 titoli/s batch 16, 2 thread | stima; smoke T15/T16 aggiorna se misurato |
 | Immagine Docker | modello **fuori** immagine base | FR-REC-ML-02 |
 
-Niente bench bloccante sulla CI senza cache modello: test ONNX **condizionali** (`PickArr:Models:Path` con file presenti).
+Niente bench bloccante sulla CI senza cache modello: test ONNX **condizionali** (`Pickarr:Models:Path` con file presenti).
 
 ---
 

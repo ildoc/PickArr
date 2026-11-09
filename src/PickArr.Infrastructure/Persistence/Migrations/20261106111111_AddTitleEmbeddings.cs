@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace PickArr.Infrastructure.Persistence.Migrations
+namespace Pickarr.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AddTitleEmbeddings : Migration

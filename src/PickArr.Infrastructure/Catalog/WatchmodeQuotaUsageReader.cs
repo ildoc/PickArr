@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
 using System.Text.Json;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class WatchmodeQuotaUsageReader(
-    PickArrDbContext db,
+    PickarrDbContext db,
     ISettingsStore settingsStore,
     IClock clock) : IQuotaUsageReader
 {

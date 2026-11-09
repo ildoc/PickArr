@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class WatchedService(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IClock clock,
     IRecoRebuildScheduler rebuildScheduler) : IWatchedService
 {

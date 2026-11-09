@@ -1,12 +1,12 @@
 using System.Reflection;
 using Hangfire.Common;
-using PickArr.Core.Admin;
-using PickArr.Core.Domain;
-using PickArr.Infrastructure.Admin;
-using PickArr.Infrastructure.Jobs;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Domain;
+using Pickarr.Infrastructure.Admin;
+using Pickarr.Infrastructure.Jobs;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class JobStateTests
 {

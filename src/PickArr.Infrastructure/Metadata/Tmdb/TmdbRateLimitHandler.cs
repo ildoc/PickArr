@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace PickArr.Infrastructure.Metadata.Tmdb;
+namespace Pickarr.Infrastructure.Metadata.Tmdb;
 
 public sealed class TmdbRateLimitHandler(IOptions<TmdbOptions> options, TmdbRateGate rateGate) : DelegatingHandler
 {

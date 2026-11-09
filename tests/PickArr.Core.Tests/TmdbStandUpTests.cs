@@ -1,7 +1,7 @@
-using PickArr.Core.Metadata;
+using Pickarr.Core.Metadata;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class TmdbStandUpTests
 {

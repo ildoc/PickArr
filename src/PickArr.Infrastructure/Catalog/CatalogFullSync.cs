@@ -1,17 +1,17 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class CatalogFullSync(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IProviderResolver providerResolver,
     ICreditBudget creditBudget,
     ISyncRunStore syncRunStore,

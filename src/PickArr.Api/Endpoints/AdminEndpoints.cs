@@ -1,7 +1,7 @@
-using PickArr.Core.Abstractions;
-using PickArr.Core.Admin;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Admin;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class AdminEndpoints
 {

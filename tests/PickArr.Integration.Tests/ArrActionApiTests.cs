@@ -2,14 +2,14 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("arr-action-api")]
 public sealed class ArrActionApiCollection : ICollectionFixture<ApiFactory>;
@@ -101,7 +101,7 @@ public sealed class ArrActionApiTests
     private async Task<int> SeedSeriesAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var stamp = Random.Shared.Next(100_000, 999_999);
         var title = new Title
         {
@@ -123,7 +123,7 @@ public sealed class ArrActionApiTests
     private async Task<int> SeedSeriesWithoutIdsAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var stamp = Random.Shared.Next(1_000_000, 9_999_999);
         var title = new Title
         {

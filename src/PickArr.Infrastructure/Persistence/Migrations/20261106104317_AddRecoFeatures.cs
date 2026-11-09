@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace PickArr.Infrastructure.Persistence.Migrations
+namespace Pickarr.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
     public partial class AddRecoFeatures : Migration

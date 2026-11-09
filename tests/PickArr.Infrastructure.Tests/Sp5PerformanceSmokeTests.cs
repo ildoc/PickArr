@@ -2,17 +2,17 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 /// <summary>
 /// SP-5: seed ~10k titles and measure list/search latency (NFR-01 p95 &lt; 300 ms).
@@ -54,7 +54,7 @@ public sealed class Sp5PerformanceSmokeTests
     [Fact]
     public async Task List_and_search_p95_under_nfr01_with_10k_titles()
     {
-        var dbPath = Path.Combine(Path.GetTempPath(), "PickArr-sp5", $"{Guid.NewGuid():N}.db");
+        var dbPath = Path.Combine(Path.GetTempPath(), "Pickarr-sp5", $"{Guid.NewGuid():N}.db");
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
         await using var connection = new SqliteConnection($"Data Source={dbPath};Cache=Shared");
@@ -63,8 +63,8 @@ public sealed class Sp5PerformanceSmokeTests
         cmd.CommandText = "PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;";
         await cmd.ExecuteNonQueryAsync();
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        await using var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var sourceId = await SeedAsync(db);
@@ -136,7 +136,7 @@ public sealed class Sp5PerformanceSmokeTests
         return sorted[idx];
     }
 
-    private static async Task<int> SeedAsync(PickArrDbContext db)
+    private static async Task<int> SeedAsync(PickarrDbContext db)
     {
         var now = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
         var provider = new Provider

@@ -1,4 +1,4 @@
-namespace PickArr.Core.Domain.Entities;
+namespace Pickarr.Core.Domain.Entities;
 
 /// <summary>Singleton row (Id = 1) for the published recommendations version.</summary>
 public sealed class RecoState

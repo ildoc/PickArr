@@ -1,4 +1,4 @@
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public sealed class HangfireOptions
 {
@@ -13,6 +13,6 @@ public sealed class HangfireOptions
 
     public bool DashboardEnabled { get; set; }
 
-    /// <summary>File name under PickArr data path when Storage=Sqlite.</summary>
+    /// <summary>File name under Pickarr data path when Storage=Sqlite.</summary>
     public string SqliteFileName { get; set; } = "jobs.db";
 }

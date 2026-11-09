@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Offline leave-one-out metrics (§17.3).</summary>
 public static class RecoEvalMetrics

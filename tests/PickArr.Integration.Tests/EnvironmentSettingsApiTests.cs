@@ -3,20 +3,20 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 public sealed class EnvSettingsApiFactory : ApiFactory
 {
     protected override void ConfigureApplication(IWebHostBuilder builder)
     {
-        builder.UseSetting("PickArr:Settings:watchmode:apiKey", "env-watchmode-key");
-        builder.UseSetting("PickArr:Settings:watchmode:quota", "1200");
-        builder.UseSetting("PickArr:Settings:sonarr:url", "http://sonarr.internal:8989/");
-        builder.UseSetting("PickArr:Settings:reco:enabled", "false");
+        builder.UseSetting("Pickarr:Settings:watchmode:apiKey", "env-watchmode-key");
+        builder.UseSetting("Pickarr:Settings:watchmode:quota", "1200");
+        builder.UseSetting("Pickarr:Settings:sonarr:url", "http://sonarr.internal:8989/");
+        builder.UseSetting("Pickarr:Settings:reco:enabled", "false");
     }
 }
 

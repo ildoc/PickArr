@@ -1,6 +1,6 @@
-using PickArr.Core.Catalog;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 internal static class WatchmodeMapping
 {

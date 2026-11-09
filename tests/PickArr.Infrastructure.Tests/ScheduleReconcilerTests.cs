@@ -3,13 +3,13 @@ using Hangfire.InMemory;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class ScheduleReconcilerTests
 {
@@ -33,8 +33,8 @@ public sealed class ScheduleReconcilerTests
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        await using var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var provider = new Provider

@@ -23,10 +23,10 @@ coverage.cobertura.xml
 coverage.json
 
 # Node
-src/PickArr.WebApp/node_modules/
-src/PickArr.WebApp/dist/
-src/PickArr.WebApp/.vite/
-src/PickArr.WebApp/coverage/
+src/Pickarr.WebApp/node_modules/
+src/Pickarr.WebApp/dist/
+src/Pickarr.WebApp/.vite/
+src/Pickarr.WebApp/coverage/
 *.tsbuildinfo
 npm-debug.log*
 

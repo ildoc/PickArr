@@ -1,8 +1,8 @@
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 public sealed class WatchmodeOptions
 {
-    public const string SectionName = "PickArr:Watchmode";
+    public const string SectionName = "Pickarr:Watchmode";
 
     public string BaseUrl { get; set; } = "https://api.watchmode.com/v1/";
 

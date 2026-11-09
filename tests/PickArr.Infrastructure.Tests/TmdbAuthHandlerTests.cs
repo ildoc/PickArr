@@ -1,7 +1,7 @@
-using PickArr.Infrastructure.Metadata.Tmdb;
+using Pickarr.Infrastructure.Metadata.Tmdb;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class TmdbAuthHandlerTests
 {

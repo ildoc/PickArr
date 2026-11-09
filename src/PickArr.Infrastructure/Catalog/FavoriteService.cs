@@ -1,11 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
-public sealed class FavoriteService(PickArrDbContext db, IClock clock) : IFavoriteService
+public sealed class FavoriteService(PickarrDbContext db, IClock clock) : IFavoriteService
 {
     public async Task AddAsync(int titleId, CancellationToken cancellationToken = default)
     {

@@ -33,10 +33,10 @@ R-01…R-06 tutti PASS su file worktree; nessun deliverable mancante; assert com
 
 | Comando | Esito |
 | --- | --- |
-| `dotnet test tests/PickArr.Core.Tests` | **80 PASS** |
-| `dotnet test tests/PickArr.Infrastructure.Tests` | **131 PASS** |
-| `dotnet test tests/PickArr.Integration.Tests` | **42 PASS** |
-| `cd src/PickArr.WebApp && npm test -- --run` | **63 PASS** (30 file) |
+| `dotnet test tests/Pickarr.Core.Tests` | **80 PASS** |
+| `dotnet test tests/Pickarr.Infrastructure.Tests` | **131 PASS** |
+| `dotnet test tests/Pickarr.Integration.Tests` | **42 PASS** |
+| `cd src/Pickarr.WebApp && npm test -- --run` | **63 PASS** (30 file) |
 | `npm run typecheck` | OK |
 | `npm run lint` | OK (warning preesistenti `set-state-in-effect`, non errori) |
 

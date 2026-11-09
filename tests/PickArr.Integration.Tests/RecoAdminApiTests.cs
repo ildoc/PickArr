@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("reco-admin-api")]
 public sealed class RecoAdminApiCollection : ICollectionFixture<ApiFactory>;
@@ -47,7 +47,7 @@ public sealed class RecoAdminApiTests
         post.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         (await db.Ratings.AnyAsync(r => r.TitleId == pick && r.Value == RatingValues.Like)).ShouldBeTrue();
     }
 
@@ -96,7 +96,7 @@ public sealed class RecoAdminApiTests
 
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             (await db.Recommendations.CountAsync()).ShouldBe(0);
             (await db.Ratings.CountAsync(r => r.TitleId == seed.RatedTitleId)).ShouldBe(1);
         }
@@ -130,7 +130,7 @@ public sealed class RecoAdminApiTests
     private async Task<Seed> SeedAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
 
         var netflix = await db.Providers.FirstAsync(p => p.Key == "netflix");
         var prime = await db.Providers.FirstAsync(p => p.Key == "prime-video");

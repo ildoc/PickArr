@@ -1,7 +1,7 @@
-using PickArr.Core.Catalog;
+using Pickarr.Core.Catalog;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class CreditBudgetRulesTests
 {

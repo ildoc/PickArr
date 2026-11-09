@@ -1,8 +1,8 @@
-using PickArr.Core.Catalog;
-using PickArr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Core.Catalog;
+using Pickarr.Infrastructure.Catalog.Watchmode;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class WatchmodeMappingTests
 {

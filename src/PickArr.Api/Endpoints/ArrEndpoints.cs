@@ -1,10 +1,10 @@
 using System.Text.Json;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class ArrEndpoints
 {

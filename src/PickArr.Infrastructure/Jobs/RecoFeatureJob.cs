@@ -1,9 +1,9 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 /// <summary>
 /// Backfill keywords / credits / en-US for Ready pool titles (FR-REC-CD-04, §11.2).

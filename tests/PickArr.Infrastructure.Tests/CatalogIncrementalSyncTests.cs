@@ -4,21 +4,21 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
 {
@@ -68,7 +68,7 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         result.CreditsUsed.ShouldBe(1);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         (await db.Titles.CountAsync()).ShouldBe(4);
         (await db.Availabilities.CountAsync()).ShouldBe(4);
         (await db.AvailabilityEvents.CountAsync(e => e.Type == AvailabilityEventTypes.Added)).ShouldBe(4);
@@ -119,7 +119,7 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         list.RequestMessage.Query!["sort_by"].ShouldContain("release_date_desc");
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var rows = await db.Availabilities.ToListAsync();
         rows.ShouldNotBeEmpty();
         rows.ShouldAllBe(row => !row.IsBaseline && row.AddedAt != null);
@@ -165,16 +165,16 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-incr-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-incr-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
 
         var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["PickArr:DataPath"] = dataPath,
-                ["PickArr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
-                ["PickArr:Watchmode:RequestsPerSecond"] = "1000",
-                ["PickArr:Watchmode:DisableResilience"] = "true",
+                ["Pickarr:DataPath"] = dataPath,
+                ["Pickarr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
+                ["Pickarr:Watchmode:RequestsPerSecond"] = "1000",
+                ["Pickarr:Watchmode:DisableResilience"] = "true",
             })
             .Build();
 
@@ -186,7 +186,7 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         services.AddSingleton<IClock, FixedClock>();
         services.AddSingleton<IApiUsageSyncRunAccessor, ApiUsageSyncRunAccessor>();
         services.AddDataProtection().UseEphemeralDataProtectionProvider();
-        services.AddDbContext<PickArrDbContext>(o => o.UseSqlite(_connection));
+        services.AddDbContext<PickarrDbContext>(o => o.UseSqlite(_connection));
         services.AddScoped<ISettingsStore, ProtectedSettingsStore>();
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
@@ -194,12 +194,12 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         services.AddSingleton<WatchmodeQuotaObservation>();
         services.AddScoped<ICatalogIncrementalSync, CatalogIncrementalSync>();
         services.AddScoped<ICreditBudget, CreditBudgetService>();
-        services.AddPickArrWatchmode(config);
+        services.AddPickarrWatchmode(config);
 
         _services = services.BuildServiceProvider();
 
         await using var scope = _services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         await db.Database.EnsureCreatedAsync();
 
         var provider = new Provider

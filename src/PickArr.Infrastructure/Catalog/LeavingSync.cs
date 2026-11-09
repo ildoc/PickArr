@@ -2,14 +2,14 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 /// <summary>
 /// Sync leaving dates from the catalog provider (spec §6.8 / FR-CAT-11).
@@ -17,7 +17,7 @@ namespace PickArr.Infrastructure.Catalog;
 /// One Watchmode call per country; results fan out to every enabled source in that country.
 /// </summary>
 public sealed class LeavingSync(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IProviderResolver providerResolver,
     ICreditBudget creditBudget,
     ISyncRunStore syncRunStore,

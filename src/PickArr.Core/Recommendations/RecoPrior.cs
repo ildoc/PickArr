@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Level-0 Bayesian + popularity prior (§12.2).</summary>
 public static class RecoPrior

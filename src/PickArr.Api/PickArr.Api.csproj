@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
-    <RootNamespace>PickArr.Api</RootNamespace>
-    <AssemblyName>PickArr.Api</AssemblyName>
+    <RootNamespace>Pickarr.Api</RootNamespace>
+    <AssemblyName>Pickarr.Api</AssemblyName>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
     <DockerComposeProjectPath>..\..\docker-compose.dcproj</DockerComposeProjectPath>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PickArr.Core\PickArr.Core.csproj" />
-    <ProjectReference Include="..\PickArr.Infrastructure\PickArr.Infrastructure.csproj" />
+    <ProjectReference Include="..\Pickarr.Core\Pickarr.Core.csproj" />
+    <ProjectReference Include="..\Pickarr.Infrastructure\Pickarr.Infrastructure.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

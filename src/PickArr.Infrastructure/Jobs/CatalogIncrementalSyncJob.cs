@@ -1,8 +1,8 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public sealed class CatalogIncrementalSyncJob(
     ICatalogIncrementalSync sync,

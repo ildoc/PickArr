@@ -1,15 +1,15 @@
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using System.Text.Json;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public sealed class ScheduleReconciler(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IRecurringJobManager recurringJobs,
     ISettingsStore settings,
     ILogger<ScheduleReconciler> logger)

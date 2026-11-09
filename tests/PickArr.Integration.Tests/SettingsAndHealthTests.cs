@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Text.Json;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [Collection("api")]
 public sealed class SettingsAndHealthTests
@@ -30,7 +30,7 @@ public sealed class SettingsAndHealthTests
         response.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         var body = await response.Content.ReadFromJsonAsync<JsonElement>();
-        var informational = typeof(PickArr.Api.Endpoints.SystemEndpoints).Assembly
+        var informational = typeof(Pickarr.Api.Endpoints.SystemEndpoints).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             ?.InformationalVersion ?? "";
         var plus = informational.IndexOf('+', StringComparison.Ordinal);

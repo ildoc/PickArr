@@ -1,9 +1,9 @@
 using Hangfire;
 using Hangfire.Common;
 using Hangfire.Storage.Monitoring;
-using PickArr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Jobs;
 
-namespace PickArr.Infrastructure.Admin;
+namespace Pickarr.Infrastructure.Admin;
 
 internal sealed class HangfireJobActivity
 {

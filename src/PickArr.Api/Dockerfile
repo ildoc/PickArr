@@ -17,9 +17,9 @@ EXPOSE 8080
 # and this stage does not depend on the .NET restore.
 FROM --platform=$BUILDPLATFORM node:24-bookworm-slim AS web
 WORKDIR /web
-COPY src/PickArr.WebApp/package.json src/PickArr.WebApp/package-lock.json ./
+COPY src/Pickarr.WebApp/package.json src/Pickarr.WebApp/package-lock.json ./
 RUN npm ci --no-audit --no-fund
-COPY src/PickArr.WebApp/ ./
+COPY src/Pickarr.WebApp/ ./
 RUN npm run build
 
 # Restore before the sources so a code change does not download packages again.
@@ -32,18 +32,18 @@ ARG TARGETARCH
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props ./
-COPY src/PickArr.Api/PickArr.Api.csproj src/PickArr.Api/
-COPY src/PickArr.Core/PickArr.Core.csproj src/PickArr.Core/
-COPY src/PickArr.Infrastructure/PickArr.Infrastructure.csproj src/PickArr.Infrastructure/
+COPY src/Pickarr.Api/Pickarr.Api.csproj src/Pickarr.Api/
+COPY src/Pickarr.Core/Pickarr.Core.csproj src/Pickarr.Core/
+COPY src/Pickarr.Infrastructure/Pickarr.Infrastructure.csproj src/Pickarr.Infrastructure/
 RUN arch="$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)" \
- && dotnet restore "src/PickArr.Api/PickArr.Api.csproj" -r "linux-$arch"
-COPY src/PickArr.Api/ src/PickArr.Api/
-COPY src/PickArr.Core/ src/PickArr.Core/
-COPY src/PickArr.Infrastructure/ src/PickArr.Infrastructure/
+ && dotnet restore "src/Pickarr.Api/Pickarr.Api.csproj" -r "linux-$arch"
+COPY src/Pickarr.Api/ src/Pickarr.Api/
+COPY src/Pickarr.Core/ src/Pickarr.Core/
+COPY src/Pickarr.Infrastructure/ src/Pickarr.Infrastructure/
 # X.Y.Z on a release tag, X.Y.Z.N for N commits after it. Local builds stay 0.0.0.
 ARG VERSION=0.0.0
 RUN arch="$([ "$TARGETARCH" = "arm64" ] && echo arm64 || echo x64)" \
- && dotnet publish "src/PickArr.Api/PickArr.Api.csproj" \
+ && dotnet publish "src/Pickarr.Api/Pickarr.Api.csproj" \
       -c "$BUILD_CONFIGURATION" \
       -r "linux-$arch" \
       --no-self-contained \
@@ -64,7 +64,7 @@ USER root
 COPY --from=wget --chmod=555 /bin/busybox /usr/local/bin/wget
 USER $APP_UID
 ENV ASPNETCORE_URLS=http://+:8080 \
-    PickArr__DataPath=/config \
+    Pickarr__DataPath=/config \
     TZ=UTC
 WORKDIR /app
 # App bits and the built web app are separate layers: a frontend-only change
@@ -75,4 +75,4 @@ VOLUME /config
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \
   CMD ["/usr/local/bin/wget", "-q", "-O", "-", "http://127.0.0.1:8080/health"]
-ENTRYPOINT ["dotnet", "PickArr.Api.dll"]
+ENTRYPOINT ["dotnet", "Pickarr.Api.dll"]

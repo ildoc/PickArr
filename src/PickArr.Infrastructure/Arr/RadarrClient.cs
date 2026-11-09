@@ -3,12 +3,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Arr;
+namespace Pickarr.Infrastructure.Arr;
 
 public sealed class RadarrClient(
     HttpClient http,

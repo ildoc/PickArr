@@ -1,6 +1,6 @@
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Recommendations;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface IRatingService
 {

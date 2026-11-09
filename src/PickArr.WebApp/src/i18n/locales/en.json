@@ -1,8 +1,8 @@
 {
   "app": {
-    "title": "PickArr",
+    "title": "Pickarr",
     "tagline": "Browse streaming catalogs and send titles to Sonarr/Radarr.",
-    "repoLink": "PickArr on GitHub",
+    "repoLink": "Pickarr on GitHub",
     "kofiLink": "Support on Ko-fi"
   },
   "nav": {
@@ -318,7 +318,7 @@
     "selectDefault": "Select…",
     "optionsHint": "These lists fill in when Test connection succeeds.",
     "optionsReady": "Loaded from the last successful connection test. Test again after changing the URL or API key.",
-    "catalogIntro": "Turn a provider on and choose the countries whose catalogs PickArr should keep. Each selected country needs its own Watchmode catalog.",
+    "catalogIntro": "Turn a provider on and choose the countries whose catalogs Pickarr should keep. Each selected country needs its own Watchmode catalog.",
     "providerOn": "On",
     "providerOff": "Off",
     "countries": "Countries",
@@ -387,5 +387,5 @@
     "watchmode": "Data provided by Watchmode.com",
     "tmdb": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
-  "widthWarning": "PickArr is designed for desktop widths of at least 1280px."
+  "widthWarning": "Pickarr is designed for desktop widths of at least 1280px."
 }

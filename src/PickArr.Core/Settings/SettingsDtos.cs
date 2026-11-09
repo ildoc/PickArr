@@ -1,4 +1,4 @@
-namespace PickArr.Core.Settings;
+namespace Pickarr.Core.Settings;
 
 public sealed record SecretStatus(bool IsSet);
 

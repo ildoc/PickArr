@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>
 /// Membership for recommendations (BR-REC-07). Distinct from catalog grid filters:

@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using PickArr.Core.Domain.Entities;
+using Pickarr.Core.Domain.Entities;
 
-namespace PickArr.Infrastructure.Persistence.Configurations;
+namespace Pickarr.Infrastructure.Persistence.Configurations;
 
 public sealed class TitleConfiguration : IEntityTypeConfiguration<Title>
 {

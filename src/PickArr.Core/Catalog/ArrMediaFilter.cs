@@ -1,6 +1,6 @@
-using PickArr.Core.Domain;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 /// <summary>
 /// V-08 / D-011: catalog media types allowed by configured Arr instances.

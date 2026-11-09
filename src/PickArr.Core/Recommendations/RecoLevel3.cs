@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Feature layout for optional supervised level 3 (§12.6). Training lives in Infrastructure (ML.NET).</summary>
 public static class RecoLevel3

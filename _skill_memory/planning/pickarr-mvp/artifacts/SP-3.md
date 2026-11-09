@@ -12,7 +12,7 @@
 | Auth | header `X-Api-Key` | header `X-Api-Key` |
 | Status | `GET /system/status` → `version`, `appName` | idem |
 
-## Endpoint usati da PickArr (sync stato)
+## Endpoint usati da Pickarr (sync stato)
 
 | Uso | Sonarr | Radarr |
 | --- | --- | --- |
@@ -37,7 +37,7 @@ Da `SeriesStatisticsResource` / `Season.statistics`:
 | `episodeCount` | episodi **aired + monitorati** (attesi per BR-10) |
 | `totalEpisodeCount` | tutti gli episodi noti (incl. non aired / non monitorati) |
 
-**Regola PickArr:** usare `episodeCount` per Downloaded/Partial/Missing; se `episodeCount == 0` → Missing (serie non ancora iniziata / niente da monitorare). Season 0 (specials) inclusa solo se `monitored`.
+**Regola Pickarr:** usare `episodeCount` per Downloaded/Partial/Missing; se `episodeCount == 0` → Missing (serie non ancora iniziata / niente da monitorare). Season 0 (specials) inclusa solo se `monitored`.
 
 ## Monitor / add options (per T21)
 
@@ -50,7 +50,7 @@ Radarr: `minimumAvailability` = `announced` | `inCinemas` | `released`; `addOpti
 ## Default profilo/root (D-018 / D-01)
 
 Nessun “default esplicito” obbligatorio nelle API: liste `qualityprofile` / `rootfolder`.  
-PickArr: settings `sonarr.defaults` / `radarr.defaults` (`qualityProfileId`, `rootFolderPath`); se assenti → **primo** elemento delle liste istanza.
+Pickarr: settings `sonarr.defaults` / `radarr.defaults` (`qualityProfileId`, `rootFolderPath`); se assenti → **primo** elemento delle liste istanza.
 
 ## Delete
 

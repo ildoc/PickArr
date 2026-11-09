@@ -2,15 +2,15 @@ using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Admin;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Admin;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class AdminQuotaServiceTests
 {
@@ -19,8 +19,8 @@ public sealed class AdminQuotaServiceTests
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        await using var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var sampledAt = new DateTime(2026, 11, 5, 10, 0, 0, DateTimeKind.Utc);
@@ -71,8 +71,8 @@ public sealed class AdminQuotaServiceTests
     {
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        await using var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var budget = Substitute.For<ICreditBudget>();

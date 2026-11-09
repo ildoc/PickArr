@@ -32,11 +32,11 @@ Workflow canonico nella skill `incremental-dev-planning`, non duplicato qui.
 | TC-02 | Nessun commit senza richiesta esplicita | C-02 |
 | TC-03 | Scope stretto al task; finding fuori scope → STATUS §3 | C-03 + skill |
 | TC-04 | Core resta libero da tipi Infrastructure; test Core non referenziano Infrastructure | `AGENTS.md` |
-| TC-05 | Integration: factory con `Hangfire:Storage=Memory`, `PickArr:Catalog:AutoInitialImport=false`; non puntare al DB `.data` | `AGENTS.md` |
+| TC-05 | Integration: factory con `Hangfire:Storage=Memory`, `Pickarr:Catalog:AutoInitialImport=false`; non puntare al DB `.data` | `AGENTS.md` |
 | TC-06 | Test che assumono settings Arr assenti o DB vuoto: collection/factory isolate, non `"api"` condivisa | `AGENTS.md` + ANALYSIS A-002 |
 | TC-07 | Non stampare/committare secret Watchmode/TMDB/Sonarr/Radarr | `AGENTS.md` |
 | TC-08 | UI copy solo via i18n `en.json`; test usano stringhe EN già presenti | `AGENTS.md` |
-| TC-09 | Prima di `dotnet test`/`build` su progetti che lockano `PickArr.Api/bin`, fermare l’API in esecuzione | `AGENTS.md` |
+| TC-09 | Prima di `dotnet test`/`build` su progetti che lockano `Pickarr.Api/bin`, fermare l’API in esecuzione | `AGENTS.md` |
 | TC-10 | Catalogo ≠ My list: non reintrodurre `view=favorites`/`favorite=true` sul catalogo | `AGENTS.md` product boundaries |
 | TC-11 | Criteri di test: assert comportamento (route, request args, empty state, status/code), non solo render | `AGENTS.md` Tests |
 
@@ -55,7 +55,7 @@ Oltre ai criteri comuni, una tranche `test-coverage` è chiusa solo se:
 ## 5. Tooling dominio-specifico
 
 - Backend: `dotnet test` (filtro per progetto/FQN come in `AGENTS.md`)
-- Frontend: `cd src/PickArr.WebApp && npm test -- --run` (+ `typecheck`/`lint` se si tocca FE)
+- Frontend: `cd src/Pickarr.WebApp && npm test -- --run` (+ `typecheck`/`lint` se si tocca FE)
 - Coverage: coverlet.collector + `npm run test:coverage` (baseline T01)
 - Comandi e path canonici: `AGENTS.md` (non `backend/`/`frontend/` del file comune CONV-04)
 - FE RTL: testo spezzato su più nodi → matcher su pezzi (`getByText('Earlier')`) o function matcher; non regex sull’intero `1. Earlier`

@@ -1,10 +1,10 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Arr;
+namespace Pickarr.Infrastructure.Arr;
 
 internal static class ArrHttp
 {

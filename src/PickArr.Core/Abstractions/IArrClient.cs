@@ -1,7 +1,7 @@
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface IArrClient
 {

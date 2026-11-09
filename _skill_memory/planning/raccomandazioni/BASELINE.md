@@ -12,11 +12,11 @@
 
 | Componente | Responsabilità | File | LOC circa |
 | --- | --- | --- | --- |
-| Title / Availability / Favorite | Catalogo e segnali futuri | `src/PickArr.Core/Domain/Entities/*` | — |
+| Title / Availability / Favorite | Catalogo e segnali futuri | `src/Pickarr.Core/Domain/Entities/*` | — |
 | TitleQueryService | Griglia catalogo | `TitleQueryService.cs` | — |
 | EnrichmentService + TMDB | Metadati | `EnrichmentService.cs`, `TmdbMetadataProvider.cs` | — |
 | HangfireBootstrap | Job queues default/sync/arr | `HangfireBootstrap.cs` | — |
-| FavoriteButton / CatalogPage / TitleDialog | UI catalogo | `src/PickArr.WebApp/src/features/**` | — |
+| FavoriteButton / CatalogPage / TitleDialog | UI catalogo | `src/Pickarr.WebApp/src/features/**` | — |
 | Ratings / Reco / ONNX | Feature target | assenti | 0 |
 
 ## 2. Flussi as-is
@@ -58,5 +58,5 @@
 ## 4. Note tecniche
 
 - Worktree al momento dell’assessment: molti path `M` con diff tipicamente EOL-only su `src`.
-- `PickArr:DataPath` sviluppo: `.data` (launchSettings); non usare per test di integrazione.
+- `Pickarr:DataPath` sviluppo: `.data` (launchSettings); non usare per test di integrazione.
 - Spec feature: `docs/raccomandazioni.md` v0.2; path UI nel doc §15 (`frontend/`) non allineato al repo.

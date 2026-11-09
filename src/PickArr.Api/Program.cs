@@ -1,9 +1,9 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using PickArr.Api.Endpoints;
-using PickArr.Core;
-using PickArr.Infrastructure;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Api.Endpoints;
+using Pickarr.Core;
+using Pickarr.Infrastructure;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 using Serilog;
 
 Log.Logger = new LoggerConfiguration()
@@ -14,7 +14,7 @@ try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    var configuredPath = builder.Configuration["PickArr:DataPath"];
+    var configuredPath = builder.Configuration["Pickarr:DataPath"];
     var dataPath = string.IsNullOrWhiteSpace(configuredPath) ? "/config" : configuredPath;
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(Path.Combine(dataPath, "logs"));
@@ -29,8 +29,8 @@ try
             rollingInterval: RollingInterval.Day,
             retainedFileCountLimit: 7));
 
-    builder.Services.AddPickArrCore();
-    builder.Services.AddPickArrInfrastructure(builder.Configuration);
+    builder.Services.AddPickarrCore();
+    builder.Services.AddPickarrInfrastructure(builder.Configuration);
     builder.Services.AddOpenApi();
 
     var app = builder.Build();

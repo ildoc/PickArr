@@ -1,7 +1,7 @@
-using PickArr.Core.Domain;
+using Pickarr.Core.Domain;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class RatingValuesTests
 {

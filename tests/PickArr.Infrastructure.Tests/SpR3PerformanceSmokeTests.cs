@@ -2,18 +2,18 @@ using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Core.Recommendations;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Metadata.Reco;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Core.Recommendations;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Metadata.Reco;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 /// <summary>
 /// SP-R3: measure RecoBuild + GET /recommendations latency (NFR-REC-01/02).
@@ -60,7 +60,7 @@ public sealed class SpR3PerformanceSmokeTests
     [Fact]
     public async Task Rebuild_and_get_recommendations_latency_against_nfr()
     {
-        var dbPath = Path.Combine(Path.GetTempPath(), "PickArr-spr3", $"{Guid.NewGuid():N}.db");
+        var dbPath = Path.Combine(Path.GetTempPath(), "Pickarr-spr3", $"{Guid.NewGuid():N}.db");
         Directory.CreateDirectory(Path.GetDirectoryName(dbPath)!);
 
         await using var connection = new SqliteConnection($"Data Source={dbPath};Cache=Shared");
@@ -71,8 +71,8 @@ public sealed class SpR3PerformanceSmokeTests
             await cmd.ExecuteNonQueryAsync();
         }
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-        await using var db = new PickArrDbContext(options);
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var now = new DateTime(2026, 11, 6, 12, 0, 0, DateTimeKind.Utc);
@@ -235,7 +235,7 @@ public sealed class SpR3PerformanceSmokeTests
         return sorted[idx];
     }
 
-    private static async Task<(int SourceA, int SourceB)> SeedAsync(PickArrDbContext db, DateTime now)
+    private static async Task<(int SourceA, int SourceB)> SeedAsync(PickarrDbContext db, DateTime now)
     {
         var providerA = new Provider
         {
@@ -457,7 +457,7 @@ public sealed class SpR3PerformanceSmokeTests
         return (sourceA.Id, sourceB.Id);
     }
 
-    private static async Task SeedSyntheticEmbeddingsAsync(PickArrDbContext db, DateTime now)
+    private static async Task SeedSyntheticEmbeddingsAsync(PickarrDbContext db, DateTime now)
     {
         var ids = await db.Titles.AsNoTracking().Select(t => t.Id).ToListAsync();
         const int dim = RecoModelCatalog.EmbeddingDimensions;

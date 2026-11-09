@@ -1,7 +1,7 @@
-using PickArr.Core.Admin;
+using Pickarr.Core.Admin;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class QuotaProjectionTests
 {

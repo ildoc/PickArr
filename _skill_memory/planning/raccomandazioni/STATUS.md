@@ -225,7 +225,7 @@
 | Branch strategy | feature opzionale `reco/*`; non obbligatorio |
 | Commit | solo su richiesta utente |
 | Test backend | `dotnet test` / filtri FullyQualifiedName~Reco\|Rating |
-| Test frontend | `cd src/PickArr.WebApp && npm test -- --run` |
+| Test frontend | `cd src/Pickarr.WebApp && npm test -- --run` |
 | Typecheck/lint | `npm run typecheck` && `npm run lint` |
 | DataPath debug | `.data` via launchSettings; non mischiare DB |
 | Stop API | prima di build se DLL locked |

@@ -1,6 +1,6 @@
-using PickArr.Core.Metadata;
+using Pickarr.Core.Metadata;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface ISeriesGuide
 {

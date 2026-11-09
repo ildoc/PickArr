@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <RootNamespace>PickArr.Infrastructure</RootNamespace>
-    <AssemblyName>PickArr.Infrastructure</AssemblyName>
+    <RootNamespace>Pickarr.Infrastructure</RootNamespace>
+    <AssemblyName>Pickarr.Infrastructure</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="PickArr.Infrastructure.Tests" />
+    <InternalsVisibleTo Include="Pickarr.Infrastructure.Tests" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PickArr.Core\PickArr.Core.csproj" />
+    <ProjectReference Include="..\Pickarr.Core\Pickarr.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />

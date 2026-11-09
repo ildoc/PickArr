@@ -1,6 +1,6 @@
-using PickArr.Core.Catalog;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 public sealed record RecommendationsQuery(
     string Scope = RecoMembership.ScopeSource,

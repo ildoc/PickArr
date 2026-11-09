@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class SystemEndpoints
 {

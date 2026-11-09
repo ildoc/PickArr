@@ -39,7 +39,7 @@ Workflow canonico nella skill `incremental-dev-planning`, non duplicato qui.
 | V-09 | Hangfire: tentare SQLite community; se fallisce → **storage in memoria** | D-10 + utente Q13 |
 | V-10 | Sonarr/Radarr: spike su **documentazione ufficiale** (nessuna istanza swagger accessibile in pianificazione) | utente Q15 |
 | V-11 | Sezione "In scadenza" in MVP (dati free + nota limite) | utente Q11; D-07 |
-| V-12 | Nome/namespace: `PickArr` / `PickArr.*` | utente Q5 |
+| V-12 | Nome/namespace: `Pickarr` / `Pickarr.*` | utente Q5 |
 | V-13 | Seguire ordine specifica §18 per le tranche | utente Q3 |
 
 ---

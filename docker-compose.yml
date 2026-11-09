@@ -1,7 +1,7 @@
-# PickArr — example compose (linux/amd64)
+# Pickarr — example compose (linux/amd64)
 # Prefer a local bind mount or named volume for /config (SQLite WAL).
 # Avoid network filesystems (SMB/NFS) for the data directory.
-# The image defaults ASPNETCORE_URLS=http://+:8080 and PickArr__DataPath=/config.
+# The image defaults ASPNETCORE_URLS=http://+:8080 and Pickarr__DataPath=/config.
 
 services:
   pickarr:
@@ -10,14 +10,14 @@ services:
     # image: ghcr.io/<owner>/<repo>:edge
     build:
       context: .
-      dockerfile: src/PickArr.Api/Dockerfile
+      dockerfile: src/Pickarr.Api/Dockerfile
     container_name: pickarr
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       - TZ=Europe/Rome
-      - PickArr__BaseUrl=http://localhost:8080
+      - Pickarr__BaseUrl=http://localhost:8080
       # Application settings (flat names). Non-empty values override the database.
       # - WATCHMODE_API_KEY=
       # - TMDB_API_KEY=

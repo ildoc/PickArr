@@ -1,7 +1,7 @@
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Recommendations;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class RecoPriorTests
 {

@@ -14,7 +14,7 @@ Workflow canonico: skill `incremental-dev-planning`, invocata prima di usare que
 
 | ID | Convenzione |
 | --- | --- |
-| CONV-01 | Namespace e progetto: `PickArr.*` |
+| CONV-01 | Namespace e progetto: `Pickarr.*` |
 | CONV-02 | CI: GitLab CI con **buildah** (non docker buildx); registry GitLab |
 | CONV-03 | Immagine Docker target: solo `linux/amd64` |
 | CONV-04 | Comandi verifica tipici: `dotnet test` in `backend/`; `npm test` / `npm run lint` in `frontend/` |

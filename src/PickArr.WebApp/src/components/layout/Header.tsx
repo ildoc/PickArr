@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchSettings } from '../../api/settings'
 import { fetchSystemStatus } from '../../api/system'
 
-const REPO_URL = 'https://github.com/ildoc/PickArr'
+const REPO_URL = 'https://github.com/ildoc/Pickarr'
 const KOFI_URL = 'https://ko-fi.com/pheeleeppo'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>

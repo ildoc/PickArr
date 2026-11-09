@@ -8,7 +8,7 @@ using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [Collection("env-initial-import")]
 public sealed class InitialCatalogImportTests : IAsyncLifetime
@@ -123,18 +123,18 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
 
     private sealed class InitialImportApiFactory(string watchmodeBaseUrl) : WebApplicationFactory<Program>
     {
-        private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "PickArr-import-tests", Guid.NewGuid().ToString("N"));
+        private readonly string _dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-import-tests", Guid.NewGuid().ToString("N"));
 
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             Directory.CreateDirectory(_dataPath);
             builder.UseEnvironment("Development");
-            builder.UseSetting("PickArr:DataPath", _dataPath);
+            builder.UseSetting("Pickarr:DataPath", _dataPath);
             builder.UseSetting("Hangfire:Storage", "Memory");
-            builder.UseSetting("PickArr:Catalog:AutoInitialImport", "true");
-            builder.UseSetting("PickArr:Watchmode:BaseUrl", watchmodeBaseUrl);
-            builder.UseSetting("PickArr:Watchmode:RequestsPerSecond", "1000");
-            builder.UseSetting("PickArr:Watchmode:DisableResilience", "true");
+            builder.UseSetting("Pickarr:Catalog:AutoInitialImport", "true");
+            builder.UseSetting("Pickarr:Watchmode:BaseUrl", watchmodeBaseUrl);
+            builder.UseSetting("Pickarr:Watchmode:RequestsPerSecond", "1000");
+            builder.UseSetting("Pickarr:Watchmode:DisableResilience", "true");
         }
 
         protected override void Dispose(bool disposing)

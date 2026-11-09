@@ -5,15 +5,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Admin;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Admin;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Admin;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class AdminJobServiceTests
 {
@@ -77,7 +77,7 @@ public sealed class AdminJobServiceTests
         private readonly SqliteConnection _connection;
 
         public required AdminJobService Sut { get; init; }
-        public required PickArrDbContext Db { get; init; }
+        public required PickarrDbContext Db { get; init; }
 
         private Fixture(SqliteConnection connection) => _connection = connection;
 
@@ -85,8 +85,8 @@ public sealed class AdminJobServiceTests
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
-            var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-            var db = new PickArrDbContext(options);
+            var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+            var db = new PickarrDbContext(options);
             await db.Database.EnsureCreatedAsync();
 
             var settings = Substitute.For<ISettingsStore>();

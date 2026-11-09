@@ -3,14 +3,14 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("recommendations-api")]
 public sealed class RecommendationsApiCollection : ICollectionFixture<ApiFactory>;
@@ -122,7 +122,7 @@ public sealed class RecommendationsApiTests
     private async Task<Seed> SeedAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
 
         var netflix = await db.Providers.FirstAsync(p => p.Key == "netflix");
         var prime = await db.Providers.FirstAsync(p => p.Key == "prime-video");
@@ -226,7 +226,7 @@ public sealed class RecommendationsApiTests
     private async Task<SimilarSeed> SeedSimilarAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
 
         var netflix = await db.Providers.FirstAsync(p => p.Key == "netflix");
         var prime = await db.Providers.FirstAsync(p => p.Key == "prime-video");

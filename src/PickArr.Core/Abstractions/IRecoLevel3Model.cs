@@ -1,6 +1,6 @@
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Recommendations;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 /// <summary>Trains and scores the optional supervised level-3 model (ML.NET in Infrastructure).</summary>
 public interface IRecoLevel3Model

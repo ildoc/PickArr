@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Maximal Marginal Relevance re-ranking in read path (§12.8).</summary>
 public static class RecoMmr

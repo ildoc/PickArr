@@ -4,17 +4,17 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("arr-happy-path-api")]
 public sealed class ArrHappyPathApiCollection : ICollectionFixture<ApiFactory>;
@@ -80,7 +80,7 @@ public sealed class ArrHappyPathApiTests : IAsyncLifetime
         deleted.GetProperty("canAdd").GetBoolean().ShouldBeTrue();
 
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         (await db.ArrLibraryItems.CountAsync(i => i.TitleId == titleId)).ShouldBe(0);
         (await db.Titles.CountAsync(t => t.Id == titleId)).ShouldBe(1);
     }
@@ -127,7 +127,7 @@ public sealed class ArrHappyPathApiTests : IAsyncLifetime
     private async Task<int> SeedSeriesAsync(int tvdbId, int tmdbId)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var title = new Title
         {
             MediaType = MediaTypes.Series,

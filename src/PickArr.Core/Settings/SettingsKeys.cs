@@ -1,4 +1,4 @@
-namespace PickArr.Core.Settings;
+namespace Pickarr.Core.Settings;
 
 public static class SettingsKeys
 {

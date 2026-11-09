@@ -10,7 +10,7 @@
 
 ### 1.1 Obiettivo
 
-Implementare da zero **PickArr** MVP: app self-hosted single-user che sincronizza il catalogo Netflix IT/US via Watchmode, arricchisce con TMDB, espone UI desktop tema scuro, e integra Sonarr/Radarr (aggiunta, stato, eliminazione), con budget crediti, job idempotenti, Docker e CI GitLab.
+Implementare da zero **Pickarr** MVP: app self-hosted single-user che sincronizza il catalogo Netflix IT/US via Watchmode, arricchisce con TMDB, espone UI desktop tema scuro, e integra Sonarr/Radarr (aggiunta, stato, eliminazione), con budget crediti, job idempotenti, Docker e CI GitLab.
 
 Richiesta originale: pianificare l'implementazione leggendo `docs/`, chiarendo dubbi prima della KB. Approvazioni utente 2026-11-04 (risposte Q1–Q27).
 
@@ -48,9 +48,9 @@ Target to-be (da specifica §3); as-is: assenti.
 
 | Componente | Ruolo | File previsti | Accoppiamento |
 | --- | --- | --- | --- |
-| `PickArr.Api` | Host Minimal API, SPA, composizione DI | `backend/src/PickArr.Api/` | alto |
-| `PickArr.Core` | Dominio, use case, astrazioni | `backend/src/PickArr.Core/` | basso |
-| `PickArr.Infrastructure` | EF, client HTTP, Hangfire, Data Protection | `backend/src/PickArr.Infrastructure/` | medio |
+| `Pickarr.Api` | Host Minimal API, SPA, composizione DI | `backend/src/Pickarr.Api/` | alto |
+| `Pickarr.Core` | Dominio, use case, astrazioni | `backend/src/Pickarr.Core/` | basso |
+| `Pickarr.Infrastructure` | EF, client HTTP, Hangfire, Data Protection | `backend/src/Pickarr.Infrastructure/` | medio |
 | SPA React | Catalogo, settings, admin | `frontend/src/` | medio |
 | Watchmode / TMDB / Sonarr / Radarr | Fonti esterne | client tipizzati | alto (rete) |
 
@@ -152,7 +152,7 @@ As-is: nessuno implementato. To-be di riferimento (da funzionale §8 / tecnica �
 
 ### 6.2 Pattern
 
-Monolite single-container: Kestrel serve API + SPA; Hangfire in-process; due file DB (`PickArr.db`, opz. `jobs.db` o Hangfire memory).
+Monolite single-container: Kestrel serve API + SPA; Hangfire in-process; due file DB (`Pickarr.db`, opz. `jobs.db` o Hangfire memory).
 
 ### 6.3 Alternative scartate
 
@@ -168,7 +168,7 @@ Monolite single-container: Kestrel serve API + SPA; Hangfire in-process; due fil
 flowchart LR
   WM[Watchmode] --> Jobs[Hangfire Jobs]
   TMDB[TMDB] --> Jobs
-  Jobs --> DB[(SQLite PickArr.db)]
+  Jobs --> DB[(SQLite Pickarr.db)]
   Arr[Sonarr/Radarr] --> Jobs
   UI[SPA React] --> API[Minimal API]
   API --> DB
@@ -181,7 +181,7 @@ flowchart LR
 
 | Data | Sezione impattata | Scoperta | Impatto sul piano |
 | --- | --- | --- | --- |
-| 2026-11-04 | §1.3 / packaging | Repo git è il monorepo padre `C:/projects/idee`; PickArr vive in `todo/pickarr` ancora untracked | Commit/scope git da chiarire con utente |
+| 2026-11-04 | §1.3 / packaging | Repo git è il monorepo padre `C:/projects/idee`; Pickarr vive in `todo/pickarr` ancora untracked | Commit/scope git da chiarire con utente |
 | 2026-11-04 | §2 stack FE | Node non era in PATH; installato Node 26 LTS via winget per TR-01 | OK per MVP; CI resta su Node 24 |
 | 2026-11-04 | §14 Docker | Smoke `docker build` + run: `/health` e `/health/ready` 200; seed Netflix IT/US OK | T04 soddisfatto localmente |
 | 2026-11-04 | NFR-08 CI | `.gitlab-ci.yml` con buildah/amd64; pipeline remota non ancora eseguita | T05 YAML OK; verde remoto → T26 |

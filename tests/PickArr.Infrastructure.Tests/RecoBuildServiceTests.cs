@@ -1,18 +1,18 @@
 using Hangfire;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Recommendations;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Metadata.Reco;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Recommendations;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Metadata.Reco;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RecoBuildServiceTests : IAsyncLifetime
 {
@@ -185,7 +185,7 @@ public sealed class RecoBuildServiceTests : IAsyncLifetime
         above.Single(r => r.TitleId == 103).Rank.ShouldBeLessThan(above.Single(r => r.TitleId == 102).Rank);
     }
 
-    private static void SeedUnitEmbedding(PickArrDbContext db, int titleId, float[] vector)
+    private static void SeedUnitEmbedding(PickarrDbContext db, int titleId, float[] vector)
     {
         RecoKnn.L2Normalize(vector);
         db.TitleEmbeddings.Add(new TitleEmbedding
@@ -198,15 +198,15 @@ public sealed class RecoBuildServiceTests : IAsyncLifetime
         });
     }
 
-    private async Task<(PickArrDbContext Db, RecoBuildService Build)> SeedAsync()
+    private async Task<(PickarrDbContext Db, RecoBuildService Build)> SeedAsync()
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>()
+        var options = new DbContextOptionsBuilder<PickarrDbContext>()
             .UseSqlite(_connection)
             .Options;
-        var db = new PickArrDbContext(options);
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var now = DateTime.UtcNow;
@@ -297,15 +297,15 @@ public sealed class RecoBuildServiceTests : IAsyncLifetime
         return (db, build);
     }
 
-    private async Task<(PickArrDbContext Db, RecoBuildService Build, int EnabledSourceId)> SeedL1Async()
+    private async Task<(PickarrDbContext Db, RecoBuildService Build, int EnabledSourceId)> SeedL1Async()
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>()
+        var options = new DbContextOptionsBuilder<PickarrDbContext>()
             .UseSqlite(_connection)
             .Options;
-        var db = new PickArrDbContext(options);
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var now = DateTime.UtcNow;

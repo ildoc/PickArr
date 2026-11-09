@@ -1,13 +1,13 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/PickArr.Api/PickArr.Api.csproj" />
-    <Project Path="src/PickArr.Core/PickArr.Core.csproj" />
-    <Project Path="src/PickArr.Infrastructure/PickArr.Infrastructure.csproj" />
+    <Project Path="src/Pickarr.Api/Pickarr.Api.csproj" />
+    <Project Path="src/Pickarr.Core/Pickarr.Core.csproj" />
+    <Project Path="src/Pickarr.Infrastructure/Pickarr.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/PickArr.Core.Tests/PickArr.Core.Tests.csproj" />
-    <Project Path="tests/PickArr.Infrastructure.Tests/PickArr.Infrastructure.Tests.csproj" />
-    <Project Path="tests/PickArr.Integration.Tests/PickArr.Integration.Tests.csproj" />
+    <Project Path="tests/Pickarr.Core.Tests/Pickarr.Core.Tests.csproj" />
+    <Project Path="tests/Pickarr.Infrastructure.Tests/Pickarr.Infrastructure.Tests.csproj" />
+    <Project Path="tests/Pickarr.Integration.Tests/Pickarr.Integration.Tests.csproj" />
   </Folder>
   <Project Path="docker-compose.dcproj">
     <Build />

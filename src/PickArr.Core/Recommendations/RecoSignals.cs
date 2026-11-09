@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Per-title signal mass s_i and N_eff (BR-REC-02..04, FR-REC-SG-*).</summary>
 public static class RecoSignals

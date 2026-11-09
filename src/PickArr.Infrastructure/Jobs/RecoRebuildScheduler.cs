@@ -1,8 +1,8 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 /// <summary>
 /// True debounce: each vote cancels the previous delayed Hangfire job and schedules a new one

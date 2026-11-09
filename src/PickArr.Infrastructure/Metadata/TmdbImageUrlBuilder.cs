@@ -1,6 +1,6 @@
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Metadata;
+namespace Pickarr.Infrastructure.Metadata;
 
 public sealed class TmdbImageUrlBuilder(IMetadataProvider metadataProvider) : ITmdbImageUrlBuilder
 {

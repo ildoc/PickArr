@@ -1,18 +1,18 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 /// <summary>
 /// ListPagesStrategy for scheduled/manual incremental catalog sync (spec §6.3).
 /// </summary>
 public sealed class CatalogIncrementalSync(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IProviderResolver providerResolver,
     ICreditBudget creditBudget,
     ISyncRunStore syncRunStore,

@@ -1,8 +1,8 @@
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 public sealed class CatalogBootstrapOptions
 {
-    public const string SectionName = "PickArr:Catalog";
+    public const string SectionName = "Pickarr:Catalog";
 
     /// <summary>
     /// When true, the first time a Watchmode API key is available the app enables the seeded

@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Admin;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [Collection("api")]
 public sealed class AdminApiTests
@@ -69,7 +69,7 @@ public sealed class AdminApiTests
         var runningId = Guid.NewGuid();
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             db.SyncRuns.Add(new SyncRun
             {
                 Id = failedId,
@@ -108,7 +108,7 @@ public sealed class AdminApiTests
         finally
         {
             using var scope = _factory.Services.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             var running = await db.SyncRuns.FirstAsync(r => r.Id == runningId);
             running.Status = SyncRunStatuses.Cancelled;
             running.FinishedAt = DateTime.UtcNow;
@@ -150,7 +150,7 @@ public sealed class AdminApiTests
     private async Task<Guid> SeedRunAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var run = new SyncRun
         {
             Id = Guid.NewGuid(),
@@ -173,7 +173,7 @@ public sealed class AdminApiTests
     private async Task SeedRunningAsync(string kind, int sourceId)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         db.SyncRuns.Add(new SyncRun
         {
             Id = Guid.NewGuid(),
@@ -195,7 +195,7 @@ public sealed class AdminApiTests
     private async Task<(int SourceId, string CountryCode)> GetEnabledSourceAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var source = await db.CatalogSources.FirstOrDefaultAsync(s => s.IsEnabled)
             ?? await db.CatalogSources.FirstAsync();
         if (!source.IsEnabled)

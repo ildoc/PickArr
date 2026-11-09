@@ -12,11 +12,11 @@
 
 | Area | Responsabilità | Path | Note |
 | --- | --- | --- | --- |
-| Core.Tests | Logica pura (budget, reco math, settings, Arr matcher) | `tests/PickArr.Core.Tests` | 18 file test |
-| Infrastructure.Tests | Service EF + WireMock sync/Arr/reco | `tests/PickArr.Infrastructure.Tests` | 29 file test |
-| Integration.Tests | API WebApplicationFactory | `tests/PickArr.Integration.Tests` | 12 file test (+ factory/collection) |
-| WebApp Vitest | UI/component/hook | `src/PickArr.WebApp/src/**/*.test.*` | 21 file test |
-| Produzione FE | App React | `src/PickArr.WebApp/src` | ~52 moduli prod ts/tsx |
+| Core.Tests | Logica pura (budget, reco math, settings, Arr matcher) | `tests/Pickarr.Core.Tests` | 18 file test |
+| Infrastructure.Tests | Service EF + WireMock sync/Arr/reco | `tests/Pickarr.Infrastructure.Tests` | 29 file test |
+| Integration.Tests | API WebApplicationFactory | `tests/Pickarr.Integration.Tests` | 12 file test (+ factory/collection) |
+| WebApp Vitest | UI/component/hook | `src/Pickarr.WebApp/src/**/*.test.*` | 21 file test |
+| Produzione FE | App React | `src/Pickarr.WebApp/src` | ~52 moduli prod ts/tsx |
 
 ---
 
@@ -30,7 +30,7 @@ Vedi ANALYSIS.md §3 (FLUSSO-01…09). Snapshot: copertura forte su sync/reco/ra
 
 | Metrica | Valore baseline | Comando/metodo misura |
 | --- | --- | --- |
-| Fact/Theory Core | 64 | conteggio `[Fact]`/`[Theory]` in `tests/PickArr.Core.Tests/*.cs` |
+| Fact/Theory Core | 64 | conteggio `[Fact]`/`[Theory]` in `tests/Pickarr.Core.Tests/*.cs` |
 | Fact/Theory Infrastructure | 106 | idem Infra |
 | Fact Integration (stimati) | ~29 | `[Fact]` in Integration.Tests (esclusi helper) |
 | Casi Vitest (`it`/`test`) | 39 | grep su `*.test.ts(x)` |

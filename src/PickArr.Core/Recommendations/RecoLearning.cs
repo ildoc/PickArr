@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Learning stage and personal weight from effective signal mass (BR-REC-04/05, §12.1).</summary>
 public static class RecoLearning

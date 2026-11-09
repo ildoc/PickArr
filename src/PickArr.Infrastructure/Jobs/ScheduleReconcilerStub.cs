@@ -1,7 +1,7 @@
 using Hangfire;
 using Microsoft.Extensions.Logging;
 
-namespace PickArr.Infrastructure.Jobs;
+namespace Pickarr.Infrastructure.Jobs;
 
 /// <summary>
 /// Spike stub for SP-4: demonstrates that recurring schedules are owned by the app DB

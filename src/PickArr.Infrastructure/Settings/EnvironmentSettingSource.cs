@@ -3,13 +3,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Settings;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Settings;
+namespace Pickarr.Infrastructure.Settings;
 
 /// <summary>
 /// Values declared as flat environment variables (<c>WATCHMODE_API_KEY</c>, <c>SONARR_URL</c>)
-/// or under <c>PickArr:Settings</c> (legacy <c>PickArr__Settings__…</c>).
+/// or under <c>Pickarr:Settings</c> (legacy <c>Pickarr__Settings__…</c>).
 /// A set variable is the effective value for the process; the database is not consulted for that key.
 /// Flat names win when both forms are present.
 /// </summary>
@@ -87,7 +87,7 @@ internal sealed class EnvironmentSettingSource
 
             throw new InvalidOperationException(
                 $"Unknown setting '{dotted}'. Use {SettingEnvironmentCatalog.ToEnvironmentVariableName(dotted)} " +
-                "or PickArr__Settings__ with each '.' replaced by '__'.");
+                "or Pickarr__Settings__ with each '.' replaced by '__'.");
         }
 
         ApplyFlatEnvironmentVariables(configuration, result, defaultsFields);

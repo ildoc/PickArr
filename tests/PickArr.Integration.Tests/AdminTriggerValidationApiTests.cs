@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("admin-trigger-validation")]
 public sealed class AdminTriggerValidationApiCollection : ICollectionFixture<ApiFactory>;

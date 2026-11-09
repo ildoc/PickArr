@@ -32,12 +32,12 @@
 | Page size | 48 |
 | Explore rate | 0 (isolare MMR) |
 
-`.data/PickArr.db` presente ma piccolo (~2 MB): **non** usato come pool reale. Fixture riproducibile come SP-5.
+`.data/Pickarr.db` presente ma piccolo (~2 MB): **non** usato come pool reale. Fixture riproducibile come SP-5.
 
 Comando:
 
 ```bash
-dotnet test tests/PickArr.Infrastructure.Tests --filter FullyQualifiedName~SpR3PerformanceSmokeTests
+dotnet test tests/Pickarr.Infrastructure.Tests --filter FullyQualifiedName~SpR3PerformanceSmokeTests
 ```
 
 ---

@@ -3,15 +3,15 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("catalog-api")]
 public sealed class CatalogApiCollection : ICollectionFixture<ApiFactory>;
@@ -100,7 +100,7 @@ public sealed class CatalogApiTests
         int unitedStatesId;
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             var italy = await db.CatalogSources.FirstAsync(s => s.CountryCode == "IT");
             var unitedStates = await db.CatalogSources.FirstAsync(s => s.CountryCode == "US");
             italy.IsEnabled = true;
@@ -162,7 +162,7 @@ public sealed class CatalogApiTests
     private async Task<int> SeedSourceWithTitlesAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var source = await db.CatalogSources.FirstAsync(s => s.CountryCode == "IT");
         source.IsEnabled = true;
         source.BaselineCompletedAt = DateTime.UtcNow;

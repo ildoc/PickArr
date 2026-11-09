@@ -1,4 +1,4 @@
-namespace PickArr.Core.Arr;
+namespace Pickarr.Core.Arr;
 
 public sealed record SonarrAddOptions(
     int QualityProfileId,

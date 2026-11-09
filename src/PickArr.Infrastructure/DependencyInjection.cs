@@ -3,44 +3,44 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
-using PickArr.Core.Abstractions;
-using PickArr.Infrastructure.Admin;
-using PickArr.Infrastructure.Arr;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Metadata;
-using PickArr.Infrastructure.Metadata.Reco;
-using PickArr.Infrastructure.Metadata.Tmdb;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Settings;
-using PickArr.Infrastructure.Time;
+using Pickarr.Core.Abstractions;
+using Pickarr.Infrastructure.Admin;
+using Pickarr.Infrastructure.Arr;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Metadata;
+using Pickarr.Infrastructure.Metadata.Reco;
+using Pickarr.Infrastructure.Metadata.Tmdb;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Settings;
+using Pickarr.Infrastructure.Time;
 using Polly;
 
-namespace PickArr.Infrastructure;
+namespace Pickarr.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPickArrInfrastructure(
+    public static IServiceCollection AddPickarrInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var configuredPath = configuration["PickArr:DataPath"];
+        var configuredPath = configuration["Pickarr:DataPath"];
         var dataPath = string.IsNullOrWhiteSpace(configuredPath) ? "/config" : configuredPath;
         Directory.CreateDirectory(dataPath);
 
-        var dbPath = Path.Combine(dataPath, "PickArr.db");
+        var dbPath = Path.Combine(dataPath, "Pickarr.db");
         var keysPath = Path.Combine(dataPath, "keys");
         Directory.CreateDirectory(keysPath);
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IApiUsageSyncRunAccessor, ApiUsageSyncRunAccessor>();
-        services.AddDbContext<PickArrDbContext>(options =>
+        services.AddDbContext<PickarrDbContext>(options =>
             options.UseSqlite($"Data Source={dbPath}"));
 
         services.AddDataProtection()
             .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-            .SetApplicationName("PickArr");
+            .SetApplicationName("Pickarr");
 
         services.AddSingleton<EnvironmentSettingSource>();
         services.AddScoped<ProtectedSettingsStore>();
@@ -98,19 +98,19 @@ public static class DependencyInjection
         services.AddScoped<IEnrichmentService, EnrichmentService>();
         services.AddScoped<ISeriesGuide, SeriesGuideService>();
         services.AddScoped<ITmdbImageUrlBuilder, TmdbImageUrlBuilder>();
-        services.AddPickArrHangfire(configuration, dataPath);
+        services.AddPickarrHangfire(configuration, dataPath);
         // After Hangfire so workers exist before the initial import is queued.
         services.AddHostedService<CatalogBootstrapHostedService>();
         services.AddHealthChecks()
-            .AddDbContextCheck<PickArrDbContext>("database");
+            .AddDbContextCheck<PickarrDbContext>("database");
 
-        services.AddPickArrWatchmode(configuration);
-        services.AddPickArrTmdb(configuration);
+        services.AddPickarrWatchmode(configuration);
+        services.AddPickarrTmdb(configuration);
 
         return services;
     }
 
-    public static IServiceCollection AddPickArrTmdb(
+    public static IServiceCollection AddPickarrTmdb(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -126,7 +126,7 @@ public static class DependencyInjection
                 var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<TmdbOptions>>().Value;
                 var baseUrl = options.BaseUrl.EndsWith('/') ? options.BaseUrl : options.BaseUrl + "/";
                 client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("PickArr/0.1");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Pickarr/0.1");
             })
             .AddHttpMessageHandler<TmdbAuthHandler>()
             .AddHttpMessageHandler<TmdbApiUsageHandler>()
@@ -152,7 +152,7 @@ public static class DependencyInjection
         return services;
     }
 
-    public static IServiceCollection AddPickArrWatchmode(
+    public static IServiceCollection AddPickarrWatchmode(
         this IServiceCollection services,
         IConfiguration configuration)
     {
@@ -169,7 +169,7 @@ public static class DependencyInjection
                 var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<WatchmodeOptions>>().Value;
                 var baseUrl = options.BaseUrl.EndsWith('/') ? options.BaseUrl : options.BaseUrl + "/";
                 client.BaseAddress = new Uri(baseUrl);
-                client.DefaultRequestHeaders.UserAgent.ParseAdd("PickArr/0.1");
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Pickarr/0.1");
             })
             .AddHttpMessageHandler<WatchmodeAuthHandler>()
             .AddHttpMessageHandler<WatchmodeApiUsageHandler>()

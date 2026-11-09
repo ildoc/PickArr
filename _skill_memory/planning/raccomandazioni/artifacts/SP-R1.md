@@ -19,7 +19,7 @@
 …/{movie|tv}/{id}?language=…&append_to_response=external_ids,keywords,credits
 ```
 
-Fonte: `src/PickArr.Infrastructure/Metadata/Tmdb/TmdbMetadataProvider.cs`.
+Fonte: `src/Pickarr.Infrastructure/Metadata/Tmdb/TmdbMetadataProvider.cs`.
 
 **Conclusione:** non serve cambiare l’URL né aggiungere endpoint dedicati (`/credits` separato) per ottenere keywords e credits nel medesimo round-trip già usato dall’enrichment.
 

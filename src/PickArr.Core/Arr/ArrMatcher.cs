@@ -1,7 +1,7 @@
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
 
-namespace PickArr.Core.Arr;
+namespace Pickarr.Core.Arr;
 
 public static class ArrMatcher
 {

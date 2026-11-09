@@ -1,10 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 public sealed class WatchmodeApiUsageHandler(
     IServiceScopeFactory scopeFactory,
@@ -39,7 +39,7 @@ public sealed class WatchmodeApiUsageHandler(
             int? quotaLimit = TryParseIntHeader(response, QuotaHeader);
 
             using var scope = scopeFactory.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             db.ApiUsages.Add(new ApiUsage
             {
                 Id = Guid.NewGuid(),

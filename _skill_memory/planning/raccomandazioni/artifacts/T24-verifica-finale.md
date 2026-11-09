@@ -32,7 +32,7 @@
 
 | Comando | Esito |
 | --- | --- |
-| `dotnet test PickArr.slnx --filter FullyQualifiedName~Reco\|FullyQualifiedName~Rating` | **68 PASS** (Core 34 + Infra 25 + Integration 9) |
+| `dotnet test Pickarr.slnx --filter FullyQualifiedName~Reco\|FullyQualifiedName~Rating` | **68 PASS** (Core 34 + Infra 25 + Integration 9) |
 | `npm test -- --run` (WebApp) | **29 PASS** |
 | `npm run typecheck` | OK |
 | `npm run lint` | exit 0 (warning `set-state-in-effect`, anche preesistenti) |

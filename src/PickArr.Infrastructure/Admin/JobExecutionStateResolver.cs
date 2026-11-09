@@ -1,7 +1,7 @@
-using PickArr.Core.Admin;
-using PickArr.Core.Domain;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Infrastructure.Admin;
+namespace Pickarr.Infrastructure.Admin;
 
 internal static class JobExecutionStateResolver
 {

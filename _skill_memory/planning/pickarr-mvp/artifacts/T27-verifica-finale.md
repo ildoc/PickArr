@@ -9,7 +9,7 @@
 | Campo | Valore |
 | --- | --- |
 | Parent git HEAD | `4869916ee25b013223e302c12885c3b3d9458bd2` |
-| Tree PickArr | `todo/pickarr/` **untracked** nel repo padre `idee` |
+| Tree Pickarr | `todo/pickarr/` **untracked** nel repo padre `idee` |
 | Docker image | `pickarr:local` id `2bac92ff0821` / sha256 `2bac92ff08212d1387f22268c2087f8e69550555fbcf4f6ed1ed2c025343b896` (2026-11-05 11:19 CET) |
 | Isolamento | Revisore codice in contesto subagente separato (solo lettura); comandi test/health rieseguiti senza fix |
 
@@ -54,7 +54,7 @@ Nessuno.
 
 1. **Pipeline GitLab remota** non ancora run su runner (D-017 DoD parziale; smoke locale sostitutivo accettato con rinvio).
 2. **Dockerfile** non pinna `--platform=linux/amd64` (claim in README/compose; rischio build su host non-amd64).
-3. Codice PickArr ancora **untracked** nel monorepo padre (scoperta ANALYSIS §7).
+3. Codice Pickarr ancora **untracked** nel monorepo padre (scoperta ANALYSIS §7).
 4. Nessuna live call Watchmode/TMDB/Arr in verifica (fixture/WireMock + docs ufficiali).
 
 ## Fuori scope (non richiesti)

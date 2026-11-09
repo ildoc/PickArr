@@ -1,10 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 public sealed class WatchmodeAuthHandler(IServiceScopeFactory scopeFactory) : DelegatingHandler
 {

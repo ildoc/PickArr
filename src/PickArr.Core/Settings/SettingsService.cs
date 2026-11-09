@@ -1,8 +1,8 @@
 using System.Text.Json;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Recommendations;
 
-namespace PickArr.Core.Settings;
+namespace Pickarr.Core.Settings;
 
 public sealed class SettingsService(ISettingsStore store)
 {

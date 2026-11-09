@@ -3,21 +3,21 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace PickArr.Infrastructure.Persistence.Migrations
+namespace Pickarr.Infrastructure.Persistence.Migrations
 {
-    [DbContext(typeof(PickArrDbContext))]
-    partial class PickArrDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PickarrDbContext))]
+    partial class PickarrDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.14");
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ApiUsage", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ApiUsage", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -58,7 +58,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("ApiUsage", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.AppSetting", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.AppSetting", b =>
                 {
                     b.Property<string>("Key")
                         .HasMaxLength(128)
@@ -79,7 +79,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Settings", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrAuditLog", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrAuditLog", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -126,7 +126,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("ArrAuditLogs", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrLibraryItem", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrLibraryItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -211,7 +211,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("ArrLibraryItems", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrSeasonState", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrSeasonState", b =>
                 {
                     b.Property<int>("ArrLibraryItemId")
                         .HasColumnType("INTEGER");
@@ -247,7 +247,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("ArrSeasonStates", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Availability", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Availability", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -290,7 +290,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Availabilities", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.AvailabilityEvent", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.AvailabilityEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -323,7 +323,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("AvailabilityEvents", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.CatalogSource", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.CatalogSource", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -378,7 +378,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("CatalogSources", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Favorite", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Favorite", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -391,7 +391,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Favorites", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Genre", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Genre", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
@@ -401,7 +401,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Genres", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.GenreLocalization", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.GenreLocalization", b =>
                 {
                     b.Property<int>("GenreId")
                         .HasColumnType("INTEGER");
@@ -420,7 +420,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("GenreLocalizations", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Keyword", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Keyword", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
@@ -435,7 +435,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Keywords", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Person", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Person", b =>
                 {
                     b.Property<int>("Id")
                         .HasColumnType("INTEGER");
@@ -450,7 +450,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("People", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -489,7 +489,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Providers", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Rating", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Rating", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -507,7 +507,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Ratings", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.RatingEvent", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RatingEvent", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -535,7 +535,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("RatingEvents", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoEventLog", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RecoEventLog", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -571,7 +571,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("RecoEventLog", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoState", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RecoState", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -629,7 +629,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("RecoState", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Recommendation", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Recommendation", b =>
                 {
                     b.Property<int>("Version")
                         .HasColumnType("INTEGER");
@@ -663,7 +663,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Recommendations", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.SyncRun", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.SyncRun", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -726,7 +726,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("SyncRuns", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Title", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Title", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -848,7 +848,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Titles", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleCredit", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleCredit", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -870,7 +870,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleCredits", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleEmbedding", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleEmbedding", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -898,7 +898,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleEmbeddings", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleGenre", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleGenre", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -913,7 +913,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleGenres", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleKeyword", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleKeyword", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -928,7 +928,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleKeywords", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleLocalization", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleLocalization", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -963,7 +963,7 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleLocalizations", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Watched", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
                 {
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
@@ -976,9 +976,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("Watched", (string)null);
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrLibraryItem", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrLibraryItem", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -986,9 +986,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrSeasonState", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrSeasonState", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.ArrLibraryItem", "ArrLibraryItem")
+                    b.HasOne("Pickarr.Core.Domain.Entities.ArrLibraryItem", "ArrLibraryItem")
                         .WithMany("Seasons")
                         .HasForeignKey("ArrLibraryItemId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -997,15 +997,15 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("ArrLibraryItem");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Availability", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Availability", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.CatalogSource", "CatalogSource")
+                    b.HasOne("Pickarr.Core.Domain.Entities.CatalogSource", "CatalogSource")
                         .WithMany()
                         .HasForeignKey("CatalogSourceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany("Availabilities")
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1016,9 +1016,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.AvailabilityEvent", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.AvailabilityEvent", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Availability", "Availability")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Availability", "Availability")
                         .WithMany("Events")
                         .HasForeignKey("AvailabilityId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1027,9 +1027,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Availability");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.CatalogSource", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.CatalogSource", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Provider", "Provider")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Provider", "Provider")
                         .WithMany("CatalogSources")
                         .HasForeignKey("ProviderId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1038,20 +1038,20 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Provider");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Favorite", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Favorite", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithOne("Favorite")
-                        .HasForeignKey("PickArr.Core.Domain.Entities.Favorite", "TitleId")
+                        .HasForeignKey("Pickarr.Core.Domain.Entities.Favorite", "TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.GenreLocalization", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.GenreLocalization", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Genre", "Genre")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Genre", "Genre")
                         .WithMany("Localizations")
                         .HasForeignKey("GenreId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1060,20 +1060,20 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Genre");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Rating", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Rating", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithOne("Rating")
-                        .HasForeignKey("PickArr.Core.Domain.Entities.Rating", "TitleId")
+                        .HasForeignKey("Pickarr.Core.Domain.Entities.Rating", "TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.RatingEvent", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RatingEvent", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1082,9 +1082,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.RecoEventLog", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RecoEventLog", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1093,9 +1093,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Recommendation", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Recommendation", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1104,9 +1104,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.SyncRun", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.SyncRun", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.CatalogSource", "CatalogSource")
+                    b.HasOne("Pickarr.Core.Domain.Entities.CatalogSource", "CatalogSource")
                         .WithMany()
                         .HasForeignKey("CatalogSourceId")
                         .OnDelete(DeleteBehavior.SetNull);
@@ -1114,15 +1114,15 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("CatalogSource");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleCredit", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleCredit", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Person", "Person")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Person", "Person")
                         .WithMany("TitleCredits")
                         .HasForeignKey("PersonId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany("TitleCredits")
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1133,9 +1133,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleEmbedding", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleEmbedding", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1144,15 +1144,15 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleGenre", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleGenre", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Genre", "Genre")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Genre", "Genre")
                         .WithMany("TitleGenres")
                         .HasForeignKey("GenreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany("TitleGenres")
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1163,15 +1163,15 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleKeyword", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleKeyword", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Keyword", "Keyword")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Keyword", "Keyword")
                         .WithMany("TitleKeywords")
                         .HasForeignKey("KeywordId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany("TitleKeywords")
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1182,9 +1182,9 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.TitleLocalization", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleLocalization", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany("Localizations")
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -1193,50 +1193,50 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Watched", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
                 {
-                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithOne("Watched")
-                        .HasForeignKey("PickArr.Core.Domain.Entities.Watched", "TitleId")
+                        .HasForeignKey("Pickarr.Core.Domain.Entities.Watched", "TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Title");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrLibraryItem", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrLibraryItem", b =>
                 {
                     b.Navigation("Seasons");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Availability", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Availability", b =>
                 {
                     b.Navigation("Events");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Genre", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Genre", b =>
                 {
                     b.Navigation("Localizations");
 
                     b.Navigation("TitleGenres");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Keyword", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Keyword", b =>
                 {
                     b.Navigation("TitleKeywords");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Person", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Person", b =>
                 {
                     b.Navigation("TitleCredits");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Provider", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Navigation("CatalogSources");
                 });
 
-            modelBuilder.Entity("PickArr.Core.Domain.Entities.Title", b =>
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Title", b =>
                 {
                     b.Navigation("Availabilities");
 

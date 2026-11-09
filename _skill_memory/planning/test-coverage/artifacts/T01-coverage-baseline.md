@@ -9,7 +9,7 @@ Worktree: tooling coverage (runsettings, vitest coverage, package-lock)
 ### Backend (coverlet.collector)
 
 ```bash
-dotnet test PickArr.slnx --settings tests/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory TestResults/coverage-baseline
+dotnet test Pickarr.slnx --settings tests/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory TestResults/coverage-baseline
 ```
 
 Output: `TestResults/coverage-baseline/**/coverage.cobertura.xml` (gitignored).  
@@ -18,31 +18,31 @@ Settings: `tests/coverlet.runsettings` (formato cobertura; esclude assembly `*.T
 ### Frontend (vitest + v8)
 
 ```bash
-cd src/PickArr.WebApp
+cd src/Pickarr.WebApp
 npm run test:coverage
 ```
 
-Output: `src/PickArr.WebApp/coverage/` (gitignored); summary JSON copiato in `T01-vitest-coverage-summary.json`.
+Output: `src/Pickarr.WebApp/coverage/` (gitignored); summary JSON copiato in `T01-vitest-coverage-summary.json`.
 
 ## Esito run baseline
 
 | Suite | Passed | Failed | Note |
 | --- | --- | --- | --- |
-| PickArr.Core.Tests | 77 | 0 | Theory espandono i casi oltre i 64 Fact/Theory |
-| PickArr.Infrastructure.Tests | 110 | 0 | |
-| PickArr.Integration.Tests | 29 | 0 | |
+| Pickarr.Core.Tests | 77 | 0 | Theory espandono i casi oltre i 64 Fact/Theory |
+| Pickarr.Infrastructure.Tests | 110 | 0 | |
+| Pickarr.Integration.Tests | 29 | 0 | |
 | Vitest | (suite completa) | 0 | log `T01-vitest-coverage.log` |
 
 ## Line coverage backend (per collector run)
 
 | Collector (test project) | Package | Line % | Branch % | Lines covered/valid |
 | --- | --- | --- | --- | --- |
-| Core.Tests | PickArr.Core | 48.9% | 50.9% | 808/1653 |
-| Infrastructure.Tests | PickArr.Core | 69.0% | 60.7% | (in run aggregato) |
-| Infrastructure.Tests | PickArr.Infrastructure | 92.3% | 58.3% | (run: 14062/15657 totale) |
-| Integration.Tests | PickArr.Api | 93.8% | 34.0% | |
-| Integration.Tests | PickArr.Infrastructure | 88.6% | 37.5% | |
-| Integration.Tests | PickArr.Core | 57.6% | 44.3% | |
+| Core.Tests | Pickarr.Core | 48.9% | 50.9% | 808/1653 |
+| Infrastructure.Tests | Pickarr.Core | 69.0% | 60.7% | (in run aggregato) |
+| Infrastructure.Tests | Pickarr.Infrastructure | 92.3% | 58.3% | (run: 14062/15657 totale) |
+| Integration.Tests | Pickarr.Api | 93.8% | 34.0% | |
+| Integration.Tests | Pickarr.Infrastructure | 88.6% | 37.5% | |
+| Integration.Tests | Pickarr.Core | 57.6% | 44.3% | |
 | Integration.Tests (totale run) | — | 85.8% | 39.7% | 14225/16572 |
 
 I tre XML non sono fusi in un unico % ufficiale: usare i comandi sopra e confrontare per package.
@@ -69,6 +69,6 @@ Nota: `CatalogPage.tsx` risulta ~76% per effetti collaterali di `router.test` / 
 ## File tooling aggiunti/modificati
 
 - `tests/coverlet.runsettings` (nuovo)
-- `src/PickArr.WebApp/vite.config.ts` — sezione `test.coverage`
-- `src/PickArr.WebApp/package.json` — script `test:coverage`, devDep `@vitest/coverage-v8`
+- `src/Pickarr.WebApp/vite.config.ts` — sezione `test.coverage`
+- `src/Pickarr.WebApp/package.json` — script `test:coverage`, devDep `@vitest/coverage-v8`
 - lockfile aggiornato da `npm install`

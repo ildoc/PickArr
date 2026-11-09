@@ -22,6 +22,6 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PickArr.Api\PickArr.Api.csproj" />
+    <ProjectReference Include="..\..\src\Pickarr.Api\Pickarr.Api.csproj" />
   </ItemGroup>
 </Project>

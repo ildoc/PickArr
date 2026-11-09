@@ -5,18 +5,18 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class WatchmodeCatalogProviderTests : IAsyncLifetime
 {
@@ -187,17 +187,17 @@ public sealed class WatchmodeCatalogProviderTests : IAsyncLifetime
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-wm-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-wm-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["PickArr:DataPath"] = dataPath,
-                ["PickArr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
-                ["PickArr:Watchmode:RequestsPerSecond"] = "1000",
-                ["PickArr:Watchmode:DisableResilience"] = "true",
-                ["PickArr:Hangfire:Storage"] = "Memory",
+                ["Pickarr:DataPath"] = dataPath,
+                ["Pickarr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
+                ["Pickarr:Watchmode:RequestsPerSecond"] = "1000",
+                ["Pickarr:Watchmode:DisableResilience"] = "true",
+                ["Pickarr:Hangfire:Storage"] = "Memory",
             })
             .Build();
 
@@ -207,17 +207,17 @@ public sealed class WatchmodeCatalogProviderTests : IAsyncLifetime
             o.HandlerLifetime = TimeSpan.FromSeconds(1));
         services.AddSingleton<IConfiguration>(config);
         services.AddSingleton<IClock, FixedClock>();
-        services.AddSingleton<IApiUsageSyncRunAccessor, PickArr.Infrastructure.Catalog.ApiUsageSyncRunAccessor>();
+        services.AddSingleton<IApiUsageSyncRunAccessor, Pickarr.Infrastructure.Catalog.ApiUsageSyncRunAccessor>();
         services.AddDataProtection().UseEphemeralDataProtectionProvider();
-        services.AddDbContext<PickArrDbContext>(o => o.UseSqlite(_connection));
-        services.AddScoped<ISettingsStore, PickArr.Infrastructure.Settings.ProtectedSettingsStore>();
-        services.AddPickArrWatchmode(config);
+        services.AddDbContext<PickarrDbContext>(o => o.UseSqlite(_connection));
+        services.AddScoped<ISettingsStore, Pickarr.Infrastructure.Settings.ProtectedSettingsStore>();
+        services.AddPickarrWatchmode(config);
 
         _services = services.BuildServiceProvider();
 
         await using (var scope = _services.CreateAsyncScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             await db.Database.EnsureCreatedAsync();
             var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
             await store.SetAsync(SettingsKeys.WatchmodeApiKey, JsonSerializer.Serialize(apiKey), isSecret: true);
@@ -227,10 +227,10 @@ public sealed class WatchmodeCatalogProviderTests : IAsyncLifetime
         return _services.GetRequiredService<ICatalogProvider>();
     }
 
-    private async Task<List<PickArr.Core.Domain.Entities.ApiUsage>> GetApiUsagesAsync()
+    private async Task<List<Pickarr.Core.Domain.Entities.ApiUsage>> GetApiUsagesAsync()
     {
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         return await db.ApiUsages.OrderBy(x => x.Timestamp).ToListAsync();
     }
 

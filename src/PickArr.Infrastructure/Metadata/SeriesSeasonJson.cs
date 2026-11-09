@@ -1,7 +1,7 @@
 using System.Text.Json;
-using PickArr.Core.Metadata;
+using Pickarr.Core.Metadata;
 
-namespace PickArr.Infrastructure.Metadata;
+namespace Pickarr.Infrastructure.Metadata;
 
 internal static class SeriesSeasonJson
 {

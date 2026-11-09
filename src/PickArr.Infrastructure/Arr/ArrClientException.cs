@@ -1,4 +1,4 @@
-namespace PickArr.Infrastructure.Arr;
+namespace Pickarr.Infrastructure.Arr;
 
 public sealed class ArrClientException : Exception
 {

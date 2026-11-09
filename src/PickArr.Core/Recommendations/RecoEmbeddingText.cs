@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Embedding input text and SHA-256 TextHash (BR-REC-09, §13.2).</summary>
 public static class RecoEmbeddingText

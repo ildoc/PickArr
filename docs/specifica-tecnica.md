@@ -1,4 +1,4 @@
-# PickArr — Specifica tecnica
+# Pickarr — Specifica tecnica
 
 | | |
 |---|---|
@@ -43,7 +43,7 @@
   - Date/ora in UTC nel DB e nelle API (ISO 8601). Il fuso `TZ` serve solo per interpretare i cron.
   - Enumerazioni serializzate come stringhe in `camelCase` nelle API e in `PascalCase` nel DB.
   - JSON in `camelCase`. Errori in formato RFC 7807 (`application/problem+json`).
-  - Nome del progetto provvisorio: `PickArr` (namespace `PickArr.*`).
+  - Nome del progetto provvisorio: `Pickarr` (namespace `Pickarr.*`).
 
 ---
 
@@ -91,7 +91,7 @@ Le versioni sono quelle stabili all'avvio del progetto, da fissare in `Directory
 Un solo container, un solo processo:
 
 ```
-┌──────────────────────── container PickArr ────────────────────────┐
+┌──────────────────────── container Pickarr ────────────────────────┐
 │  Kestrel :8080                                                       │
 │   ├─ /            → SPA React (file statici in wwwroot)              │
 │   ├─ /api/v1/*    → Minimal API                                      │
@@ -99,7 +99,7 @@ Un solo container, un solo processo:
 │   └─ /health      → health check                                     │
 │  Hangfire Server (in-process): code "default", "sync", "arr", "ml"   │
 │    (secondo server WorkerCount=1 solo coda "ml")                     │
-│  SQLite: /config/PickArr.db   /config/jobs.db   /config/keys/        │
+│  SQLite: /config/Pickarr.db   /config/jobs.db   /config/keys/        │
 │  Modelli ONNX: /config/models (hash verificato al download)          │
 └──────────────────────────────────────────────────────────────────────┘
         │               │               │               │
@@ -109,20 +109,20 @@ Un solo container, un solo processo:
 ### 3.2 Struttura del repository (monorepo)
 
 ```
-PickArr/
-├─ PickArr.slnx
+Pickarr/
+├─ Pickarr.slnx
 ├─ Directory.Build.props
 ├─ Directory.Packages.props
 ├─ docker-compose.yml
 ├─ src/
-│  ├─ PickArr.Core/              # dominio + casi d'uso + astrazioni (nessuna dipendenza da infrastruttura)
-│  ├─ PickArr.Infrastructure/    # EF, client esterni, job, sicurezza
-│  ├─ PickArr.Api/               # host, endpoint, DTO, composizione DI, Dockerfile
-│  └─ PickArr.WebApp/            # SPA (vedi §9)
+│  ├─ Pickarr.Core/              # dominio + casi d'uso + astrazioni (nessuna dipendenza da infrastruttura)
+│  ├─ Pickarr.Infrastructure/    # EF, client esterni, job, sicurezza
+│  ├─ Pickarr.Api/               # host, endpoint, DTO, composizione DI, Dockerfile
+│  └─ Pickarr.WebApp/            # SPA (vedi §9)
 ├─ tests/
-│  ├─ PickArr.Core.Tests/
-│  ├─ PickArr.Infrastructure.Tests/
-│  └─ PickArr.Integration.Tests/
+│  ├─ Pickarr.Core.Tests/
+│  ├─ Pickarr.Infrastructure.Tests/
+│  └─ Pickarr.Integration.Tests/
 ├─ docs/
 │  ├─ documento-funzionale.md
 │  └─ specifica-tecnica.md
@@ -152,7 +152,7 @@ Gli endpoint di `Api` sono sottili: validano l'input, chiamano un servizio, mapp
 
 ### 3.4 Registrazione e composizione
 
-- `Program.cs`: `AddPickArrCore()`, `AddPickArrInfrastructure(config)`, `AddPickArrApi()`.
+- `Program.cs`: `AddPickarrCore()`, `AddPickarrInfrastructure(config)`, `AddPickarrApi()`.
 - Gli endpoint sono definiti in classi `static` con un metodo `MapXxxEndpoints(this IEndpointRouteBuilder)` per feature: `Catalog`, `Titles`, `Favorites`, `Ratings`, `Recommendations`, `RecoAdmin`, `Arr`, `Settings`, `Admin`, `Webhooks`, `System`.
 - Il fallback SPA (`MapFallbackToFile("index.html")`) esclude `/api`, `/docs`, `/health`.
 
@@ -160,7 +160,7 @@ Gli endpoint di `Api` sono sottili: validano l'input, chiamano un servizio, mapp
 
 ## 4. Modello dati
 
-Database `PickArr.db` (SQLite). Convenzioni:
+Database `Pickarr.db` (SQLite). Convenzioni:
 
 - Chiavi surrogate `Id` intere autoincrementali, salvo dove indicato.
 - Timestamp come `DateTime` UTC con value converter (testo ISO 8601), per consentire ordinamenti e confronti. Non usare `DateTimeOffset` con SQLite.
@@ -338,13 +338,13 @@ Indice univoco `(Kind, ArrId)`; indici su `TmdbId`, `TvdbId`, `TitleId`.
 
 ### 4.2 Database dei job
 
-`jobs.db` è un file distinto, gestito interamente da Hangfire, per evitare contesa di lock con `PickArr.db`.
+`jobs.db` è un file distinto, gestito interamente da Hangfire, per evitare contesa di lock con `Pickarr.db`.
 
 ### 4.3 Migrazioni e seed
 
 - Le migrazioni EF sono applicate all'avvio (`Database.MigrateAsync()`), prima dell'avvio dei job.
 - Seed idempotente: `Providers(netflix)`, `CatalogSources(netflix, IT, it-IT)` e `(netflix, US, en-US)` (disabilitate finché non c'è la chiave Watchmode), impostazioni di default.
-- Prima di ogni migrazione distruttiva si crea una copia di sicurezza del file (`PickArr.db.bak-<versione>`).
+- Prima di ogni migrazione distruttiva si crea una copia di sicurezza del file (`Pickarr.db.bak-<versione>`).
 
 ### 4.4 Ricerca
 
@@ -995,7 +995,7 @@ I DTO di elenco e dettaglio titolo espongono `rating` (`like`\|`dislike`\|null) 
 ### 9.1 Struttura
 
 ```
-src/PickArr.WebApp/src/
+src/Pickarr.WebApp/src/
 ├─ app/            App.tsx, router.tsx, providers.tsx (QueryClient, i18n, toasts)
 ├─ api/            client.ts, types.ts, recommendations.ts, ratings.ts, …
 ├─ features/
@@ -1014,7 +1014,7 @@ src/PickArr.WebApp/src/
 └─ main.tsx
 ```
 
-> Nota: il path `frontend/` citato in bozze precedenti è obsoleto; la SPA vive in `src/PickArr.WebApp`.
+> Nota: il path `frontend/` citato in bozze precedenti è obsoleto; la SPA vive in `src/Pickarr.WebApp`.
 
 ### 9.2 Routing
 
@@ -1062,7 +1062,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 
 - Solo tema scuro: `class="dark"` fissa su `<html>`, token colore in Tailwind (`surface`, `surface-2`, `accent`, `muted`).
 - Larghezza minima 1280 px: sotto la soglia compare un avviso non bloccante.
-- `Header` sticky in cima (`sticky top-0`) con sfondo semitrasparente e blur, così il menu resta raggiungibile durante lo scroll. A destra: versione da `GET /api/v1/system/status` (stessa stringa `VERSION` dell’immagine Docker / `InformationalVersion`) con link a `https://github.com/ildoc/PickArr`, e icona Ko-fi verso `https://ko-fi.com/pheeleeppo`.
+- `Header` sticky in cima (`sticky top-0`) con sfondo semitrasparente e blur, così il menu resta raggiungibile durante lo scroll. A destra: versione da `GET /api/v1/system/status` (stessa stringa `VERSION` dell’immagine Docker / `InformationalVersion`) con link a `https://github.com/ildoc/Pickarr`, e icona Ko-fi verso `https://ko-fi.com/pheeleeppo`.
 - Griglia con colonne `repeat(auto-fill, minmax(180px, 1fr))`.
 - Accessibilità di base: dialog con focus trap (Radix), alternative testuali sui poster, contrasto adeguato nei badge.
 
@@ -1087,7 +1087,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 | Azioni distruttive | L'API di eliminazione richiede parametri espliciti; la UI richiede conferma. Audit log. |
 | Accesso | v1 **senza login** (D-02): documentare l'uso in LAN o dietro reverse proxy con autenticazione. Predisporre un middleware di autenticazione opzionale (password singola con cookie, abilitabile da variabile d'ambiente) come evoluzione. |
 | Hangfire dashboard | **Disabilitata** di default (`Hangfire:Dashboard:Enabled=false`); la pagina Admin usa la propria API. Se abilitata, solo con autenticazione attiva. |
-| Modelli ONNX | File sotto `/config/models` (o `PickArr__Models__Path`); download con verifica hash; self-test prima di marcare `Ready`. Nessun dato di gusto esce dal container. |
+| Modelli ONNX | File sotto `/config/models` (o `Pickarr__Models__Path`); download con verifica hash; self-test prima di marcare `Ready`. Nessun dato di gusto esce dal container. |
 | Intestazioni | CSP con `img-src 'self' https://image.tmdb.org data:`, `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, nessun CORS (stessa origine). |
 | Container | Esecuzione come utente non root, filesystem scrivibile solo su `/config`. |
 | Dipendenze | Aggiornamenti periodici, `dotnet list package --vulnerable` e `npm audit` in CI. |
@@ -1111,18 +1111,18 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 | Variabile | Default | Descrizione |
 |---|---|---|
 | `ASPNETCORE_URLS` | `http://+:8080` | Indirizzo di ascolto. |
-| `PickArr__DataPath` | `/config` | Cartella dati (DB, chiavi, log). |
+| `Pickarr__DataPath` | `/config` | Cartella dati (DB, chiavi, log). |
 | `TZ` | `UTC` | Fuso per cron e log. |
-| `PickArr__BaseUrl` | (vuoto) | URL pubblico per generare gli URL dei webhook. |
-| `PickArr__PathBase` | (vuoto) | Prefisso se dietro reverse proxy con sottopercorso. |
+| `Pickarr__BaseUrl` | (vuoto) | URL pubblico per generare gli URL dei webhook. |
+| `Pickarr__PathBase` | (vuoto) | Prefisso se dietro reverse proxy con sottopercorso. |
 | `Logging__Level` | `Information` | Livello di log. |
-| `PickArr__Auth__Password` | (vuoto) | Abilita l'autenticazione opzionale. |
+| `Pickarr__Auth__Password` | (vuoto) | Abilita l'autenticazione opzionale. |
 | `Hangfire__Dashboard__Enabled` | `false` | Dashboard Hangfire. |
-| `PickArr__Models__Path` | `/config/models` | Directory modelli ONNX. |
-| `PickArr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
-| `PickArr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
+| `Pickarr__Models__Path` | `/config/models` | Directory modelli ONNX. |
+| `Pickarr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
+| `Pickarr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
 
-Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con nomi flat `SCREAMING_SNAKE` derivati dalla chiave (`.` e camelCase → `_`). Esempi: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_API_KEY`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. Resta accettata la forma legacy `PickArr__Settings__` con ogni `.` sostituito da `__`. Se entrambe sono impostate, vince il nome flat. I default di Sonarr e Radarr si passano come `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` oppure come JSON in `SONARR_DEFAULTS` (e analoghi per Radarr).
+Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con nomi flat `SCREAMING_SNAKE` derivati dalla chiave (`.` e camelCase → `_`). Esempi: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_API_KEY`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. Resta accettata la forma legacy `Pickarr__Settings__` con ogni `.` sostituito da `__`. Se entrambe sono impostate, vince il nome flat. I default di Sonarr e Radarr si passano come `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` oppure come JSON in `SONARR_DEFAULTS` (e analoghi per Radarr).
 
 Se la variabile è impostata e non vuota, quel valore è quello effettivo per tutta l'esecuzione: vince sul valore salvato e un aggiornamento dalla UI non lo sostituisce. I segreti dichiarati così non vengono scritti nel database e le API continuano a esporre solo `isSet`. Un numero o un booleano non interpretabile, o una chiave nested sconosciuta, impedisce l'avvio. I booleani sono `true` o `false`; i numeri usano il punto decimale. Senza la variabile resta il valore nel database (o il default).
 
@@ -1161,7 +1161,7 @@ Alla modifica delle impostazioni rilevanti per le schedulazioni, `SettingsServic
 
 ### 14.1 Dockerfile (singola immagine)
 
-Il Dockerfile in `src/PickArr.Api/Dockerfile` è quello eseguito dalla pipeline. In sintesi:
+Il Dockerfile in `src/Pickarr.Api/Dockerfile` è quello eseguito dalla pipeline. In sintesi:
 
 - `npm ci` e `dotnet restore` stanno su layer propri, prima dei sorgenti. Un cambiamento di codice non riscarica i pacchetti; un cambiamento solo del frontend non ripubblica l'API, e viceversa.
 - La pubblicazione è framework-dependent (`--no-self-contained`) per `linux-x64` o `linux-arm64`, senza simboli di debug e senza un secondo runtime. Il frontend e `dotnet publish` girano sull'architettura del builder (`$BUILDPLATFORM`) per evitare l'emulazione QEMU; l'immagine finale è quella della piattaforma target.
@@ -1174,15 +1174,15 @@ L'utente non root e i permessi sul volume `/config` vanno verificati (SP-5); l'i
 
 ```yaml
 services:
-  PickArr:
+  Pickarr:
     image: ghcr.io/<owner>/pickarr:latest
-    container_name: PickArr
+    container_name: Pickarr
     restart: unless-stopped
     ports:
       - "8080:8080"
     environment:
       - TZ=Europe/Rome
-      - PickArr__BaseUrl=http://PickArr:8080   # usato per generare gli URL dei webhook
+      - Pickarr__BaseUrl=http://Pickarr:8080   # usato per generare gli URL dei webhook
       # WATCHMODE_API_KEY / TMDB_API_KEY / SONARR_URL / … (default DataPath=/config, URLS=:8080)
     volumes:
       - ./config:/config
@@ -1272,7 +1272,7 @@ Un titolo è unico e riusato tra sorgenti: i metadati TMDB si scaricano una volt
 
 ```json
 {
-  "type": "https://PickArr.local/errors/arr-unreachable",
+  "type": "https://Pickarr.local/errors/arr-unreachable",
   "title": "Sonarr non raggiungibile",
   "status": 503,
   "detail": "Timeout durante la connessione a http://sonarr:8989.",

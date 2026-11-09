@@ -1,7 +1,7 @@
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class ProviderResolver(IEnumerable<ICatalogProvider> providers) : IProviderResolver
 {

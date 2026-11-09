@@ -1,18 +1,18 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Admin;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Admin;
+namespace Pickarr.Infrastructure.Admin;
 
 public sealed class AdminQuotaService(
     ICreditBudget creditBudget,
     ISettingsStore settings,
-    PickArrDbContext db,
+    PickarrDbContext db,
     IClock clock) : IAdminQuotaService
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

@@ -2,16 +2,16 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class CatalogFullSyncTests
 {
@@ -101,7 +101,7 @@ public sealed class CatalogFullSyncTests
     private sealed class Harness : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
-        public required PickArrDbContext Db { get; init; }
+        public required PickarrDbContext Db { get; init; }
         public required ICatalogFullSync FullSync { get; init; }
         public required FakeCatalogProvider Provider { get; init; }
         public required MutableClock Clock { get; init; }
@@ -115,8 +115,8 @@ public sealed class CatalogFullSyncTests
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
-            var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-            var db = new PickArrDbContext(options);
+            var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+            var db = new PickarrDbContext(options);
             await db.Database.EnsureCreatedAsync();
 
             var providerEntity = new Provider

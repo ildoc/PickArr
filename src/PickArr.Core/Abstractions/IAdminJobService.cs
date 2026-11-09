@@ -1,6 +1,6 @@
-using PickArr.Core.Admin;
+using Pickarr.Core.Admin;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface IAdminJobService
 {

@@ -3,13 +3,13 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("ratings-api")]
 public sealed class RatingsApiCollection : ICollectionFixture<ApiFactory>;
@@ -44,7 +44,7 @@ public sealed class RatingsApiTests
 
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             var rating = await db.Ratings.SingleAsync(r => r.TitleId == titleId);
             rating.Value.ShouldBe(RatingValues.Dislike);
             (await db.RatingEvents.CountAsync(e => e.TitleId == titleId)).ShouldBe(2);
@@ -122,7 +122,7 @@ public sealed class RatingsApiTests
     private async Task<int> SeedTitleAsync(int? tmdbId = null, string? tmdbType = null)
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var now = DateTime.UtcNow;
         var title = new Title
         {

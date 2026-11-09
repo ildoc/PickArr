@@ -1,6 +1,6 @@
-using PickArr.Core.Domain.Entities;
+using Pickarr.Core.Domain.Entities;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface ISyncRunStore
 {

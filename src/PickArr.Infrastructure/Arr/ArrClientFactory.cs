@@ -1,8 +1,8 @@
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Arr;
+namespace Pickarr.Infrastructure.Arr;
 
 public sealed class ArrClientFactory(
     SonarrClient sonarr,

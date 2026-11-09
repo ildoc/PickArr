@@ -1,13 +1,13 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class DatabaseInitializerTests
 {
@@ -22,11 +22,11 @@ public sealed class DatabaseInitializerTests
         await using var connection = new SqliteConnection("Data Source=:memory:");
         await connection.OpenAsync();
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>()
+        var options = new DbContextOptionsBuilder<PickarrDbContext>()
             .UseSqlite(connection)
             .Options;
 
-        await using var db = new PickArrDbContext(options);
+        await using var db = new PickarrDbContext(options);
         var initializer = new DatabaseInitializer(db, new FixedClock(DateTime.UtcNow), NullLogger<DatabaseInitializer>.Instance);
         await initializer.InitializeAsync();
         await initializer.InitializeAsync();

@@ -1,9 +1,9 @@
 using Microsoft.ML;
 using Microsoft.ML.Data;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Recommendations;
 
-namespace PickArr.Infrastructure.Metadata.Reco;
+namespace Pickarr.Infrastructure.Metadata.Reco;
 
 /// <summary>Regularized logistic regression via ML.NET (§12.6).</summary>
 public sealed class RecoLevel3Model : IRecoLevel3Model

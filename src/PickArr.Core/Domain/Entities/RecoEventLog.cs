@@ -1,4 +1,4 @@
-namespace PickArr.Core.Domain.Entities;
+namespace Pickarr.Core.Domain.Entities;
 
 /// <summary>Local recommendation interaction log (FR-REC-AD-05). Written only when events are enabled.</summary>
 public sealed class RecoEventLog

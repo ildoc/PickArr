@@ -3,9 +3,9 @@ using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using Microsoft.ML.Tokenizers;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Recommendations;
+using Pickarr.Core.Recommendations;
 
-namespace PickArr.Infrastructure.Metadata.Reco;
+namespace Pickarr.Infrastructure.Metadata.Reco;
 
 /// <summary>Thread-safe ONNX sentence embedder (mean pool + L2).</summary>
 public sealed class RecoOnnxEmbedder : IDisposable

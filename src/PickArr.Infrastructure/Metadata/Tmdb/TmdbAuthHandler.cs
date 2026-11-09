@@ -1,10 +1,10 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Infrastructure.Metadata.Tmdb;
+namespace Pickarr.Infrastructure.Metadata.Tmdb;
 
 public sealed class TmdbAuthHandler(IServiceScopeFactory scopeFactory) : DelegatingHandler
 {

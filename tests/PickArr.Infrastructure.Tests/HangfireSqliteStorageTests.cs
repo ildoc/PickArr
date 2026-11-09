@@ -2,17 +2,17 @@ using Hangfire;
 using Hangfire.Common;
 using Hangfire.Storage.SQLite;
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Jobs;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class HangfireSqliteStorageTests
 {
     [Fact]
     public void Sqlite_storage_survives_restart_and_keeps_recurring_job()
     {
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-hf-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-hf-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
         var sqlitePath = Path.Combine(dataPath, "jobs.db");
 
@@ -45,7 +45,7 @@ public sealed class HangfireSqliteStorageTests
     [Fact]
     public void ScheduleReconciler_reapplies_probe_after_storage_reset()
     {
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-hf-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-hf-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
         var sqlitePath = Path.Combine(dataPath, "jobs.db");
 

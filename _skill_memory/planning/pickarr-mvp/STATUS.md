@@ -8,9 +8,9 @@
 
 ## 0. Quick Context
 
-- Obiettivo: implementare PickArr MVP (Netflix IT/US + TMDB + UI + Sonarr/Radarr + admin + Docker/CI); requisiti in ANALYSIS.md §1
+- Obiettivo: implementare Pickarr MVP (Netflix IT/US + TMDB + UI + Sonarr/Radarr + admin + Docker/CI); requisiti in ANALYSIS.md §1
 - Stato dominio: **MVP chiuso** — TR-01…TR-10 completate (T27 PASS_WITH_DEFERRALS)
-- Codebase: HEAD padre `4869916ee25b013223e302c12885c3b3d9458bd2`; codice PickArr ancora untracked
+- Codebase: HEAD padre `4869916ee25b013223e302c12885c3b3d9458bd2`; codice Pickarr ancora untracked
 - Snapshot locale: invariato post-verifica (nessuna correzione in T27); nessuno staged
 - Tranche/task candidato: nessuno (MVP); opz. commit/push + CI remota
 - Dettagli: `artifacts/T27-verifica-finale.md`
@@ -133,7 +133,7 @@
 | --- | --- | --- | --- | --- | --- |
 | D-001 | 2026-11-04 | Dominio KB `pickarr-mvp`; scope solo MVP Netflix | utente | Q1–Q2 | chat 2026-11-04 |
 | D-002 | 2026-11-04 | Seguire ordine specifica §18 | utente | Q3 | chat |
-| D-003 | 2026-11-04 | Nome `PickArr` / `PickArr.*` | utente | Q5 | chat |
+| D-003 | 2026-11-04 | Nome `Pickarr` / `Pickarr.*` | utente | Q5 | chat |
 | D-004 | 2026-11-04 | Nessun login v1 | utente | D-02 funzionale; Q6 | chat |
 | D-011 | 2026-11-04 | **Filtro catalogo**: Sonarr→serie, Radarr→film, nessuno→vuoto; stand-up per MediaType | utente | Q7 | chat |
 | D-018 | 2026-11-04 | Default profilo/root Arr: impostati in settings; se assenti → primo elemento lista istanza | docs D-01 (adottato) | non contraddetto in Q1–Q27 | assessment + funzionale D-01 |
@@ -235,6 +235,6 @@
 | Isolamento effettivo | Revisore read-only separato; nessuna correzione codice in T27 |
 | Versione verificata | HEAD padre `4869916ee25b…`; `pickarr:local` `2bac92ff0821` / sha256 `2bac92ff0821…343b896` |
 | Rapporto | `artifacts/T27-verifica-finale.md` |
-| Rinvii/rischi approvati | (1) pipeline GitLab remota non eseguita; (2) Dockerfile senza `--platform` pin; (3) tree PickArr untracked; (4) no live API keys in verifica |
+| Rinvii/rischi approvati | (1) pipeline GitLab remota non eseguita; (2) Dockerfile senza `--platform` pin; (3) tree Pickarr untracked; (4) no live API keys in verifica |
 
 > Storico tranche, log datati, finding risolti: → `ARCHIVE.md`

@@ -1,8 +1,8 @@
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class ArrMediaFilterTests
 {

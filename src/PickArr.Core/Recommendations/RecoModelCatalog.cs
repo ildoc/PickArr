@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Known local embedding models (D-REC-11 / SP-R2).</summary>
 public static class RecoModelCatalog

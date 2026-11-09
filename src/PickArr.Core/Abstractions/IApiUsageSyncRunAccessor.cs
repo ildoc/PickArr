@@ -1,4 +1,4 @@
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 /// <summary>
 /// Optional ambient SyncRun id for ApiUsage rows written by HTTP handlers.

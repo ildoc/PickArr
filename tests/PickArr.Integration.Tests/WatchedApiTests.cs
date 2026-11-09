@@ -3,12 +3,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("watched-api")]
 public sealed class WatchedApiCollection : ICollectionFixture<ApiFactory>;
@@ -40,7 +40,7 @@ public sealed class WatchedApiTests
 
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             (await db.Watched.AnyAsync(w => w.TitleId == titleId)).ShouldBeTrue();
         }
 
@@ -62,7 +62,7 @@ public sealed class WatchedApiTests
     private async Task<int> SeedTitleAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var now = DateTime.UtcNow;
         var title = new Title
         {

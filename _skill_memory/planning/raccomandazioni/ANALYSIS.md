@@ -42,7 +42,7 @@ Implementare voto (mi piace / non mi piace) sul `Title` e raccomandazioni locali
 
 ### 1.3 Stato as-is (sintesi)
 
-Catalogo self-hosted già operativo: titoli unificati, availability per sorgente, preferiti globali, libreria Arr, enrichment TMDB con keywords/credits nel payload ma keywords non persistite e cast solo nomi in `CastJson`. Nessuna tabella/API/UI di rating o raccomandazioni. Hangfire: code `default`/`sync`/`arr`, un server. UI catalogo/lista/settings senza `/for-you`. SSE assente. Path reale frontend: `src/PickArr.WebApp` (il doc §15 cita `frontend/` obsoleto).
+Catalogo self-hosted già operativo: titoli unificati, availability per sorgente, preferiti globali, libreria Arr, enrichment TMDB con keywords/credits nel payload ma keywords non persistite e cast solo nomi in `CastJson`. Nessuna tabella/API/UI di rating o raccomandazioni. Hangfire: code `default`/`sync`/`arr`, un server. UI catalogo/lista/settings senza `/for-you`. SSE assente. Path reale frontend: `src/Pickarr.WebApp` (il doc §15 cita `frontend/` obsoleto).
 
 Dettaglio metriche: `BASELINE.md`.
 
@@ -52,7 +52,7 @@ Dettaglio metriche: `BASELINE.md`.
 
 | Componente | Ruolo | File | Accoppiamento |
 | --- | --- | --- | --- |
-| `Title` + merge | Identità voto | `src/PickArr.Core/Domain/Entities/Title.cs`; `CatalogUpserter.ResolveTitleAsync` | alto |
+| `Title` + merge | Identità voto | `src/Pickarr.Core/Domain/Entities/Title.cs`; `CatalogUpserter.ResolveTitleAsync` | alto |
 | `Availability` | Scope/pool | `Availability.cs`; join in `TitleQueryService` | alto |
 | `TitleQueryService` | Griglia catalogo (filtra RemovedAt) | `TitleQueryService.cs` | alto — **non riusare predicato RemovedAt per reco** |
 | `TitleListItemDto` | Card DTO (`RatingTmdb`, no user rating; `CatalogPlaceDto` senza removedAt) | `TitleQueryModels.cs` | alto |
@@ -192,7 +192,7 @@ graph TD
 | 2026-11-06 | K-013, FLUSSO-05/06 | Mitigazioni SP-R3 in TR-08: GET materializza max(200, pageEnd); similar prova emb senza sparse pool + narrow genere/cap 800; ScoreAll maxSignals=64 | K-013 da rivalidare con SpR3; acceptance T17–T19 rafforzata |
 | 2026-11-06 | K-013 | Rivalidazione SpR3: MMR ~150ms / similar ~77ms / L2 ~10s PASS-bordo; L1 ~10.1s bordo; utente sceglie RESOLVED | artifacts/SP-R3.md aggiornato; D-013; K-013 RESOLVED |
 | 2026-11-06 | TR-09 T20–T22 | Eval leave-one-out + L3 ML.NET gated + RecoEventLog + SP-R4 defaults tenuti | migrazione AddRecoEvalAndEvents; artifacts/SP-R4.md; D-014 |
-| 2026-11-06 | TR-10 T23 / R-DOCS / A-006 | documento-funzionale + specifica-tecnica v0.2; D-REC; path `src/PickArr.WebApp`; F-005 RESOLVED | docs/*.md |
+| 2026-11-06 | TR-10 T23 / R-DOCS / A-006 | documento-funzionale + specifica-tecnica v0.2; D-REC; path `src/Pickarr.WebApp`; F-005 RESOLVED | docs/*.md |
 
 ---
 

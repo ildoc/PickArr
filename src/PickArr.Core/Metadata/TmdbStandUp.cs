@@ -1,4 +1,4 @@
-namespace PickArr.Core.Metadata;
+namespace Pickarr.Core.Metadata;
 
 /// <summary>SP-2: stand-up classification via TMDB keywords (D-008).</summary>
 public static class TmdbStandUp

@@ -2,12 +2,12 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class EnvironmentSettingSourceTests
 {
@@ -50,13 +50,13 @@ public sealed class EnvironmentSettingSourceTests
     {
         var source = Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:apiKey"] = "secret-key",
-            ["PickArr:Settings:watchmode:quota"] = "1200",
-            ["PickArr:Settings:reco:enabled"] = "false",
-            ["PickArr:Settings:reco:weights:dislike"] = "-1.5",
-            ["PickArr:Settings:sonarr:url"] = "http://sonarr:8989/",
-            ["PickArr:Settings:sonarr:defaults:qualityProfileId"] = "4",
-            ["PickArr:Settings:sonarr:defaults:rootFolderPath"] = "/tv",
+            ["Pickarr:Settings:watchmode:apiKey"] = "secret-key",
+            ["Pickarr:Settings:watchmode:quota"] = "1200",
+            ["Pickarr:Settings:reco:enabled"] = "false",
+            ["Pickarr:Settings:reco:weights:dislike"] = "-1.5",
+            ["Pickarr:Settings:sonarr:url"] = "http://sonarr:8989/",
+            ["Pickarr:Settings:sonarr:defaults:qualityProfileId"] = "4",
+            ["Pickarr:Settings:sonarr:defaults:rootFolderPath"] = "/tv",
         });
 
         source.TryGet(SettingsKeys.WatchmodeApiKey, out var apiKey).ShouldBeTrue();
@@ -114,7 +114,7 @@ public sealed class EnvironmentSettingSourceTests
     {
         var source = Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:apiKey"] = "legacy-key",
+            ["Pickarr:Settings:watchmode:apiKey"] = "legacy-key",
             ["WATCHMODE_API_KEY"] = "flat-key",
         });
 
@@ -127,7 +127,7 @@ public sealed class EnvironmentSettingSourceTests
     {
         var source = Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:radarr:defaults"] = "{\"qualityProfileId\":2,\"rootFolderPath\":\"/movies\"}",
+            ["Pickarr:Settings:radarr:defaults"] = "{\"qualityProfileId\":2,\"rootFolderPath\":\"/movies\"}",
         });
 
         source.TryGet(SettingsKeys.RadarrDefaults, out var defaults).ShouldBeTrue();
@@ -140,8 +140,8 @@ public sealed class EnvironmentSettingSourceTests
     {
         var source = Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:apiKey"] = "  ",
-            ["PickArr:Settings:ui:language"] = "en",
+            ["Pickarr:Settings:watchmode:apiKey"] = "  ",
+            ["Pickarr:Settings:ui:language"] = "en",
         });
 
         source.TryGet(SettingsKeys.WatchmodeApiKey, out _).ShouldBeFalse();
@@ -154,7 +154,7 @@ public sealed class EnvironmentSettingSourceTests
     {
         var error = Should.Throw<InvalidOperationException>(() => Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:quota"] = "many",
+            ["Pickarr:Settings:watchmode:quota"] = "many",
         }));
 
         error.Message.ShouldContain(SettingsKeys.WatchmodeQuota);
@@ -166,7 +166,7 @@ public sealed class EnvironmentSettingSourceTests
     {
         var error = Should.Throw<InvalidOperationException>(() => Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:catalog:initialImportStarted"] = "true",
+            ["Pickarr:Settings:catalog:initialImportStarted"] = "true",
         }));
 
         error.Message.ShouldContain("catalog.initialImportStarted");
@@ -178,7 +178,7 @@ public sealed class EnvironmentSettingSourceTests
     {
         var source = Create(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:plan"] = "paid",
+            ["Pickarr:Settings:watchmode:plan"] = "paid",
         });
         var inner = Substitute.For<ISettingsStore>();
         inner.IsSetAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(false);

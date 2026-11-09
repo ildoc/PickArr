@@ -1,15 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Arr;
+namespace Pickarr.Infrastructure.Arr;
 
 public sealed class ArrLibrarySync(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IArrClientFactory clientFactory,
     IClock clock,
     ISyncRunStore syncRuns,

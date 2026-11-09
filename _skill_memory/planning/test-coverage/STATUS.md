@@ -121,7 +121,7 @@
 | --- | --- | --- | --- | --- |
 | 2026-11-09 | INIT | Creati ANALYSIS/STATUS/PLAN/BASELINE/ARCHIVE/AGENT_KB | DONE | questa cartella |
 | 2026-11-09 | T01 | coverlet.runsettings + vitest coverage; report baseline | DONE | artifacts/T01-coverage-baseline.md; Core/Infra/Int PASS con coverlet; FE 65.07% |
-| 2026-11-09 | T02 | Collection `catalog-api`/`arr-action-api`; seed idempotente; ClearArr | DONE | `dotnet test tests/PickArr.Integration.Tests` 29/29 |
+| 2026-11-09 | T02 | Collection `catalog-api`/`arr-action-api`; seed idempotente; ClearArr | DONE | `dotnet test tests/Pickarr.Integration.Tests` 29/29 |
 | 2026-11-09 | T03 | Harden DeleteFromArr/Jobs/Quota + TextNormalizer empty | DONE | Core 80 PASS; FE 41 PASS |
 | 2026-11-09 | F-001→RESOLVED | Coverage misurabile | DONE | T01 |
 | 2026-11-09 | F-002→RESOLVED | Isolation integration | DONE | T02 |
@@ -148,7 +148,7 @@
 
 | KPI | Baseline | Target | Attuale | Comando misura |
 | --- | --- | --- | --- | --- |
-| Fact/Theory Core (casi eseguiti) | 64 marcatori / 77 run | ≥70 edge sensati | **80** (T14) | `dotnet test tests/PickArr.Core.Tests` |
+| Fact/Theory Core (casi eseguiti) | 64 marcatori / 77 run | ≥70 edge sensati | **80** (T14) | `dotnet test tests/Pickarr.Core.Tests` |
 | Fact/Theory Infrastructure | 106 | ≥120 | **131** (T14) | Infra.Tests |
 | Fact Integration | ~29 | ≥40 | **42 PASS** (T14) | Integration.Tests |
 | Casi Vitest | 39 | ≥60 | **63** (T14) | `npm test -- --run` |
@@ -179,10 +179,10 @@
 | Branch strategy | a discrezione utente |
 | Commit convention | solo su richiesta utente |
 | Test backend | `dotnet test` / filtro FQN; API ferma se lock |
-| Test frontend | `cd src/PickArr.WebApp && npm test -- --run` |
+| Test frontend | `cd src/Pickarr.WebApp && npm test -- --run` |
 | Typecheck/lint FE | `npm run typecheck` / `npm run lint` |
-| Coverage backend | `dotnet test PickArr.slnx --settings tests/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory TestResults/coverage-baseline` |
-| Coverage frontend | `cd src/PickArr.WebApp && npm run test:coverage` |
+| Coverage backend | `dotnet test Pickarr.slnx --settings tests/coverlet.runsettings --collect:"XPlat Code Coverage" --results-directory TestResults/coverage-baseline` |
+| Coverage frontend | `cd src/Pickarr.WebApp && npm run test:coverage` |
 
 ---
 

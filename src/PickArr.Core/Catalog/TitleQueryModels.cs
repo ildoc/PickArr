@@ -1,4 +1,4 @@
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 public sealed record TitleQueryRequest(
     string? Q = null,

@@ -1,16 +1,16 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Metadata;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Metadata;
+namespace Pickarr.Infrastructure.Metadata;
 
 public sealed class EnrichmentService(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IMetadataProvider metadata,
     IClock clock,
     ILogger<EnrichmentService> logger) : IEnrichmentService

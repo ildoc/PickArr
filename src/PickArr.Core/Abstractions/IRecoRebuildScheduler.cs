@@ -1,4 +1,4 @@
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 /// <summary>Debounced enqueue of RecoBuildJob after rating changes (BR-REC-12).</summary>
 public interface IRecoRebuildScheduler

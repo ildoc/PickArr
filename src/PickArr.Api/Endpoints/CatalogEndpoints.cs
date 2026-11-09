@@ -1,7 +1,7 @@
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class CatalogEndpoints
 {

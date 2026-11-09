@@ -1,8 +1,8 @@
-using PickArr.Core.Abstractions;
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Catalog;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Catalog;
 
-namespace PickArr.Api.Endpoints;
+namespace Pickarr.Api.Endpoints;
 
 public static class RecommendationsEndpoints
 {

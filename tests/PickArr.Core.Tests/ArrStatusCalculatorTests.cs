@@ -1,8 +1,8 @@
-using PickArr.Core.Arr;
-using PickArr.Core.Domain;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Domain;
 using Shouldly;
 
-namespace PickArr.Core.Tests;
+namespace Pickarr.Core.Tests;
 
 public sealed class ArrStatusCalculatorTests
 {

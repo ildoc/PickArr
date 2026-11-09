@@ -1,17 +1,17 @@
 using Hangfire;
 using Hangfire.Storage;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Admin;
-using PickArr.Core.Domain;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Admin;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Admin;
+namespace Pickarr.Infrastructure.Admin;
 
 public sealed class AdminJobService(
-    PickArrDbContext db,
+    PickarrDbContext db,
     IBackgroundJobClient backgroundJobs,
     ISettingsStore settings,
     CatalogBootstrap bootstrap) : IAdminJobService

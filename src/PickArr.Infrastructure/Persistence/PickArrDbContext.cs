@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Domain.Entities;
+using Pickarr.Core.Domain.Entities;
 
-namespace PickArr.Infrastructure.Persistence;
+namespace Pickarr.Infrastructure.Persistence;
 
-public sealed class PickArrDbContext(DbContextOptions<PickArrDbContext> options) : DbContext(options)
+public sealed class PickarrDbContext(DbContextOptions<PickarrDbContext> options) : DbContext(options)
 {
     public DbSet<Provider> Providers => Set<Provider>();
     public DbSet<CatalogSource> CatalogSources => Set<CatalogSource>();
@@ -35,7 +35,7 @@ public sealed class PickArrDbContext(DbContextOptions<PickArrDbContext> options)
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PickArrDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PickarrDbContext).Assembly);
         base.OnModelCreating(modelBuilder);
     }
 }

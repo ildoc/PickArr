@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Level-1 sparse TF-IDF profile and cosine similarity (§12.3).</summary>
 public static class RecoSparse

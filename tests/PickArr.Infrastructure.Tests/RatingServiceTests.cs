@@ -1,14 +1,14 @@
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RatingServiceTests : IAsyncLifetime
 {
@@ -70,15 +70,15 @@ public sealed class RatingServiceTests : IAsyncLifetime
         (await db.RatingEvents.CountAsync(e => e.TitleId == titleId)).ShouldBe(1);
     }
 
-    private async Task<(PickArrDbContext Db, RatingService Ratings, int TitleId)> SeedAsync(bool enabled = true)
+    private async Task<(PickarrDbContext Db, RatingService Ratings, int TitleId)> SeedAsync(bool enabled = true)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var options = new DbContextOptionsBuilder<PickArrDbContext>()
+        var options = new DbContextOptionsBuilder<PickarrDbContext>()
             .UseSqlite(_connection)
             .Options;
-        var db = new PickArrDbContext(options);
+        var db = new PickarrDbContext(options);
         await db.Database.EnsureCreatedAsync();
 
         var now = DateTime.UtcNow;

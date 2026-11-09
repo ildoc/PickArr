@@ -1,7 +1,7 @@
-using PickArr.Core.Arr;
-using PickArr.Core.Catalog;
+using Pickarr.Core.Arr;
+using Pickarr.Core.Catalog;
 
-namespace PickArr.Core.Abstractions;
+namespace Pickarr.Core.Abstractions;
 
 public interface IArrAddService
 {

@@ -1,4 +1,4 @@
-namespace PickArr.Infrastructure.Admin;
+namespace Pickarr.Infrastructure.Admin;
 
 internal static class JobText
 {

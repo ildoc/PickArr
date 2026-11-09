@@ -1,4 +1,4 @@
-namespace PickArr.Core.Domain.Entities;
+namespace Pickarr.Core.Domain.Entities;
 
 public sealed class SyncRun
 {

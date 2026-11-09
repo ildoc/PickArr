@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Catalog;
+namespace Pickarr.Infrastructure.Catalog;
 
-public sealed class EfSyncRunStore(PickArrDbContext db, IClock clock) : ISyncRunStore
+public sealed class EfSyncRunStore(PickarrDbContext db, IClock clock) : ISyncRunStore
 {
     public Task<SyncRun?> GetAsync(Guid id, CancellationToken cancellationToken = default) =>
         db.SyncRuns.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);

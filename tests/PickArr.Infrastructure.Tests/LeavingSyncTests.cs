@@ -4,21 +4,21 @@ using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Catalog;
-using PickArr.Infrastructure.Catalog.Watchmode;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Catalog.Watchmode;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class LeavingSyncTests : IAsyncLifetime
 {
@@ -69,7 +69,7 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         result.TitlesUpdated.ShouldBe(1); // only US fixture id 1000001 is on this source
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var alpha = await db.Availabilities
             .Include(a => a.Title)
             .SingleAsync(a => a.Title!.WatchmodeId == 1000001);
@@ -97,7 +97,7 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         result.Status.ShouldBe(SyncRunStatuses.Succeeded);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var orphan = await db.Availabilities
             .Include(a => a.Title)
             .SingleAsync(a => a.Title!.WatchmodeId == 1999999);
@@ -125,7 +125,7 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         result.Status.ShouldBe(SyncRunStatuses.Succeeded);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var orphan = await db.Availabilities
             .Include(a => a.Title)
             .SingleAsync(a => a.Title!.WatchmodeId == 1999999);
@@ -179,7 +179,7 @@ public sealed class LeavingSyncTests : IAsyncLifetime
             .ShouldBe(1);
 
         await using var scope = _services!.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var netflix = await db.Availabilities
             .Include(a => a.Title)
             .Include(a => a.CatalogSource!)
@@ -205,16 +205,16 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
 
-        var dataPath = Path.Combine(Path.GetTempPath(), "PickArr-leaving-tests", Guid.NewGuid().ToString("N"));
+        var dataPath = Path.Combine(Path.GetTempPath(), "Pickarr-leaving-tests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dataPath);
 
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
-                ["PickArr:DataPath"] = dataPath,
-                ["PickArr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
-                ["PickArr:Watchmode:RequestsPerSecond"] = "1000",
-                ["PickArr:Watchmode:DisableResilience"] = "true",
+                ["Pickarr:DataPath"] = dataPath,
+                ["Pickarr:Watchmode:BaseUrl"] = _server.Urls[0] + "/v1/",
+                ["Pickarr:Watchmode:RequestsPerSecond"] = "1000",
+                ["Pickarr:Watchmode:DisableResilience"] = "true",
             })
             .Build();
 
@@ -226,19 +226,19 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         services.AddSingleton<IClock, FixedClock>();
         services.AddSingleton<IApiUsageSyncRunAccessor, ApiUsageSyncRunAccessor>();
         services.AddDataProtection().UseEphemeralDataProtectionProvider();
-        services.AddDbContext<PickArrDbContext>(o => o.UseSqlite(_connection));
+        services.AddDbContext<PickarrDbContext>(o => o.UseSqlite(_connection));
         services.AddScoped<ISettingsStore, ProtectedSettingsStore>();
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
         services.AddSingleton<WatchmodeQuotaObservation>();
         services.AddScoped<ILeavingSync, LeavingSync>();
         services.AddScoped<ICreditBudget, CreditBudgetService>();
-        services.AddPickArrWatchmode(config);
+        services.AddPickarrWatchmode(config);
 
         _services = services.BuildServiceProvider();
 
         await using var scope = _services.CreateAsyncScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         await db.Database.EnsureCreatedAsync();
 
         var provider = new Provider

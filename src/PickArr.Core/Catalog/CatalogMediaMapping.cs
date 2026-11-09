@@ -1,6 +1,6 @@
-using PickArr.Core.Domain;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 public static class CatalogMediaMapping
 {

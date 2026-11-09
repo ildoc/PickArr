@@ -1,4 +1,4 @@
-namespace PickArr.Infrastructure.Metadata.Tmdb;
+namespace Pickarr.Infrastructure.Metadata.Tmdb;
 
 /// <summary>
 /// Process-wide TMDB request spacing so Enrichment, MetadataRefresh, and RecoFeature

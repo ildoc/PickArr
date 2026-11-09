@@ -8,16 +8,16 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Core.Settings;
-using PickArr.Infrastructure.Jobs;
-using PickArr.Infrastructure.Persistence;
-using PickArr.Infrastructure.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Settings;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class CatalogBootstrapTests
 {
@@ -114,7 +114,7 @@ public sealed class CatalogBootstrapTests
         await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: false);
         var source = CreateEnvSource(new Dictionary<string, string?>
         {
-            ["PickArr:Settings:watchmode:apiKey"] = "from-env",
+            ["Pickarr:Settings:watchmode:apiKey"] = "from-env",
         });
         var bootstrap = new CatalogBootstrap(
             fixture.Db,
@@ -212,7 +212,7 @@ public sealed class CatalogBootstrapTests
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
-        public required PickArrDbContext Db { get; init; }
+        public required PickarrDbContext Db { get; init; }
         public required CatalogBootstrap Bootstrap { get; init; }
         public required IBackgroundJobClient Jobs { get; init; }
         public required MemorySettings Settings { get; init; }
@@ -224,8 +224,8 @@ public sealed class CatalogBootstrapTests
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
-            var options = new DbContextOptionsBuilder<PickArrDbContext>().UseSqlite(connection).Options;
-            var db = new PickArrDbContext(options);
+            var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+            var db = new PickarrDbContext(options);
             await db.Database.EnsureCreatedAsync();
 
             var provider = new Provider

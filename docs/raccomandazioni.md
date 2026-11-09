@@ -1,4 +1,4 @@
-# PickArr — Rating e raccomandazioni
+# Pickarr — Rating e raccomandazioni
 
 | | |
 |---|---|
@@ -52,7 +52,7 @@
 
 ### 1.1 Scopo
 
-Aggiungere a PickArr un **voto** (mi piace / non mi piace) sul titolo e dei **consigli** che usano quel voto. Il voto è unico anche se lo stesso titolo è su più servizi. I consigli che l’utente vede sono titoli già presenti nei cataloghi importati.
+Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **consigli** che usano quel voto. Il voto è unico anche se lo stesso titolo è su più servizi. I consigli che l’utente vede sono titoli già presenti nei cataloghi importati.
 
 ### 1.2 Obiettivi
 
@@ -205,7 +205,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 | NFR-REC-04 | Memoria | Modello quantizzato più i vettori del pool restano nell’ordine di qualche centinaio di MB. Da misurare. |
 | NFR-REC-05 | Robustezza | Modello assente o corrotto, errore TMDB o metadati incompleti: l’app resta su, i consigli scendono al livello disponibile. |
 | NFR-REC-06 | Riproducibilità | A parità di voti, segnali e catalogo, la ricostruzione produce lo stesso ordine. L’esplorazione usa un seme legato alla versione. |
-| NFR-REC-07 | Privacy | I gusti restano in `PickArr.db`. Verso TMDB escono solo id di titoli già in catalogo, per completare i metadati. Nessuna telemetria. |
+| NFR-REC-07 | Privacy | I gusti restano in `Pickarr.db`. Verso TMDB escono solo id di titoli già in catalogo, per completare i metadati. Nessuna telemetria. |
 | NFR-REC-08 | Persistenza | I voti stanno nel DB principale (backup di `/config`) e sono esportabili. |
 | NFR-REC-09 | Portabilità | Il modello gira su linux/amd64 e linux/arm64 senza GPU. |
 | NFR-REC-10 | Licenze | Modello e dati con licenze compatibili (SP-R5). |
@@ -353,7 +353,7 @@ Voce **Per te** nell’intestazione, accanto a *La mia lista*. *Le mie valutazio
 | Voto medio e popolarità | `Title.VoteTmdb`, `VoteTmdbCount`, `Popularity` | Prior. |
 | Preferiti | `Favorite` (`TitleId` PK) | Segnale implicito e modello UI del toggle ottimistico (`FavoriteButton`). |
 | Libreria | `ArrLibraryItem.State`, `ArrAuditLog` (`Add` / `Delete`, `Success` / `Failed`) | Segnali e filtro «in libreria». |
-| Sorgente UI | `src/PickArr.WebApp/src/` (`pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
+| Sorgente UI | `src/Pickarr.WebApp/src/` (`pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
 | Card | `TitleListItem` / `TitleListItemDto`, `places`, `TitleCard`, `TitleDialog` | Si aggiunge il campo `rating`. |
 | Job | Hangfire, code `default`, `sync`, `arr` (`HangfireBootstrap`), `SyncRun` + `SyncRunKinds` | Nuova coda `ml` e nuovi `Kind`. |
 | Impostazioni | `AppSetting`, `SettingsKeys` | Chiavi `reco.*`. |
@@ -397,7 +397,7 @@ GET /recommendations , GET /titles/{id}/similar  →  React
 
 ## 10. Modello dati
 
-Convenzioni di `specifica-tecnica.md` §4. Tabelle nel DB `PickArr.db`. Migrazione EF additiva.
+Convenzioni di `specifica-tecnica.md` §4. Tabelle nel DB `Pickarr.db`. Migrazione EF additiva.
 
 ### 10.1 Colonne nuove su tabelle esistenti
 
@@ -865,9 +865,9 @@ Dopo un voto il client invalida le query `titles`, `title`, `recommendations`, `
 Si aggiungono feature accanto a quelle esistenti, senza una shell nuova.
 
 ```
-src/PickArr.WebApp/src/features/ratings/   RatingButtons, MyRatingsPage, import/export
-src/PickArr.WebApp/src/features/reco/      ForYouPage, TastePage, LearningProgress, ReasonChips
-src/PickArr.WebApp/src/features/settings/  RecommendationsSettingsPage
+src/Pickarr.WebApp/src/features/ratings/   RatingButtons, MyRatingsPage, import/export
+src/Pickarr.WebApp/src/features/reco/      ForYouPage, TastePage, LearningProgress, ReasonChips
+src/Pickarr.WebApp/src/features/settings/  RecommendationsSettingsPage
 ```
 
 `RatingButtons` si monta in `TitleCard` e `TitleDialog`, accanto a `FavoriteButton`.
@@ -955,9 +955,9 @@ Variabili d’ambiente:
 
 | Variabile | Default | |
 |---|---|---|
-| `PickArr__Models__Path` | `/config/models` | |
-| `PickArr__Models__DownloadBaseUrl` | URL del repository del modello | mirror interno |
-| `PickArr__Reco__MaxThreads` | `2` | tetto ONNX, vince se è più basso dell’impostazione |
+| `Pickarr__Models__Path` | `/config/models` | |
+| `Pickarr__Models__DownloadBaseUrl` | URL del repository del modello | mirror interno |
+| `Pickarr__Reco__MaxThreads` | `2` | tetto ONNX, vince se è più basso dell’impostazione |
 
 Non c’è una lingua di visualizzazione separata: si usa `CatalogSource.MetadataLanguage`.
 
@@ -969,7 +969,7 @@ Non c’è una lingua di visualizzazione separata: si usa `CatalogSource.Metadat
 
 | Livello | Cosa |
 |---|---|
-| **Unit — algoritmo** | Funzioni pure in `PickArr.Core`: vettori sparsi, TF-IDF, profilo, kNN, prior, fusione, MMR, esplorazione deterministica. Dataset sintetico: solo fantascienza nei mi piace → fantascienza in cima; un mi piace non peggiora l’ordine dei simili; un non mi piace abbassa i vicini; zero segnali → ordine = prior. |
+| **Unit — algoritmo** | Funzioni pure in `Pickarr.Core`: vettori sparsi, TF-IDF, profilo, kNN, prior, fusione, MMR, esplorazione deterministica. Dataset sintetico: solo fantascienza nei mi piace → fantascienza in cima; un mi piace non peggiora l’ordine dei simili; un non mi piace abbassa i vicini; zero segnali → ordine = prior. |
 | **Proprietà** | Componenti in [0, 1]. Nessun titolo con voto nella pagina di consigli. Stesso input → stesso ordine. |
 | **Unit — appartenenza** | Scope `source` tiene i titoli con `Availability` su quella sorgente anche se `RemovedAt` è valorizzato. Scope `enabled` tiene l’unione delle sorgenti accese, una riga per `Title`. Una sorgente spenta non contribuisce. Un titolo senza `Availability` non entra. |
 | **Unit — voto** | Secondo `PUT` sostituisce il valore. `DELETE` toglie la riga e scrive un evento con valore nullo. Due sorgenti, stesso `Title.Id`: un voto. |
@@ -1079,7 +1079,7 @@ Ordine: **R1 → R2 → R3 → R4**. SP-R1 prima di R2. SP-R2 prima di R3.
 **`specifica-tecnica.md`**
 
 - §4: tabelle di §10. Nessuna colonna `Origin` su `Titles`.
-- §3: modulo `PickArr.Core` per l’algoritmo puro; persistenza, ONNX e il completamento metadati in Infrastructure, agganciati a `EnrichmentService`.
+- §3: modulo `Pickarr.Core` per l’algoritmo puro; persistenza, ONNX e il completamento metadati in Infrastructure, agganciati a `EnrichmentService`.
 - §6: coda Hangfire `ml`, second server a un worker, `SyncRunKinds` nuovi.
 - §8: percorsi di §14, campo `rating` sui DTO di elenco e dettaglio.
 - §9: route e feature di §15.

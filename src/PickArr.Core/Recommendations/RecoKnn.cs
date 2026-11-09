@@ -1,4 +1,4 @@
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 /// <summary>Level-2 embedding kNN (§12.4).</summary>
 public static class RecoKnn

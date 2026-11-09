@@ -1,8 +1,8 @@
 using System.Text.Json;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 public sealed class CreditBudgetService(
     ISettingsStore settingsStore,

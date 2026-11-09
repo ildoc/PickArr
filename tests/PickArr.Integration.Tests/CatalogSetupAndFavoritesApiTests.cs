@@ -3,12 +3,12 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Domain;
-using PickArr.Core.Domain.Entities;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Domain.Entities;
+using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
-namespace PickArr.Integration.Tests;
+namespace Pickarr.Integration.Tests;
 
 [CollectionDefinition("catalog-setup-favorites-api")]
 public sealed class CatalogSetupAndFavoritesApiCollection : ICollectionFixture<ApiFactory>;
@@ -127,7 +127,7 @@ public sealed class CatalogSetupAndFavoritesApiTests
 
         using (var scope = _factory.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+            var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
             (await db.Favorites.CountAsync(f => f.TitleId == seed.TitleId)).ShouldBe(0);
         }
     }
@@ -135,7 +135,7 @@ public sealed class CatalogSetupAndFavoritesApiTests
     private async Task<(int TitleId, int SourceId)> SeedFavoriteScopeAsync()
     {
         using var scope = _factory.Services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
         var source = await db.CatalogSources.FirstAsync(s => s.CountryCode == "IT");
         source.IsEnabled = true;
         source.BaselineCompletedAt ??= DateTime.UtcNow;

@@ -1,7 +1,7 @@
 # SP-2 — TMDB (T13)
 
 > Data: 2026-11-05  
-> Fonti: docs ufficiali TMDB v3 (`append_to_response`, movie/tv details, find, configuration, genres); specifica PickArr §5.2 / §6.6  
+> Fonti: docs ufficiali TMDB v3 (`append_to_response`, movie/tv details, find, configuration, genres); specifica Pickarr §5.2 / §6.6  
 > Live call con API token: **non eseguita** in questa sessione (token assente) — keyword stand-up id da conferma opzionale
 
 ## Auth e base
@@ -24,7 +24,7 @@
 
 ## Lingue (BR-15)
 
-- Parametro `language`: BCP-47 come da sorgente (`it-IT`, `en-US`); TMDB accetta anche `it`, `en` — PickArr invia il tag completo della sorgente.
+- Parametro `language`: BCP-47 come da sorgente (`it-IT`, `en-US`); TMDB accetta anche `it`, `en` — Pickarr invia il tag completo della sorgente.
 - Se `title`/`name` **oppure** `overview` risultano vuoti/null nella lingua richiesta → seconda chiamata con `en-US`.
 - Si memorizzano **entrambe** le localizzazioni quando il fallback è usato (non si sovrascrive la riga primaria con l’inglese).
 

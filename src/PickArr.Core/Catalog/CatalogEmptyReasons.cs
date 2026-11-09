@@ -1,4 +1,4 @@
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 public static class CatalogEmptyReasons
 {

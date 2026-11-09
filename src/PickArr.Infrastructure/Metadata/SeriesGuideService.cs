@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Domain;
-using PickArr.Core.Metadata;
-using PickArr.Infrastructure.Persistence;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Domain;
+using Pickarr.Core.Metadata;
+using Pickarr.Infrastructure.Persistence;
 
-namespace PickArr.Infrastructure.Metadata;
+namespace Pickarr.Infrastructure.Metadata;
 
-public sealed class SeriesGuideService(PickArrDbContext db, IMetadataProvider metadata) : ISeriesGuide
+public sealed class SeriesGuideService(PickarrDbContext db, IMetadataProvider metadata) : ISeriesGuide
 {
     public async Task<IReadOnlyList<TmdbSeason>?> ListSeasonsAsync(
         int titleId,

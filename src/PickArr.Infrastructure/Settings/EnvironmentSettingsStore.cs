@@ -1,6 +1,6 @@
-using PickArr.Core.Abstractions;
+using Pickarr.Core.Abstractions;
 
-namespace PickArr.Infrastructure.Settings;
+namespace Pickarr.Infrastructure.Settings;
 
 /// <summary>
 /// Applies settings declared in configuration before the encrypted database.

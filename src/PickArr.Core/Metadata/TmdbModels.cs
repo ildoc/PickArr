@@ -1,4 +1,4 @@
-namespace PickArr.Core.Metadata;
+namespace Pickarr.Core.Metadata;
 
 public sealed record TmdbGenre(int Id, string Name);
 

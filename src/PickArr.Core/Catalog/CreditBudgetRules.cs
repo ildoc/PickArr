@@ -1,4 +1,4 @@
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 /// <summary>
 /// Pure credit-budget rules (spec §6.2 / BR-14).

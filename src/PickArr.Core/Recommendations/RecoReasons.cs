@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace PickArr.Core.Recommendations;
+namespace Pickarr.Core.Recommendations;
 
 public static class RecoReasons
 {

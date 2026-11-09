@@ -14,10 +14,10 @@
 
 ### T02 — Isolare integration test con stato mutabile condiviso
 
-- Scope: `tests/PickArr.Integration.Tests/CatalogApiTests.cs`, `ArrActionApiTests.cs`, eventualmente `AdminApiTests.cs` / `ArrConnectionApiTests.cs` se necessario; pattern collection come `FavoritesApiTests`
+- Scope: `tests/Pickarr.Integration.Tests/CatalogApiTests.cs`, `ArrActionApiTests.cs`, eventualmente `AdminApiTests.cs` / `ArrConnectionApiTests.cs` se necessario; pattern collection come `FavoritesApiTests`
 - Requisiti: R-02; A-002; TC-06
-- Acceptance: seed non dipende da “DB vuoto globale”; test che cancellano settings Arr non contaminano altri della suite; `dotnet test tests/PickArr.Integration.Tests` PASS
-- Verifica: `dotnet test tests/PickArr.Integration.Tests` (API ferma se lock DLL)
+- Acceptance: seed non dipende da “DB vuoto globale”; test che cancellano settings Arr non contaminano altri della suite; `dotnet test tests/Pickarr.Integration.Tests` PASS
+- Verifica: `dotnet test tests/Pickarr.Integration.Tests` (API ferma se lock DLL)
 - Contesto: F-002; K-005; K-007
 - Assunzioni: K-007 da confermare
 - Rollback: ripristinare attributi collection/seed precedenti
@@ -39,7 +39,7 @@
 - Scope: nuovo test Infra (o Core se estratto); `CatalogConfigurationService.cs`; opzionale mapping exception in `SettingsEndpoints` se già espone HTTP
 - Requisiti: R-03; A-001; K-004
 - Acceptance: casi — provider sconosciuto; enabled senza country; paese non offerto; superamento `FreeCountryLimit` su piano free; update valido persiste enable/country; eccezioni `CatalogSetupException` verificate
-- Verifica: `dotnet test tests/PickArr.Infrastructure.Tests --filter FullyQualifiedName~CatalogConfiguration`
+- Verifica: `dotnet test tests/Pickarr.Infrastructure.Tests --filter FullyQualifiedName~CatalogConfiguration`
 - Contesto: F-004; FLUSSO-05
 - Assunzioni: nessuna
 - Rollback: rimuovere file test aggiunti

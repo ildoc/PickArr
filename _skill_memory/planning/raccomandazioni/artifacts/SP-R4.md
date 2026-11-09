@@ -25,7 +25,7 @@
 Comando smoke:
 
 ```bash
-dotnet test tests/PickArr.Infrastructure.Tests --filter FullyQualifiedName~RecoEvalServiceTests
+dotnet test tests/Pickarr.Infrastructure.Tests --filter FullyQualifiedName~RecoEvalServiceTests
 ```
 
 ---

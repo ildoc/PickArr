@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace PickArr.Infrastructure.Catalog.Watchmode;
+namespace Pickarr.Infrastructure.Catalog.Watchmode;
 
 /// <summary>
 /// Simple fixed-interval limiter (default 1 req/s) for Watchmode outbound calls.

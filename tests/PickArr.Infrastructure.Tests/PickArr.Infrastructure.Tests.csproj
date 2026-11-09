@@ -24,6 +24,6 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\PickArr.Infrastructure\PickArr.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\Pickarr.Infrastructure\Pickarr.Infrastructure.csproj" />
   </ItemGroup>
 </Project>

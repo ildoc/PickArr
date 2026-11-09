@@ -17,7 +17,7 @@
 Comando:
 
 ```bash
-dotnet test tests/PickArr.Infrastructure.Tests --filter FullyQualifiedName~Sp5PerformanceSmokeTests
+dotnet test tests/Pickarr.Infrastructure.Tests --filter FullyQualifiedName~Sp5PerformanceSmokeTests
 ```
 
 ## Risultati (NFR-01 target p95 &lt; 300 ms)

@@ -1,4 +1,4 @@
-namespace PickArr.Core.Catalog;
+namespace Pickarr.Core.Catalog;
 
 /// <summary>
 /// Stable TMDB image CDN helpers for API responses (no network round-trip).

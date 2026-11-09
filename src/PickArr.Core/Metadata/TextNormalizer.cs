@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Text;
 
-namespace PickArr.Core.Metadata;
+namespace Pickarr.Core.Metadata;
 
 public static class TextNormalizer
 {

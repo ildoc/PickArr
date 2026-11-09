@@ -1,13 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
-using PickArr.Core.Abstractions;
-using PickArr.Core.Catalog;
-using PickArr.Core.Settings;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
+using Pickarr.Core.Settings;
 
-namespace PickArr.Core;
+namespace Pickarr.Core;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddPickArrCore(this IServiceCollection services)
+    public static IServiceCollection AddPickarrCore(this IServiceCollection services)
     {
         services.AddSingleton<WatchmodeQuotaObservation>();
         services.AddScoped<SettingsService>();

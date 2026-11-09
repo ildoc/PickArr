@@ -1,9 +1,9 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using PickArr.Core.Recommendations;
-using PickArr.Infrastructure.Metadata.Reco;
+using Pickarr.Core.Recommendations;
+using Pickarr.Infrastructure.Metadata.Reco;
 using Shouldly;
 
-namespace PickArr.Infrastructure.Tests;
+namespace Pickarr.Infrastructure.Tests;
 
 public sealed class RecoOnnxEmbedderTests
 {
@@ -27,7 +27,7 @@ public sealed class RecoOnnxEmbedderTests
 
     private static string? ResolveModelDir()
     {
-        var configured = Environment.GetEnvironmentVariable("PickArr__Models__Path");
+        var configured = Environment.GetEnvironmentVariable("Pickarr__Models__Path");
         var candidates = new List<string>();
         if (!string.IsNullOrWhiteSpace(configured))
         {

@@ -47,7 +47,7 @@ describe('Header', () => {
     wrap(<Header />)
 
     const version = await screen.findByRole('link', { name: '1.2.3.4' })
-    expect(version).toHaveAttribute('href', 'https://github.com/ildoc/PickArr')
+    expect(version).toHaveAttribute('href', 'https://github.com/ildoc/Pickarr')
     expect(fetchSystemStatus).toHaveBeenCalled()
 
     const kofi = screen.getByRole('link', { name: 'Support on Ko-fi' })

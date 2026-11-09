@@ -1,4 +1,4 @@
-namespace PickArr.Core.Domain;
+namespace Pickarr.Core.Domain;
 
 public static class ArrKinds
 {

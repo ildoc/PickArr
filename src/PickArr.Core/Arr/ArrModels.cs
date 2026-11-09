@@ -1,6 +1,6 @@
-using PickArr.Core.Domain;
+using Pickarr.Core.Domain;
 
-namespace PickArr.Core.Arr;
+namespace Pickarr.Core.Arr;
 
 public sealed record ArrSystemInfo(string Version, string AppName);
 
