@@ -148,7 +148,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 | FR-REC-RC-06 | Ogni elemento riporta i motivi (titoli simili con mi piace, generi o keyword, oppure «molto apprezzato / popolare»). | M |
 | FR-REC-RC-07 | Filtri: tipo (film/serie/stand-up), genere, anno, stato libreria. Per default sono esclusi i titoli già in libreria (*Scaricato*, *In download*, *Parziale*, *Mancante*). L’utente può includerli. | M |
 | FR-REC-RC-08 | Sono esclusi i titoli che hanno già un voto o sono marcati *Visto*. | M |
-| FR-REC-RC-09 | **Titoli simili**, nella scheda: vicini del titolo aperto che hanno una `Availability` su almeno una sorgente abilitata, con `places`. Non richiede voti. Non è limitato alla sorgente da cui si è aperta la scheda. | M |
+| FR-REC-RC-09 | **Titoli simili**, in fondo alla scheda su più righe: vicini del titolo aperto che hanno una `Availability` su almeno una sorgente abilitata, con `places`. Non richiede voti. Non è limitato alla sorgente da cui si è aperta la scheda. | M |
 | FR-REC-RC-10 | Diversità: re-ranking MMR sui primi risultati, per non riempire la pagina con un solo genere o una sola saga. | S |
 | FR-REC-RC-11 | Esplorazione: una quota di posizioni (default 10%) per titoli lontani dalle abitudini. Disattivabile. | S |
 | FR-REC-RC-12 | Azione **Aggiorna raccomandazioni** nelle impostazioni. | M |
@@ -322,7 +322,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 **Card.** Accanto al cuore dei preferiti, due azioni (mi piace, non mi piace). Il voto attivo resta visibile. Su *Per te* in scope `enabled`, e sui simili, la card mostra `places` come *La mia lista*.
 
-**Scheda (`TitleDialog`).** Azioni etichettate *Mi piace* / *Non mi piace*, *Visto*, e preferito. Scorciatoie `L` / `D` / `W`. Blocco *Perché te lo consigliamo* se si arriva da *Per te*. Riga *Titoli simili*.
+**Scheda (`TitleDialog`).** Azioni etichettate *Mi piace* / *Non mi piace*, *Visto*, e preferito. Scorciatoie `L` / `D` / `W`. Blocco *Perché te lo consigliamo* se si arriva da *Per te*. In fondo, griglia *Titoli simili* su più righe.
 
 **Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
 
@@ -871,7 +871,7 @@ src/PickArr.WebApp/src/features/settings/  RecommendationsSettingsPage
 ```
 
 `RatingButtons` si monta in `TitleCard` e `TitleDialog`, accanto a `FavoriteButton`.
-`SimilarRow` si monta in `TitleDialog`.
+`SimilarRow` si monta in fondo a `TitleDialog` come griglia multi-riga.
 `ForYouPage` riusa `FilterBar` (selettore provider/paese), `TitleGrid`, `TitleDialog`.
 
 ### 15.2 Route

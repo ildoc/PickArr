@@ -309,7 +309,7 @@ Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi pr
 | FR-REC-RT | L'utente può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; può marcare *Visto* dalla scheda. Voto e visto sono globali sul `Title` e indipendenti. Mutazione ottimistica in UI. | M |
 | FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
 | FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
-| FR-REC-SIM | Riga *Simili* in scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
+| FR-REC-SIM | Griglia *Simili* in fondo alla scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
 | FR-REC-ML | Embedding ONNX locali opzionali (modello scaricato o copiato); senza modello restano prior e livello sparse. | M |
 | FR-REC-AD | Impostazioni *Raccomandazioni*: stato, rebuild, embedding, download modello, valutazione offline, reset; eventi locali disattivabili (default off). | M |
 
@@ -563,7 +563,7 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 **Le mie valutazioni** (`/ratings`). Elenco Like/Dislike con export/import.
 
-**Scheda di dettaglio (modale).** Backdrop in testata; colonna sinistra poster; a destra titolo, anno, durata/stagioni, generi, voti, trama, link esterni, disponibilità (dal / scade / rimosso). Sezione *Libreria*: stato, monitorato, percentuale download, tabella stagioni per le serie. Barra azioni: preferito, voto, Aggiungi / Elimina, Cerca ora, Aggiorna stato. Riga *Simili* quando le raccomandazioni sono attive.
+**Scheda di dettaglio (modale).** Backdrop in testata; colonna sinistra poster; a destra titolo, anno, durata/stagioni, generi, voti, trama, link esterni, disponibilità (dal / scade / rimosso). Sezione *Libreria*: stato, monitorato, percentuale download, tabella stagioni per le serie. Barra azioni: preferito, voto, Aggiungi / Elimina, Cerca ora, Aggiorna stato. In fondo, griglia *Simili* su più righe quando le raccomandazioni sono attive.
 
 **Dialog Aggiungi.** Titolo, destinazione (Sonarr/Radarr), campi opzione, casella "Cerca subito", pulsanti Annulla / Aggiungi.
 

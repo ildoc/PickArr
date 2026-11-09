@@ -258,8 +258,6 @@ export function TitleDialog({
                 </ul>
               </section>
 
-              <SimilarRow titleId={detail.data.id} sourceId={sourceId} />
-
               <section className="space-y-3 rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
@@ -357,6 +355,7 @@ export function TitleDialog({
               </section>
             </div>
           </div>
+          <SimilarRow titleId={detail.data.id} sourceId={sourceId} />
         </div>
       )}
     </dialog>

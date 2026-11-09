@@ -26,7 +26,11 @@ export function SimilarRow({
 
   if (!recoEnabled) return null
   if (similar.isLoading) {
-    return <p className="text-sm text-[var(--muted)]">{t('reco.similarLoading')}</p>
+    return (
+      <p className="border-t border-white/10 px-6 pb-6 pt-4 text-sm text-[var(--muted)]">
+        {t('reco.similarLoading')}
+      </p>
+    )
   }
   if (similar.isError || !similar.data || similar.data.items.length === 0) {
     return null
@@ -39,13 +43,13 @@ export function SimilarRow({
   }
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 border-t border-white/10 px-6 pb-6 pt-4">
       <h3 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
         {t('reco.similarHeading')}
       </h3>
-      <ul className="flex gap-3 overflow-x-auto pb-1">
+      <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
         {similar.data.items.map((item) => (
-          <li key={item.id} className="w-28 shrink-0">
+          <li key={item.id}>
             <button
               type="button"
               onClick={() => openTitle(item.id)}
