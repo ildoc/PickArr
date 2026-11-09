@@ -53,6 +53,12 @@ public sealed class WatchmodeApiUsageHandler(
                 SyncRunId = syncRunAccessor.CurrentSyncRunId,
             });
             await db.SaveChangesAsync(cancellationToken);
+
+            if (quotaUsed is not null || quotaLimit is not null)
+            {
+                var budget = scope.ServiceProvider.GetRequiredService<ICreditBudget>();
+                await budget.ObserveQuotaAsync(quotaUsed, quotaLimit, cancellationToken);
+            }
         }
         catch (Exception ex)
         {

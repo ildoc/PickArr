@@ -22,7 +22,7 @@ internal static class JobText
     public static string LeavingName(string code) => $"Titles leaving soon ({code})";
 
     public static string LeavingDescription(string code) =>
-        $"Refreshes the short preview of titles about to leave Netflix in {CountryName(code)}.";
+        $"Refreshes the short preview of titles about to leave streaming catalogs in {CountryName(code)} (one Watchmode call for the country).";
 
     public const string ResumeName = "Resume paused imports";
 

@@ -14,6 +14,7 @@ public interface IRecoQueryService
 
     Task<RecommendationsPageDto> GetOnboardingAsync(
         int? sourceId = null,
+        IReadOnlyList<int>? excludeTitleIds = null,
         CancellationToken cancellationToken = default);
 
     Task<RecoStatusDto> GetStatusAsync(CancellationToken cancellationToken = default);

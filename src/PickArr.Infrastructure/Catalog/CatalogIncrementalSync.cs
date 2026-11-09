@@ -34,6 +34,7 @@ public sealed class CatalogIncrementalSync(
     public async Task<CatalogSyncResult> RunAsync(
         int catalogSourceId,
         bool isManual = false,
+        string? resumeCheckpointJson = null,
         CancellationToken cancellationToken = default)
     {
         var source = await db.CatalogSources
@@ -46,11 +47,15 @@ public sealed class CatalogIncrementalSync(
             throw new InvalidOperationException($"CatalogSource '{catalogSourceId}' has no provider external id.");
         }
 
-        var trigger = isManual ? SyncRunTriggers.Manual : SyncRunTriggers.Schedule;
+        var trigger = resumeCheckpointJson is not null
+            ? SyncRunTriggers.Resume
+            : isManual ? SyncRunTriggers.Manual : SyncRunTriggers.Schedule;
+
         var run = await syncRunStore.StartAsync(
             SyncRunKinds.CatalogIncremental,
             catalogSourceId,
             trigger,
+            checkpointJson: resumeCheckpointJson,
             cancellationToken: cancellationToken);
 
         syncRunAccessor.CurrentSyncRunId = run.Id;
@@ -58,13 +63,14 @@ public sealed class CatalogIncrementalSync(
         {
             var catalogProvider = providerResolver.Resolve(source.Provider.ProviderType);
             var pages = Math.Max(1, source.IncrementalPages);
+            var startPage = ReadCheckpointPage(resumeCheckpointJson) ?? 1;
             // Newest releases are fetched first. Record them as new even before the full
             // baseline, so the first import fills the New filter instead of hiding them.
             const bool recordAsNew = true;
             var titlesAdded = 0;
             var titlesUpdated = 0;
 
-            for (var page = 1; page <= pages; page++)
+            for (var page = startPage; page <= pages; page++)
             {
                 const int estimatedCost = 1;
                 if (!await creditBudget.TryReserveAsync(run.Id, estimatedCost, isManual, cancellationToken))
@@ -150,6 +156,29 @@ public sealed class CatalogIncrementalSync(
         {
             syncRunAccessor.CurrentSyncRunId = null;
         }
+    }
+
+    private static int? ReadCheckpointPage(string? checkpointJson)
+    {
+        if (string.IsNullOrWhiteSpace(checkpointJson))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(checkpointJson);
+            if (doc.RootElement.TryGetProperty("page", out var page) && page.TryGetInt32(out var value))
+            {
+                return value;
+            }
+        }
+        catch (JsonException)
+        {
+            // ignore invalid checkpoint
+        }
+
+        return null;
     }
 
     private static CatalogSyncResult ToResult(Core.Domain.Entities.SyncRun run) =>

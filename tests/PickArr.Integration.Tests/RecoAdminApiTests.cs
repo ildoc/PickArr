@@ -52,6 +52,35 @@ public sealed class RecoAdminApiTests
     }
 
     [Fact]
+    public async Task Onboarding_exclude_skips_previously_shown_titles()
+    {
+        var seed = await SeedAsync();
+
+        var first = await _client.GetAsync(
+            $"/api/v1/recommendations/onboarding?sourceId={seed.NetflixItId}");
+        first.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var firstBody = await first.Content.ReadFromJsonAsync<JsonElement>();
+        var firstIds = firstBody.GetProperty("items")
+            .EnumerateArray()
+            .Select(i => i.GetProperty("id").GetInt32())
+            .ToList();
+        firstIds.Count.ShouldBeGreaterThan(0);
+
+        var exclude = string.Join(',', firstIds);
+        var second = await _client.GetAsync(
+            $"/api/v1/recommendations/onboarding?sourceId={seed.NetflixItId}&exclude={exclude}");
+        second.StatusCode.ShouldBe(HttpStatusCode.OK);
+        var secondBody = await second.Content.ReadFromJsonAsync<JsonElement>();
+        var secondIds = secondBody.GetProperty("items")
+            .EnumerateArray()
+            .Select(i => i.GetProperty("id").GetInt32())
+            .ToList();
+
+        secondIds.ShouldNotContain(id => firstIds.Contains(id));
+        secondIds.ShouldNotContain(seed.RatedTitleId);
+    }
+
+    [Fact]
     public async Task Admin_reset_derived_returns_accepted_and_clears_recommendations()
     {
         var seed = await SeedAsync();

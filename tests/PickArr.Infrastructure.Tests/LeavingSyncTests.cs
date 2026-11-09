@@ -154,10 +154,53 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         _server.LogEntries.ShouldBeEmpty();
     }
 
+    [Fact]
+    public async Task RunForCountryAsync_fetches_watchmode_once_for_two_sources()
+    {
+        var fixtureRoot = FindFixtureRoot();
+        var body = await File.ReadAllTextAsync(Path.Combine(fixtureRoot, "title-leaving-dates-preview.json"));
+        _server
+            .Given(Request.Create().WithPath("/v1/title-leaving-dates/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithHeader("X-Account-Quota", "2500")
+                .WithHeader("X-Account-Quota-Used", "12")
+                .WithBody(body));
+
+        await BuildServicesAsync(plan: "free", secondProviderSameCountry: true);
+        var sync = _services!.GetRequiredService<ILeavingSync>();
+
+        var result = await sync.RunForCountryAsync("US", isManual: true);
+        result.Status.ShouldBe(SyncRunStatuses.Succeeded);
+        result.CreditsUsed.ShouldBe(1);
+
+        _server.LogEntries.Count(e => e.RequestMessage.Path.Contains("title-leaving-dates", StringComparison.OrdinalIgnoreCase))
+            .ShouldBe(1);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var netflix = await db.Availabilities
+            .Include(a => a.Title)
+            .Include(a => a.CatalogSource!)
+            .ThenInclude(s => s.Provider)
+            .SingleAsync(a => a.Title!.WatchmodeId == 1000001 && a.CatalogSource!.Provider!.ExternalId == "203");
+        netflix.LeavingDate.ShouldBe(new DateOnly(2026, 11, 15));
+
+        // Fixture entry is provider 203 only — Disney source is visited but not matched.
+        var disney = await db.Availabilities
+            .Include(a => a.Title)
+            .Include(a => a.CatalogSource!)
+            .ThenInclude(s => s.Provider)
+            .SingleAsync(a => a.Title!.WatchmodeId == 1000001 && a.CatalogSource!.Provider!.ExternalId == "337");
+        disney.LeavingDate.ShouldBeNull();
+    }
+
     private async Task BuildServicesAsync(
         string plan,
         bool seedExtraLeaving = false,
-        int maxCreditsPerRun = 80)
+        int maxCreditsPerRun = 80,
+        bool secondProviderSameCountry = false)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
@@ -187,6 +230,7 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         services.AddScoped<ISettingsStore, ProtectedSettingsStore>();
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
+        services.AddSingleton<WatchmodeQuotaObservation>();
         services.AddScoped<ILeavingSync, LeavingSync>();
         services.AddScoped<ICreditBudget, CreditBudgetService>();
         services.AddPickArrWatchmode(config);
@@ -220,6 +264,32 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         db.CatalogSources.Add(source);
         await db.SaveChangesAsync();
         _sourceId = source.Id;
+
+        CatalogSource? secondSource = null;
+        if (secondProviderSameCountry)
+        {
+            var disney = new Provider
+            {
+                Key = "disney",
+                DisplayName = "Disney+",
+                ProviderType = "watchmode",
+                ExternalId = "337",
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow,
+            };
+            db.Providers.Add(disney);
+            await db.SaveChangesAsync();
+            secondSource = new CatalogSource
+            {
+                ProviderId = disney.Id,
+                CountryCode = "US",
+                MetadataLanguage = "en-US",
+                IsEnabled = true,
+                BaselineCompletedAt = DateTime.UtcNow,
+            };
+            db.CatalogSources.Add(secondSource);
+            await db.SaveChangesAsync();
+        }
 
         var now = new DateTime(2026, 11, 4, 12, 0, 0, DateTimeKind.Utc);
         db.Titles.Add(new Title
@@ -270,6 +340,20 @@ public sealed class LeavingSyncTests : IAsyncLifetime
                 IsBaseline = true,
                 LeavingDate = title.WatchmodeId == 1999999 ? new DateOnly(2026, 12, 1) : null,
             });
+
+            if (secondSource is not null && title.WatchmodeId == 1000001)
+            {
+                // Same title available on a second US provider — leaving fan-out must update both.
+                db.Availabilities.Add(new Availability
+                {
+                    TitleId = title.Id,
+                    CatalogSourceId = secondSource.Id,
+                    FirstSeenAt = now,
+                    LastSeenAt = now,
+                    AddedAt = now,
+                    IsBaseline = true,
+                });
+            }
         }
 
         await db.SaveChangesAsync();

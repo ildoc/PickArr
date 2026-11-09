@@ -16,16 +16,16 @@ public sealed class TmdbAuthHandler(IServiceScopeFactory scopeFactory) : Delegat
     {
         using var scope = scopeFactory.CreateScope();
         var settings = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
-        var raw = await settings.GetRawAsync(SettingsKeys.TmdbToken, cancellationToken);
+        var raw = await settings.GetRawAsync(SettingsKeys.TmdbApiKey, cancellationToken);
         if (string.IsNullOrWhiteSpace(raw))
         {
-            throw new InvalidOperationException("TMDB token is not configured.");
+            throw new InvalidOperationException("TMDB API key is not configured.");
         }
 
         var token = JsonSerializer.Deserialize<string>(raw, JsonOptions)?.Trim();
         if (string.IsNullOrWhiteSpace(token))
         {
-            throw new InvalidOperationException("TMDB token is not configured.");
+            throw new InvalidOperationException("TMDB API key is not configured.");
         }
 
         ApplyCredential(request, token);

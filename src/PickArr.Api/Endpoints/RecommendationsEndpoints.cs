@@ -58,11 +58,12 @@ public static class RecommendationsEndpoints
         group.MapGet("/onboarding", async (
             IRecoQueryService reco,
             int? sourceId,
+            string? exclude,
             CancellationToken ct) =>
         {
             try
             {
-                return Results.Ok(await reco.GetOnboardingAsync(sourceId, ct));
+                return Results.Ok(await reco.GetOnboardingAsync(sourceId, ParseIntCsv(exclude), ct));
             }
             catch (RecoDisabledException)
             {

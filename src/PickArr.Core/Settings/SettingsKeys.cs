@@ -15,7 +15,7 @@ public static class SettingsKeys
     public const string CatalogRemovedWindowDays = "catalog.removedWindowDays";
     public const string CatalogStaleWarningDays = "catalog.staleWarningDays";
     public const string CatalogInitialImportStarted = "catalog.initialImportStarted";
-    public const string TmdbToken = "tmdb.token";
+    public const string TmdbApiKey = "tmdb.apiKey";
     public const string OmdbApiKey = "omdb.apiKey";
     public const string SonarrUrl = "sonarr.url";
     public const string SonarrApiKey = "sonarr.apiKey";

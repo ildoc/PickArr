@@ -151,7 +151,7 @@ public sealed class CatalogFullSyncTests
 
             var syncRuns = new EfSyncRunStore(db, clock);
             var usage = new FixedUsageReader();
-            var budget = new CreditBudgetService(settings, usage, syncRuns);
+            var budget = new CreditBudgetService(settings, usage, syncRuns, new WatchmodeQuotaObservation());
             var upserter = new CatalogUpserter(db, clock);
             var resolver = new ProviderResolver([fakeProvider]);
             var full = new CatalogFullSync(

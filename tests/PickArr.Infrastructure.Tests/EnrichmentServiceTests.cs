@@ -355,7 +355,7 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
         await db.Database.EnsureCreatedAsync();
         var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
-        await store.SetAsync(SettingsKeys.TmdbToken, JsonSerializer.Serialize("test-tmdb-token"), true);
+        await store.SetAsync(SettingsKeys.TmdbApiKey, JsonSerializer.Serialize("test-tmdb-api-key"), true);
     }
 
     private static string FindFixtureRoot()

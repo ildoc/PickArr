@@ -11,15 +11,19 @@ public sealed class LeavingSyncJob(
     public const string Cron = "30 5 * * *";
 
     [DisableConcurrentExecution(timeoutInSeconds: 60 * 30)]
-    public async Task ExecuteAsync(int catalogSourceId, bool isManual = false, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(
+        string countryCode,
+        bool isManual = false,
+        CancellationToken cancellationToken = default)
     {
-        logger.LogInformation("Starting leaving sync for source {SourceId}", catalogSourceId);
-        var result = await sync.RunAsync(catalogSourceId, isManual, cancellationToken);
+        logger.LogInformation("Starting leaving sync for country {Country}", countryCode);
+        var result = await sync.RunForCountryAsync(countryCode, isManual, cancellationToken);
         logger.LogInformation(
-            "Leaving sync finished for source {SourceId} with status {Status}",
-            catalogSourceId,
+            "Leaving sync finished for country {Country} with status {Status}",
+            countryCode,
             result.Status);
     }
 
-    public static string JobId(int sourceId) => $"catalog-leaving-{sourceId}";
+    public static string JobId(string countryCode) =>
+        $"catalog-leaving-{countryCode.Trim().ToUpperInvariant()}";
 }

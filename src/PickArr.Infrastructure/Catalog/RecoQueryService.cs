@@ -590,6 +590,7 @@ public sealed class RecoQueryService(
 
     public async Task<RecommendationsPageDto> GetOnboardingAsync(
         int? sourceId = null,
+        IReadOnlyList<int>? excludeTitleIds = null,
         CancellationToken cancellationToken = default)
     {
         await EnsureEnabledAsync(cancellationToken);
@@ -606,10 +607,17 @@ public sealed class RecoQueryService(
             .ToListAsync(cancellationToken);
 
         var rated = await db.Ratings.AsNoTracking().Select(r => r.TitleId).ToListAsync(cancellationToken);
-        var ratedSet = rated.ToHashSet();
+        var skipSet = rated.ToHashSet();
+        if (excludeTitleIds is { Count: > 0 })
+        {
+            foreach (var id in excludeTitleIds)
+            {
+                skipSet.Add(id);
+            }
+        }
 
         var candidates = await db.Titles.AsNoTracking()
-            .Where(t => poolIds.Contains(t.Id) && !ratedSet.Contains(t.Id))
+            .Where(t => poolIds.Contains(t.Id) && !skipSet.Contains(t.Id))
             .Select(t => new
             {
                 t.Id,

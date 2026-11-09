@@ -40,9 +40,12 @@ export function fetchSimilarTitles(titleId: number, sourceId?: number | null, li
   )
 }
 
-export function fetchOnboarding(sourceId?: number | null) {
+export function fetchOnboarding(sourceId?: number | null, excludeTitleIds?: number[]) {
   return apiGet<RecommendationsPage>(
-    `/api/v1/recommendations/onboarding${buildQuery({ sourceId: sourceId ?? undefined })}`,
+    `/api/v1/recommendations/onboarding${buildQuery({
+      sourceId: sourceId ?? undefined,
+      exclude: excludeTitleIds && excludeTitleIds.length > 0 ? excludeTitleIds.join(',') : undefined,
+    })}`,
   )
 }
 

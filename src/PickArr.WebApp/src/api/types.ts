@@ -164,7 +164,7 @@ export type SettingsResponse = {
     reservePercent: number
     maxCreditsPerRun: number
   }
-  tmdb: { token: SecretStatus }
+  tmdb: { apiKey: SecretStatus }
   omdb: { apiKey: SecretStatus }
   sonarr: {
     url: string | null

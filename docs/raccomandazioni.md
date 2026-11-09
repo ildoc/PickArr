@@ -295,7 +295,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 ### UC-REC-04 — Onboarding
 
 - **Attore:** Utente.
-- **Flusso:** `/taste` mostra titoli del pool, scelti per coprire generi ed epoche → voti in blocco → una sola ricostruzione a fine invio.
+- **Flusso:** `/taste` mostra titoli del pool, scelti per coprire generi ed epoche → l’utente può chiedere un altro lotto (esclude i titoli già mostrati e conserva i voti già dati) → voti in blocco → una sola ricostruzione a fine invio.
 
 ### UC-REC-05 — Installare il modello
 
@@ -323,7 +323,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 **Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
 
-**Onboarding (`/taste`).** Griglia di titoli del pool, azioni grandi, contatore, *Fatto*.
+**Onboarding (`/taste`).** Griglia di titoli del pool, azioni grandi, contatore, *Mostra altri titoli*, *Fatto*.
 
 **Le mie valutazioni (`/ratings`).** Due tab, ricerca, azioni sul voto, *Esporta* / *Importa*. Elenco globale. Badge rispetto alla sorgente selezionata e `places` sulle sorgenti abilitate.
 
@@ -673,7 +673,7 @@ MMR(t) = λ · Score(t) − (1 − λ) · max_{u già scelto} sim(t, u)     λ =
 ### 12.9 Cold start
 
 - `N_eff = 0`: prior, con MMR.
-- Onboarding: 24 titoli del pool ad alta popolarità, scelti per coprire generi ed epoche (greedy su generi; sugli embedding se ci sono). Solo titoli con appartenenza `enabled`.
+- Onboarding: 24 titoli del pool ad alta popolarità, scelti per coprire generi ed epoche (greedy su generi; sugli embedding se ci sono). Solo titoli con appartenenza `enabled`. Un refresh passa `exclude` con gli id già mostrati e ripete la selezione sul resto del pool; i voti già dati restano in sessione fino a *Fatto*.
 - I simili non richiedono voti.
 
 ---
@@ -831,7 +831,7 @@ Niente parametro di scope: l’appartenenza è sempre `enabled` (BR-REC-14). Ste
 }
 ```
 
-**`GET /recommendations/onboarding`** — i 24 titoli del pool (§12.9).
+**`GET /recommendations/onboarding`** — i 24 titoli del pool (§12.9). Query opzionale `exclude` (CSV di `titleId`) per un nuovo lotto senza i titoli già mostrati.
 
 ### 14.3 Amministrazione
 
@@ -904,7 +904,7 @@ In `AppRouter`, dentro `AppShell`:
 - **`LearningProgress`**: `N_eff / targetN` e lo stadio. Link a `/taste`.
 - **`ReasonChips`**: chiavi i18n `reco.reason.similarTo`, `reco.reason.terms`, `reco.reason.popular`, `reco.reason.explore`.
 - **Scope**: due voci. Con una sola sorgente abilitata resta solo *Questa sorgente*.
-- **`OnboardingTaste`**: 24 card, *Fatto*, scorciatoie `L` e `D`.
+- **`OnboardingTaste`**: 24 card, *Mostra altri titoli*, *Fatto*, scorciatoie `L` e `D`.
 
 ### 15.6 i18n
 

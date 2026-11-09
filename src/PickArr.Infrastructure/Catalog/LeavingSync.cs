@@ -14,6 +14,7 @@ namespace PickArr.Infrastructure.Catalog;
 /// <summary>
 /// Sync leaving dates from the catalog provider (spec §6.8 / FR-CAT-11).
 /// Free plan: preview only — never clears dates merely because they are absent from the preview.
+/// One Watchmode call per country; results fan out to every enabled source in that country.
 /// </summary>
 public sealed class LeavingSync(
     PickArrDbContext db,
@@ -32,27 +33,52 @@ public sealed class LeavingSync(
         bool isManual = false,
         CancellationToken cancellationToken = default)
     {
-        var source = await db.CatalogSources
-            .Include(s => s.Provider)
+        var source = await db.CatalogSources.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == catalogSourceId, cancellationToken)
             ?? throw new InvalidOperationException($"CatalogSource '{catalogSourceId}' was not found.");
 
-        if (source.Provider is null || string.IsNullOrWhiteSpace(source.Provider.ExternalId))
+        return await RunForCountryAsync(source.CountryCode, isManual, cancellationToken);
+    }
+
+    public async Task<CatalogSyncResult> RunForCountryAsync(
+        string countryCode,
+        bool isManual = false,
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(countryCode))
         {
-            throw new InvalidOperationException($"CatalogSource '{catalogSourceId}' has no provider external id.");
+            throw new ArgumentException("Country code is required.", nameof(countryCode));
+        }
+
+        var normalizedCountry = countryCode.Trim().ToUpperInvariant();
+        var sources = await db.CatalogSources
+            .Include(s => s.Provider)
+            .Where(s =>
+                s.IsEnabled
+                && s.Provider != null
+                && s.Provider.IsEnabled
+                && s.CountryCode == normalizedCountry)
+            .OrderBy(s => s.Id)
+            .ToListAsync(cancellationToken);
+
+        if (sources.Count == 0)
+        {
+            throw new InvalidOperationException(
+                $"No enabled catalog sources found for country '{normalizedCountry}'.");
         }
 
         var trigger = isManual ? SyncRunTriggers.Manual : SyncRunTriggers.Schedule;
+        // Anchor the run on the first source so admin history stays linked to a catalog row.
         var run = await syncRunStore.StartAsync(
             SyncRunKinds.Leaving,
-            catalogSourceId,
+            sources[0].Id,
             trigger,
             cancellationToken: cancellationToken);
 
         syncRunAccessor.CurrentSyncRunId = run.Id;
         try
         {
-            var catalogProvider = providerResolver.Resolve(source.Provider.ProviderType);
+            var catalogProvider = providerResolver.Resolve(sources[0].Provider!.ProviderType);
             if (!catalogProvider.Capabilities.SupportsLeavingDates)
             {
                 await syncRunStore.SucceedAsync(run.Id, cancellationToken);
@@ -64,20 +90,24 @@ public sealed class LeavingSync(
             {
                 await syncRunStore.PauseAsync(run.Id, "{}", cancellationToken);
                 logger.LogInformation(
-                    "Leaving sync paused for source {SourceId} (budget)",
-                    catalogSourceId);
+                    "Leaving sync paused for country {Country} (budget)",
+                    normalizedCountry);
                 return ToResult((await syncRunStore.GetAsync(run.Id, cancellationToken))!);
             }
 
             IReadOnlyList<LeavingEntry> leaving;
             try
             {
+                var providerExternalId = sources[0].Provider!.ExternalId
+                    ?? throw new InvalidOperationException(
+                        $"CatalogSource '{sources[0].Id}' has no provider external id.");
+                // One HTTP call per country; provider id is unused by Watchmode for this endpoint.
                 leaving = (await catalogProvider.GetLeavingAsync(
-                        new CatalogSourceRef(source.Provider.ExternalId, source.CountryCode),
+                        new CatalogSourceRef(providerExternalId, normalizedCountry),
                         cancellationToken))
                     .Where(e =>
                         string.IsNullOrWhiteSpace(e.CountryCode)
-                        || string.Equals(e.CountryCode, source.CountryCode, StringComparison.OrdinalIgnoreCase))
+                        || string.Equals(e.CountryCode, normalizedCountry, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
             catch (WatchmodeQuotaExceededException ex)
@@ -92,85 +122,30 @@ public sealed class LeavingSync(
             var plan = await GetPlanAsync(cancellationToken);
             var isPaid = string.Equals(plan, "paid", StringComparison.OrdinalIgnoreCase);
 
-            var watchmodeIds = leaving
-                .Select(e => int.TryParse(e.ExternalId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id) ? id : (int?)null)
-                .Where(id => id is not null)
-                .Select(id => id!.Value)
-                .Distinct()
-                .ToList();
-
-            var titles = await db.Titles
-                .Where(t => t.WatchmodeId != null && watchmodeIds.Contains(t.WatchmodeId.Value))
-                .ToDictionaryAsync(t => t.WatchmodeId!.Value, cancellationToken);
-
-            var availabilities = await db.Availabilities
-                .Where(a => a.CatalogSourceId == catalogSourceId && a.RemovedAt == null)
-                .ToListAsync(cancellationToken);
-            var byTitleId = availabilities.ToDictionary(a => a.TitleId);
-
             var announced = 0;
-            var seenAvailabilityIds = new HashSet<int>();
-
-            foreach (var entry in leaving)
-            {
-                if (!int.TryParse(entry.ExternalId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var wmId))
-                {
-                    continue;
-                }
-
-                if (!titles.TryGetValue(wmId, out var title))
-                {
-                    continue;
-                }
-
-                if (!byTitleId.TryGetValue(title.Id, out var availability))
-                {
-                    continue;
-                }
-
-                seenAvailabilityIds.Add(availability.Id);
-
-                if (availability.LeavingDate == entry.LeavingDate)
-                {
-                    continue;
-                }
-
-                availability.LeavingDate = entry.LeavingDate;
-                db.AvailabilityEvents.Add(new AvailabilityEvent
-                {
-                    AvailabilityId = availability.Id,
-                    Type = AvailabilityEventTypes.LeavingAnnounced,
-                    OccurredAt = now,
-                    SyncRunId = run.Id,
-                    Details = JsonSerializer.Serialize(
-                        new { leavingDate = entry.LeavingDate, season = entry.Season },
-                        JsonOptions),
-                });
-                announced++;
-            }
-
             var cleared = 0;
-            foreach (var availability in availabilities.Where(a => a.LeavingDate is not null))
+
+            foreach (var source in sources)
             {
-                var shouldClear = availability.LeavingDate < today
-                    || (isPaid && !seenAvailabilityIds.Contains(availability.Id));
+                var forSource = leaving
+                    .Where(e =>
+                        string.IsNullOrWhiteSpace(e.ProviderExternalId)
+                        || string.Equals(
+                            e.ProviderExternalId,
+                            source.Provider!.ExternalId,
+                            StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
-                if (!shouldClear)
-                {
-                    continue;
-                }
-
-                var previous = availability.LeavingDate;
-                availability.LeavingDate = null;
-                db.AvailabilityEvents.Add(new AvailabilityEvent
-                {
-                    AvailabilityId = availability.Id,
-                    Type = AvailabilityEventTypes.LeavingCleared,
-                    OccurredAt = now,
-                    SyncRunId = run.Id,
-                    Details = JsonSerializer.Serialize(new { previousLeavingDate = previous }, JsonOptions),
-                });
-                cleared++;
+                var (sourceAnnounced, sourceCleared) = await ApplyToSourceAsync(
+                    source.Id,
+                    forSource,
+                    run.Id,
+                    now,
+                    today,
+                    isPaid,
+                    cancellationToken);
+                announced += sourceAnnounced;
+                cleared += sourceCleared;
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -185,8 +160,9 @@ public sealed class LeavingSync(
 
             await syncRunStore.SucceedAsync(run.Id, cancellationToken);
             logger.LogInformation(
-                "Leaving sync for source {SourceId}: announced={Announced}, cleared={Cleared}, paid={Paid}",
-                catalogSourceId,
+                "Leaving sync for country {Country} ({SourceCount} sources): announced={Announced}, cleared={Cleared}, paid={Paid}",
+                normalizedCountry,
+                sources.Count,
                 announced,
                 cleared,
                 isPaid);
@@ -194,7 +170,7 @@ public sealed class LeavingSync(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Leaving sync failed for source {SourceId}", catalogSourceId);
+            logger.LogError(ex, "Leaving sync failed for country {Country}", normalizedCountry);
             await syncRunStore.FailAsync(run.Id, ex.Message, cancellationToken);
             return ToResult((await syncRunStore.GetAsync(run.Id, cancellationToken))!);
         }
@@ -202,6 +178,99 @@ public sealed class LeavingSync(
         {
             syncRunAccessor.CurrentSyncRunId = null;
         }
+    }
+
+    private async Task<(int Announced, int Cleared)> ApplyToSourceAsync(
+        int catalogSourceId,
+        IReadOnlyList<LeavingEntry> leaving,
+        Guid runId,
+        DateTime now,
+        DateOnly today,
+        bool isPaid,
+        CancellationToken cancellationToken)
+    {
+        var watchmodeIds = leaving
+            .Select(e => int.TryParse(e.ExternalId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var id) ? id : (int?)null)
+            .Where(id => id is not null)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+
+        var titles = await db.Titles
+            .Where(t => t.WatchmodeId != null && watchmodeIds.Contains(t.WatchmodeId.Value))
+            .ToDictionaryAsync(t => t.WatchmodeId!.Value, cancellationToken);
+
+        var availabilities = await db.Availabilities
+            .Where(a => a.CatalogSourceId == catalogSourceId && a.RemovedAt == null)
+            .ToListAsync(cancellationToken);
+        var byTitleId = availabilities.ToDictionary(a => a.TitleId);
+
+        var announced = 0;
+        var seenAvailabilityIds = new HashSet<int>();
+
+        foreach (var entry in leaving)
+        {
+            if (!int.TryParse(entry.ExternalId, NumberStyles.Integer, CultureInfo.InvariantCulture, out var wmId))
+            {
+                continue;
+            }
+
+            if (!titles.TryGetValue(wmId, out var title))
+            {
+                continue;
+            }
+
+            if (!byTitleId.TryGetValue(title.Id, out var availability))
+            {
+                continue;
+            }
+
+            seenAvailabilityIds.Add(availability.Id);
+
+            if (availability.LeavingDate == entry.LeavingDate)
+            {
+                continue;
+            }
+
+            availability.LeavingDate = entry.LeavingDate;
+            db.AvailabilityEvents.Add(new AvailabilityEvent
+            {
+                AvailabilityId = availability.Id,
+                Type = AvailabilityEventTypes.LeavingAnnounced,
+                OccurredAt = now,
+                SyncRunId = runId,
+                Details = JsonSerializer.Serialize(
+                    new { leavingDate = entry.LeavingDate, season = entry.Season },
+                    JsonOptions),
+            });
+            announced++;
+        }
+
+        var cleared = 0;
+        foreach (var availability in availabilities.Where(a => a.LeavingDate is not null))
+        {
+            var shouldClear = availability.LeavingDate < today
+                || (isPaid && !seenAvailabilityIds.Contains(availability.Id));
+
+            if (!shouldClear)
+            {
+                continue;
+            }
+
+            var previous = availability.LeavingDate;
+            availability.LeavingDate = null;
+            db.AvailabilityEvents.Add(new AvailabilityEvent
+            {
+                AvailabilityId = availability.Id,
+                Type = AvailabilityEventTypes.LeavingCleared,
+                OccurredAt = now,
+                SyncRunId = runId,
+                Details = JsonSerializer.Serialize(new { previousLeavingDate = previous }, JsonOptions),
+            });
+            cleared++;
+        }
+
+        return (announced, cleared);
     }
 
     private async Task<string> GetPlanAsync(CancellationToken cancellationToken)

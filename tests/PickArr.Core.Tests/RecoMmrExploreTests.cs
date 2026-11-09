@@ -61,6 +61,27 @@ public sealed class RecoMmrExploreTests
     }
 
     [Fact]
+    public void Onboarding_refresh_picks_next_cover_after_excluding_shown()
+    {
+        var pool = new List<RecoOnboardingCandidate>
+        {
+            new(1, 100, [10]),
+            new(2, 90, [10]),
+            new(3, 80, [20]),
+            new(4, 70, [30]),
+            new(5, 60, [40]),
+        };
+        var first = RecoExplore.PickOnboarding(pool, 3);
+        var remaining = pool.Where(c => !first.Contains(c.TitleId)).ToList();
+        var second = RecoExplore.PickOnboarding(remaining, 3);
+
+        second.Count.ShouldBe(2);
+        second.ShouldNotContain(id => first.Contains(id));
+        second.ShouldContain(2);
+        second.ShouldContain(5);
+    }
+
+    [Fact]
     public void Embedding_text_hash_is_stable()
     {
         var text = RecoEmbeddingText.Build(

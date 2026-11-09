@@ -21,14 +21,34 @@ public sealed class ScheduleReconciler(
         var sources = await db.CatalogSources.AsNoTracking()
             .Include(source => source.Provider)
             .ToListAsync(cancellationToken);
+        // Always drop legacy per-source leaving ids (pre country-dedupe).
+        foreach (var source in sources)
+        {
+            recurringJobs.RemoveIfExists($"catalog-leaving-{source.Id}");
+        }
+
         foreach (var source in sources.Where(source => !source.IsEnabled || source.Provider?.IsEnabled != true))
         {
             recurringJobs.RemoveIfExists(IncrementalJobId(source.Id));
             recurringJobs.RemoveIfExists(FullJobId(source.Id));
-            recurringJobs.RemoveIfExists(LeavingSyncJob.JobId(source.Id));
         }
 
         sources = sources.Where(source => source.IsEnabled && source.Provider?.IsEnabled == true).ToList();
+
+        var enabledCountries = sources
+            .Select(s => s.CountryCode.Trim().ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToHashSet(StringComparer.Ordinal);
+
+        // Drop country-level leaving jobs whose country no longer has an enabled source.
+        foreach (var source in await db.CatalogSources.AsNoTracking().ToListAsync(cancellationToken))
+        {
+            var country = source.CountryCode.Trim().ToUpperInvariant();
+            if (!enabledCountries.Contains(country))
+            {
+                recurringJobs.RemoveIfExists(LeavingSyncJob.JobId(country));
+            }
+        }
 
         var incrementalCount = 0;
         var fullCount = 0;
@@ -40,7 +60,7 @@ public sealed class ScheduleReconciler(
 
             recurringJobs.AddOrUpdate<CatalogIncrementalSyncJob>(
                 incrId,
-                j => j.ExecuteAsync(source.Id, false, CancellationToken.None),
+                j => j.ExecuteAsync(source.Id, false, null, CancellationToken.None),
                 source.IncrementalCron);
             incrementalCount++;
 
@@ -49,10 +69,13 @@ public sealed class ScheduleReconciler(
                 j => j.ExecuteAsync(source.Id, false, null, CancellationToken.None),
                 source.FullSyncCron);
             fullCount++;
+        }
 
+        foreach (var country in enabledCountries.OrderBy(c => c, StringComparer.Ordinal))
+        {
             recurringJobs.AddOrUpdate<LeavingSyncJob>(
-                LeavingSyncJob.JobId(source.Id),
-                j => j.ExecuteAsync(source.Id, false, CancellationToken.None),
+                LeavingSyncJob.JobId(country),
+                j => j.ExecuteAsync(country, false, CancellationToken.None),
                 LeavingSyncJob.Cron);
         }
 

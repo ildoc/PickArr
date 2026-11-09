@@ -34,7 +34,35 @@ public sealed class DatabaseInitializer(
             }
         }
 
+        await MigrateLegacySettingKeysAsync(now, cancellationToken);
         await EnsureDefaultSettingsAsync(now, cancellationToken);
+    }
+
+    private async Task MigrateLegacySettingKeysAsync(DateTime now, CancellationToken cancellationToken)
+    {
+        // tmdb.token → tmdb.apiKey (env TMDB_API_KEY). Keep the encrypted value.
+        const string legacyTmdbToken = "tmdb.token";
+        var legacy = await db.Settings.FirstOrDefaultAsync(s => s.Key == legacyTmdbToken, cancellationToken);
+        if (legacy is null)
+        {
+            return;
+        }
+
+        var already = await db.Settings.AnyAsync(s => s.Key == SettingsKeys.TmdbApiKey, cancellationToken);
+        if (!already)
+        {
+            db.Settings.Add(new AppSetting
+            {
+                Key = SettingsKeys.TmdbApiKey,
+                ValueJson = legacy.ValueJson,
+                IsSecret = legacy.IsSecret,
+                UpdatedAt = now,
+            });
+        }
+
+        db.Settings.Remove(legacy);
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Migrated setting {From} to {To}", legacyTmdbToken, SettingsKeys.TmdbApiKey);
     }
 
     private async Task<Provider> EnsureProviderAsync(

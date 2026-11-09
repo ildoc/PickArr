@@ -256,7 +256,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, token TMDB, API key OMDb (opzionale), piano Watchmode (free/a pagamento). | M |
+| FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, API key TMDB, API key OMDb (opzionale), piano Watchmode (free/a pagamento). | M |
 | FR-SET-02 | Impostazioni **Sonarr** e **Radarr**: URL e API key di una istanza ciascuna, con pulsante **Test connessione** che mostra la versione rilevata. | M |
 | FR-SET-03 | Valori di **default** per Sonarr/Radarr: profilo qualità e root folder, scelti tra quelli esposti dall'istanza. | M |
 | FR-SET-04 | **Budget crediti**: quota mensile, riserva percentuale, massimo crediti per esecuzione. | M |

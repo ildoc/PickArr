@@ -125,6 +125,38 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         rows.ShouldAllBe(row => !row.IsBaseline && row.AddedAt != null);
     }
 
+    [Fact]
+    public async Task RunAsync_resumes_from_checkpoint_page()
+    {
+        var fixtureRoot = FindFixtureRoot();
+        var body = await File.ReadAllTextAsync(Path.Combine(fixtureRoot, "list-titles-page1.json"));
+        _server
+            .Given(Request.Create().WithPath("/v1/list-titles/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithHeader("X-Account-Quota", "2500")
+                .WithHeader("X-Account-Quota-Used", "10")
+                .WithBody(body));
+
+        await BuildServicesAsync(incrementalPages: 3, baselineCompleted: true);
+        var sync = _services!.GetRequiredService<ICatalogIncrementalSync>();
+
+        var result = await sync.RunAsync(
+            _sourceId,
+            isManual: false,
+            resumeCheckpointJson: """{"page":3}""");
+        result.Status.ShouldBe(SyncRunStatuses.Succeeded);
+        result.PagesFetched.ShouldBe(3);
+        result.CreditsUsed.ShouldBe(1);
+
+        var pages = _server.LogEntries
+            .Where(e => e.RequestMessage.Path.Contains("list-titles", StringComparison.OrdinalIgnoreCase))
+            .Select(e => e.RequestMessage.Query!["page"].First())
+            .ToList();
+        pages.ShouldBe(["3"]);
+    }
+
     private async Task BuildServicesAsync(
         int incrementalPages,
         bool baselineCompleted,
@@ -159,6 +191,7 @@ public sealed class CatalogIncrementalSyncTests : IAsyncLifetime
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
         services.AddScoped<ICatalogUpserter, CatalogUpserter>();
+        services.AddSingleton<WatchmodeQuotaObservation>();
         services.AddScoped<ICatalogIncrementalSync, CatalogIncrementalSync>();
         services.AddScoped<ICreditBudget, CreditBudgetService>();
         services.AddPickArrWatchmode(config);

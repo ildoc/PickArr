@@ -538,7 +538,7 @@ Configurati in Sonarr/Radarr (*Settings → Connect → Webhook*), metodo `POST`
 | `CatalogResumeJob` | giornaliero (e dopo il reset mensile) | sync | 1 | — |
 | `EnrichmentJob` | accodato dopo le sync + ogni ora | default | 1 | 3 con backoff |
 | `MetadataRefreshJob` | giornaliero, lotti | default | 1 | 3 |
-| `LeavingSyncJob(sourceId)` | giornaliero | sync | 1 per sorgente | 2 |
+| `LeavingSyncJob(country)` | giornaliero | sync | 1 per paese (una call Watchmode, fan-out alle sorgenti) | 2 |
 | `ArrSyncJob(kind)` | intervallo (default 15 min) | arr | 1 per kind | 2 |
 | `ArrRefreshItemJob(kind, arrId)` | dopo add/delete/webhook | arr | per elemento | 3 |
 | `RecoFeatureJob` | dopo enrichment / orario | ml | 1 (`DisableConcurrentExecution`) | 2 |
@@ -671,7 +671,7 @@ delete da cache gli elementi non più presenti nello snapshot
 
 ### 6.8 Sync delle scadenze (`LeavingSyncJob`, FR-CAT-11)
 
-Chiama l'endpoint leaving dates per il paese (free: massimo 10 elementi). Per ogni voce risolve il titolo tramite id Watchmode, imposta `LeavingDate` e registra `LeavingAnnounced`; per i titoli che avevano una data e non risultano più, registra `LeavingCleared`. Su piano free il job è a basso costo e opzionale (impostazione).
+Una sola chiamata all'endpoint leaving dates per paese (free: massimo 10 elementi), poi fan-out a tutte le sorgenti abilitate di quel paese filtrando per `provider_id`. Per ogni voce risolve il titolo tramite id Watchmode, imposta `LeavingDate` e registra `LeavingAnnounced`; per i titoli che avevano una data e non risultano più, registra `LeavingCleared`. Su piano free il job è a basso costo e opzionale (impostazione).
 
 ---
 
@@ -901,7 +901,7 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 {
   "watchmode": { "apiKey": { "isSet": true }, "plan": "free",
                  "quota": 2500, "reservePercent": 10, "maxCreditsPerRun": 80 },
-  "tmdb":      { "token": { "isSet": true } },
+  "tmdb":      { "apiKey": { "isSet": true } },
   "omdb":      { "apiKey": { "isSet": false } },
   "sonarr":    { "url": "http://sonarr:8989", "apiKey": { "isSet": true },
                  "defaults": { "qualityProfileId": 4, "rootFolderPath": "/tv" },
@@ -961,7 +961,7 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 | `POST` | `/ratings/onboarding` | Batch voto da `/taste`. |
 | `GET` | `/recommendations` | *Per te* (scope `source`\|`enabled`, filtri, `diversify`, pagina). |
 | `GET` | `/recommendations/status` | Stage, N_eff, modello, coverage, pool, version. |
-| `GET` | `/recommendations/onboarding` | 24 titoli pool per onboarding. |
+| `GET` | `/recommendations/onboarding` | 24 titoli pool per onboarding. Query `exclude` (CSV) per saltare titoli già mostrati. |
 | `POST` | `/recommendations/events` | Log Shown/Opened/… se `reco.events.enabled`. |
 | `GET` | `/titles/{id}/similar` | Simili sul pool abilitato. |
 
@@ -1116,13 +1116,13 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 | `PickArr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
 | `PickArr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
 
-Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con nomi flat `SCREAMING_SNAKE` derivati dalla chiave (`.` e camelCase → `_`). Esempi: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_TOKEN`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. Resta accettata la forma legacy `PickArr__Settings__` con ogni `.` sostituito da `__`. Se entrambe sono impostate, vince il nome flat. I default di Sonarr e Radarr si passano come `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` oppure come JSON in `SONARR_DEFAULTS` (e analoghi per Radarr).
+Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con nomi flat `SCREAMING_SNAKE` derivati dalla chiave (`.` e camelCase → `_`). Esempi: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_API_KEY`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. Resta accettata la forma legacy `PickArr__Settings__` con ogni `.` sostituito da `__`. Se entrambe sono impostate, vince il nome flat. I default di Sonarr e Radarr si passano come `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` oppure come JSON in `SONARR_DEFAULTS` (e analoghi per Radarr).
 
 Se la variabile è impostata e non vuota, quel valore è quello effettivo per tutta l'esecuzione: vince sul valore salvato e un aggiornamento dalla UI non lo sostituisce. I segreti dichiarati così non vengono scritti nel database e le API continuano a esporre solo `isSet`. Un numero o un booleano non interpretabile, o una chiave nested sconosciuta, impedisce l'avvio. I booleani sono `true` o `false`; i numeri usano il punto decimale. Senza la variabile resta il valore nel database (o il default).
 
 ### 12.2 Impostazioni applicative (tabella `Settings`)
 
-Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.token`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, più chiavi reco: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*`, `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (elenco completo in `raccomandazioni.md` §16).
+Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, più chiavi reco: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*`, `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (elenco completo in `raccomandazioni.md` §16).
 
 Alla modifica delle impostazioni rilevanti per le schedulazioni, `SettingsService` emette un evento che attiva `ScheduleReconciler`.
 
@@ -1177,7 +1177,7 @@ services:
     environment:
       - TZ=Europe/Rome
       - PickArr__BaseUrl=http://PickArr:8080   # usato per generare gli URL dei webhook
-      # WATCHMODE_API_KEY / TMDB_TOKEN / SONARR_URL / … (default DataPath=/config, URLS=:8080)
+      # WATCHMODE_API_KEY / TMDB_API_KEY / SONARR_URL / … (default DataPath=/config, URLS=:8080)
     volumes:
       - ./config:/config
 ```

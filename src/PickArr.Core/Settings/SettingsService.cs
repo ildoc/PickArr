@@ -22,7 +22,7 @@ public sealed class SettingsService(ISettingsStore store)
             },
             Tmdb = new TmdbSettingsDto
             {
-                Token = new SecretStatus(await store.IsSetAsync(SettingsKeys.TmdbToken, cancellationToken)),
+                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.TmdbApiKey, cancellationToken)),
             },
             Omdb = new OmdbSettingsDto
             {
@@ -98,7 +98,7 @@ public sealed class SettingsService(ISettingsStore store)
 
         if (request.Tmdb is { } tmdb)
         {
-            await ApplySecretAsync(SettingsKeys.TmdbToken, tmdb.Token, cancellationToken);
+            await ApplySecretAsync(SettingsKeys.TmdbApiKey, tmdb.ApiKey, cancellationToken);
         }
 
         if (request.Omdb is { } omdb)

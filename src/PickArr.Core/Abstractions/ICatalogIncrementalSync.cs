@@ -15,5 +15,6 @@ public interface ICatalogIncrementalSync
     Task<CatalogSyncResult> RunAsync(
         int catalogSourceId,
         bool isManual = false,
+        string? resumeCheckpointJson = null,
         CancellationToken cancellationToken = default);
 }

@@ -20,7 +20,11 @@ public sealed class CreditBudgetServiceTests
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
-        var budget = new CreditBudgetService(settings, new FakeUsageReader(used: 80, quota: 100), store);
+        var budget = new CreditBudgetService(
+            settings,
+            new FakeUsageReader(used: 80, quota: 100),
+            store,
+            new WatchmodeQuotaObservation());
 
         (await budget.TryReserveAsync(run.Id, cost: 10, isManual: false)).ShouldBeTrue();
         (await store.GetAsync(run.Id))!.CreditsUsed.ShouldBe(10);
@@ -39,7 +43,11 @@ public sealed class CreditBudgetServiceTests
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
-        var budget = new CreditBudgetService(settings, new FakeUsageReader(used: 80, quota: 100), store);
+        var budget = new CreditBudgetService(
+            settings,
+            new FakeUsageReader(used: 80, quota: 100),
+            store,
+            new WatchmodeQuotaObservation());
 
         (await budget.TryReserveAsync(run.Id, cost: 20, isManual: true)).ShouldBeTrue();
         (await budget.TryReserveAsync(run.Id, cost: 1, isManual: true)).ShouldBeFalse();
@@ -55,12 +63,43 @@ public sealed class CreditBudgetServiceTests
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
-        var budget = new CreditBudgetService(settings, new FakeUsageReader(used: 0, quota: 2500), store);
+        var observation = new WatchmodeQuotaObservation();
+        var budget = new CreditBudgetService(
+            settings,
+            new FakeUsageReader(used: 0, quota: 2500),
+            store,
+            observation);
         await budget.ObserveQuotaAsync(quotaUsed: 2490, quotaLimit: 2500);
 
         // spendable scheduled = 2500 - 2490 - 250 = 0
         (await budget.TryReserveAsync(run.Id, cost: 1, isManual: false)).ShouldBeFalse();
         (await budget.TryReserveAsync(run.Id, cost: 10, isManual: true)).ShouldBeTrue();
+    }
+
+    [Fact]
+    public async Task ObserveQuotaAsync_is_shared_across_budget_instances()
+    {
+        var run = NewRun();
+        var store = new FakeSyncRunStore(run);
+        var settings = new FakeSettingsStore();
+        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "2500", false);
+        await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
+        await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
+
+        var observation = new WatchmodeQuotaObservation();
+        var writer = new CreditBudgetService(
+            settings,
+            new FakeUsageReader(used: 0, quota: 2500),
+            store,
+            observation);
+        await writer.ObserveQuotaAsync(quotaUsed: 2490, quotaLimit: 2500);
+
+        var reader = new CreditBudgetService(
+            settings,
+            new FakeUsageReader(used: 0, quota: 2500),
+            store,
+            observation);
+        (await reader.TryReserveAsync(run.Id, cost: 1, isManual: false)).ShouldBeFalse();
     }
 
     [Fact]
@@ -74,7 +113,8 @@ public sealed class CreditBudgetServiceTests
         var budget = new CreditBudgetService(
             settings,
             new FakeUsageReader(used: 80, quota: 100),
-            new FakeSyncRunStore(NewRun()));
+            new FakeSyncRunStore(NewRun()),
+            new WatchmodeQuotaObservation());
 
         var snap = await budget.GetSnapshotAsync();
         snap.Used.ShouldBe(80);

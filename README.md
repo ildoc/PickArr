@@ -36,7 +36,7 @@ docker run -d --name pickarr \
   -p 8080:8080 \
   -e TZ=Europe/Rome \
   -e WATCHMODE_API_KEY=YOUR_KEY \
-  -e TMDB_TOKEN=YOUR_TOKEN \
+  -e TMDB_API_KEY=YOUR_KEY \
   -e SONARR_URL=http://sonarr:8989 \
   -e SONARR_API_KEY=YOUR_SONARR_KEY \
   -e RADARR_URL=http://radarr:7878 \
@@ -67,7 +67,7 @@ Use flat `SCREAMING_SNAKE` names derived from the settings key (`.` and camelCas
 
 ```text
 watchmode.apiKey           →  WATCHMODE_API_KEY
-tmdb.token                 →  TMDB_TOKEN
+tmdb.apiKey                →  TMDB_API_KEY
 sonarr.url                 →  SONARR_URL
 sonarr.apiKey              →  SONARR_API_KEY
 radarr.url                 →  RADARR_URL
@@ -102,7 +102,7 @@ A trailing `/` on `sonarr.url` and `radarr.url` is removed. `catalog.initialImpo
 | `watchmode.reservePercent` | `10` | Quota held back from jobs. |
 | `watchmode.maxCreditsPerRun` | `80` | Cap for one catalog run. |
 | `watchmode.billingDayOfMonth` | `1` | Day the monthly quota resets. |
-| `tmdb.token` | | TMDB v4 read token. Secret. |
+| `tmdb.apiKey` | | TMDB v3 API key or v4 read access token. Secret. |
 | `omdb.apiKey` | | Optional OMDb key. Secret. |
 | `sonarr.url` | | Sonarr base URL, for example `http://sonarr:8989`. |
 | `sonarr.apiKey` | | Secret. |

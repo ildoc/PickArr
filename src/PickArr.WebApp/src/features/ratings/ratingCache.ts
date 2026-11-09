@@ -3,12 +3,43 @@ import type { PagedTitles, RecommendationsPage, TitleDetail, TitleListItem } fro
 
 export type UserRating = 'like' | 'dislike' | null
 
+function isPagedTitles(data: unknown): data is InfiniteData<PagedTitles> {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    Array.isArray((data as InfiniteData<PagedTitles>).pages) &&
+    (data as InfiniteData<PagedTitles>).pages.every(
+      (page) => page != null && Array.isArray(page.items),
+    )
+  )
+}
+
+function isRecommendationsPage(data: unknown): data is RecommendationsPage {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    Array.isArray((data as RecommendationsPage).items) &&
+    !Array.isArray((data as InfiniteData<RecommendationsPage>).pages)
+  )
+}
+
+function isRecommendationsInfinite(data: unknown): data is InfiniteData<RecommendationsPage> {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    Array.isArray((data as InfiniteData<RecommendationsPage>).pages) &&
+    (data as InfiniteData<RecommendationsPage>).pages.every(
+      (page) => page != null && Array.isArray(page.items),
+    )
+  )
+}
+
 function patchPagedRating(
   data: InfiniteData<PagedTitles> | undefined,
   titleId: number,
   rating: UserRating,
 ): InfiniteData<PagedTitles> | undefined {
-  if (!data) return data
+  if (!isPagedTitles(data)) return data
   return {
     ...data,
     pages: data.pages.map((page) => ({
@@ -20,28 +51,39 @@ function patchPagedRating(
   }
 }
 
-function patchRecommendations(
-  data: InfiniteData<RecommendationsPage> | undefined,
+function patchRecommendationsPage(
+  page: RecommendationsPage,
   titleId: number,
   rating: UserRating,
-): InfiniteData<RecommendationsPage> | undefined {
-  if (!data) return data
+): RecommendationsPage {
+  // Rated titles leave For you immediately (FR-REC-RT-04).
+  const items =
+    rating == null
+      ? page.items.map((item) => (item.id === titleId ? { ...item, rating: null } : item))
+      : page.items.filter((item) => item.id !== titleId)
+  const removed = page.items.length - items.length
   return {
-    ...data,
-    pages: data.pages.map((page) => {
-      // Rated titles leave For you immediately (FR-REC-RT-04).
-      const items =
-        rating == null
-          ? page.items.map((item) => (item.id === titleId ? { ...item, rating: null } : item))
-          : page.items.filter((item) => item.id !== titleId)
-      const removed = page.items.length - items.length
-      return {
-        ...page,
-        items,
-        total: Math.max(0, page.total - removed),
-      }
-    }),
+    ...page,
+    items,
+    total: Math.max(0, page.total - removed),
   }
+}
+
+function patchRecommendations(
+  data: InfiniteData<RecommendationsPage> | RecommendationsPage | undefined,
+  titleId: number,
+  rating: UserRating,
+): InfiniteData<RecommendationsPage> | RecommendationsPage | undefined {
+  if (isRecommendationsInfinite(data)) {
+    return {
+      ...data,
+      pages: data.pages.map((page) => patchRecommendationsPage(page, titleId, rating)),
+    }
+  }
+  if (isRecommendationsPage(data)) {
+    return patchRecommendationsPage(data, titleId, rating)
+  }
+  return data
 }
 
 function patchRatingsLists(
@@ -49,7 +91,7 @@ function patchRatingsLists(
   titleId: number,
   rating: UserRating,
 ): InfiniteData<PagedTitles> | undefined {
-  if (!data) return data
+  if (!isPagedTitles(data)) return data
   return {
     ...data,
     pages: data.pages.map((page) => {
@@ -73,18 +115,19 @@ export function applyOptimisticRating(
   queryClient.setQueriesData<InfiniteData<PagedTitles>>({ queryKey: ['titles'] }, (data) =>
     patchPagedRating(data, titleId, rating),
   )
-  queryClient.setQueriesData<InfiniteData<PagedTitles>>({ queryKey: ['my-list'] }, (data) =>
+  // Only title pages — ['my-list','types'] / ['my-list','genres'] share the prefix.
+  queryClient.setQueriesData<InfiniteData<PagedTitles>>({ queryKey: ['my-list', 'titles'] }, (data) =>
     patchPagedRating(data, titleId, rating),
   )
   queryClient.setQueriesData<InfiniteData<PagedTitles>>({ queryKey: ['ratings'] }, (data) =>
     patchRatingsLists(data, titleId, rating),
   )
-  queryClient.setQueriesData<InfiniteData<RecommendationsPage>>(
+  queryClient.setQueriesData<InfiniteData<RecommendationsPage> | RecommendationsPage>(
     { queryKey: ['recommendations'] },
     (data) => patchRecommendations(data, titleId, rating),
   )
   queryClient.setQueriesData<TitleDetail>({ queryKey: ['title', titleId] }, (detail) =>
-    detail ? { ...detail, rating } : detail,
+    detail && typeof detail === 'object' && 'id' in detail ? { ...detail, rating } : detail,
   )
 }
 

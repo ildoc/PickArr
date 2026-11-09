@@ -20,7 +20,7 @@ services:
       - PickArr__BaseUrl=http://localhost:8080
       # Application settings (flat names). Non-empty values override the database.
       # - WATCHMODE_API_KEY=
-      # - TMDB_TOKEN=
+      # - TMDB_API_KEY=
       # - SONARR_URL=http://sonarr:8989
       # - SONARR_API_KEY=
       # - RADARR_URL=http://radarr:7878

@@ -36,7 +36,7 @@ public sealed class CatalogResumeJob(
             else if (run.Kind == SyncRunKinds.CatalogIncremental)
             {
                 backgroundJobs.Enqueue<CatalogIncrementalSyncJob>(j =>
-                    j.ExecuteAsync(sourceId, false, CancellationToken.None));
+                    j.ExecuteAsync(sourceId, false, run.CheckpointJson, CancellationToken.None));
                 logger.LogInformation("Enqueued incremental sync resume for source {SourceId} from run {RunId}", sourceId, run.Id);
             }
         }

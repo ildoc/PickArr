@@ -7,6 +7,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchOnboarding, postOnboardingRatings } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
+import type { RecommendationsPage } from '../../api/types'
 import i18n from '../../i18n'
 import { TastePage } from './TastePage'
 
@@ -18,6 +19,37 @@ vi.mock('../../api/recommendations', () => ({
 vi.mock('../../api/settings', () => ({
   fetchSettings: vi.fn(),
 }))
+
+function title(id: number, name: string): RecommendationsPage['items'][number] {
+  return {
+    id,
+    name,
+    originalTitle: name,
+    year: 2020,
+    category: 'movie',
+    posterUrl: null,
+    genres: [],
+    ratingTmdb: null,
+    ratingImdb: null,
+    isFavorite: false,
+    rating: null,
+    availability: null,
+    arr: null,
+    places: [],
+    reco: { score: 0, personalized: false, reasons: [], similarity: null },
+  }
+}
+
+function page(items: RecommendationsPage['items']): RecommendationsPage {
+  return {
+    version: 0,
+    stage: 'cold',
+    page: 1,
+    pageSize: 24,
+    total: items.length,
+    items,
+  }
+}
 
 function renderPage() {
   const client = new QueryClient({
@@ -57,32 +89,7 @@ describe('TastePage', () => {
     vi.mocked(fetchSettings).mockResolvedValue({
       reco: { enabled: true },
     } as Awaited<ReturnType<typeof fetchSettings>>)
-    vi.mocked(fetchOnboarding).mockResolvedValue({
-      version: 0,
-      stage: 'cold',
-      page: 1,
-      pageSize: 24,
-      total: 1,
-      items: [
-        {
-          id: 42,
-          name: 'Onboarding Movie',
-          originalTitle: 'Onboarding Movie',
-          year: 2020,
-          category: 'movie',
-          posterUrl: null,
-          genres: [],
-          ratingTmdb: null,
-          ratingImdb: null,
-          isFavorite: false,
-          rating: null,
-          availability: null,
-          arr: null,
-          places: [],
-          reco: { score: 0, personalized: false, reasons: [], similarity: null },
-        },
-      ],
-    })
+    vi.mocked(fetchOnboarding).mockResolvedValue(page([title(42, 'Onboarding Movie')]))
     vi.mocked(postOnboardingRatings).mockResolvedValue(undefined)
   })
 
@@ -100,5 +107,32 @@ describe('TastePage', () => {
       expect(postOnboardingRatings).toHaveBeenCalledWith([{ titleId: 42, value: 'like' }]),
     )
     expect(await screen.findByText('For you')).toBeTruthy()
+  })
+
+  it('refreshes proposals excluding shown titles and keeps prior votes', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchOnboarding)
+      .mockResolvedValueOnce(page([title(42, 'Onboarding Movie')]))
+      .mockResolvedValueOnce(page([title(99, 'Next Batch Movie')]))
+
+    renderPage()
+
+    expect(await screen.findByText('Onboarding Movie')).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Like' }))
+    await user.click(screen.getByRole('button', { name: 'Show different titles' }))
+
+    expect(await screen.findByText('Next Batch Movie')).toBeTruthy()
+    expect(screen.queryByText('Onboarding Movie')).toBeNull()
+    expect(fetchOnboarding).toHaveBeenLastCalledWith(null, [42])
+
+    await user.click(screen.getByRole('button', { name: 'Dislike' }))
+    await user.click(screen.getByRole('button', { name: 'Save ratings' }))
+
+    await waitFor(() =>
+      expect(postOnboardingRatings).toHaveBeenCalledWith([
+        { titleId: 42, value: 'like' },
+        { titleId: 99, value: 'dislike' },
+      ]),
+    )
   })
 })

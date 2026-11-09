@@ -244,8 +244,11 @@
     "similarHeading": "Similar titles",
     "similarLoading": "Loading similar titles…",
     "tasteHeading": "Teach your taste",
-    "tasteIntro": "Rate a few titles already in your enabled catalogs. Skipped titles are left blank.",
+    "tasteIntro": "Rate titles you know from your enabled catalogs. Skip the rest, or load a new batch if these are unfamiliar.",
     "tasteSubmit": "Save ratings",
+    "tasteRefresh": "Show different titles",
+    "tasteRatedCount": "{{count}} rated so far (kept when you refresh)",
+    "tasteEmpty": "No more unrated titles left in your enabled catalogs.",
     "tasteSkip": "Skip for now"
   },
   "title": {
@@ -295,9 +298,7 @@
     "saved": "Settings saved.",
     "watchmode": "Watchmode",
     "tmdb": "TMDB",
-    "token": "Token",
-    "tokenSet": "Token is set",
-    "tokenHint": "TMDB v3 API key or read access token. Posters, overview, cast, and genres are loaded with it.",
+    "tmdbApiKeyHint": "TMDB v3 API key or v4 read access token. Posters, overview, cast, and genres are loaded with it.",
     "testConnection": "Test connection",
     "testing": "Testing…",
     "testOk": "Connected — version {{version}}. Quality profiles and root folders are ready to choose.",

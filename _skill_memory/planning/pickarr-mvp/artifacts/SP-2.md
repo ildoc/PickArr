@@ -9,7 +9,7 @@
 | Voce | Valore |
 | --- | --- |
 | Base URL | `https://api.themoviedb.org/3` |
-| Auth | `Authorization: Bearer <read access token>` (settings `tmdb.token`) |
+| Auth | `Authorization: Bearer <read access token>` or `api_key` (settings `tmdb.apiKey`) |
 | Rate limit consigliato | 20 req/s outbound (configurabile) |
 
 ## Endpoint usati (MVP)

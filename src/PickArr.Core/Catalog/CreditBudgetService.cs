@@ -7,13 +7,10 @@ namespace PickArr.Core.Catalog;
 public sealed class CreditBudgetService(
     ISettingsStore settingsStore,
     IQuotaUsageReader usageReader,
-    ISyncRunStore syncRunStore) : ICreditBudget
+    ISyncRunStore syncRunStore,
+    WatchmodeQuotaObservation observation) : ICreditBudget
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
-    // Last observed headers override ApiUsage aggregation until process restart / next observe.
-    private int? _observedUsed;
-    private int? _observedQuota;
 
     public async Task<CreditBudgetSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
@@ -53,23 +50,14 @@ public sealed class CreditBudgetService(
         run.CreditsUsed += cost;
         await syncRunStore.UpdateAsync(run, cancellationToken);
 
-        // Optimistic local used bump until ObserveQuotaAsync / next reader refresh.
-        _observedUsed = used + cost;
+        // Optimistic bump until Watchmode headers call ObserveQuotaAsync.
+        observation.Observe(used + cost, quota);
         return true;
     }
 
     public Task ObserveQuotaAsync(int? quotaUsed, int? quotaLimit, CancellationToken cancellationToken = default)
     {
-        if (quotaUsed is { } used)
-        {
-            _observedUsed = used;
-        }
-
-        if (quotaLimit is { } limit)
-        {
-            _observedQuota = limit;
-        }
-
+        observation.Observe(quotaUsed, quotaLimit);
         return Task.CompletedTask;
     }
 
@@ -77,9 +65,10 @@ public sealed class CreditBudgetService(
         CancellationToken cancellationToken)
     {
         var usage = await usageReader.GetWatchmodeUsageAsync(cancellationToken);
-        var used = _observedUsed ?? usage.Used;
+        var (observedUsed, observedQuota) = observation.Snapshot();
+        var used = observedUsed ?? usage.Used;
         var configuredQuota = await GetIntAsync(SettingsKeys.WatchmodeQuota, 2500, cancellationToken);
-        var quota = _observedQuota ?? usage.QuotaLimit ?? configuredQuota;
+        var quota = observedQuota ?? usage.QuotaLimit ?? configuredQuota;
         var reservePercent = await GetIntAsync(SettingsKeys.WatchmodeReservePercent, 10, cancellationToken);
         var maxPerRun = await GetIntAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, 80, cancellationToken);
         return (used, quota, reservePercent, maxPerRun);

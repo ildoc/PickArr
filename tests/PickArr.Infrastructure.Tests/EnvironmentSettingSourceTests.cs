@@ -37,8 +37,8 @@ public sealed class EnvironmentSettingSourceTests
             .ShouldBe("SONARR_URL");
         SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.SonarrApiKey)
             .ShouldBe("SONARR_API_KEY");
-        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.TmdbToken)
-            .ShouldBe("TMDB_TOKEN");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.TmdbApiKey)
+            .ShouldBe("TMDB_API_KEY");
         SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.RecoWeightLike)
             .ShouldBe("RECO_WEIGHTS_LIKE");
         SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.SonarrDefaults + ".qualityProfileId")
@@ -86,7 +86,7 @@ public sealed class EnvironmentSettingSourceTests
             ["SONARR_URL"] = "http://sonarr:8989/",
             ["SONARR_DEFAULTS_QUALITY_PROFILE_ID"] = "4",
             ["SONARR_DEFAULTS_ROOT_FOLDER_PATH"] = "/tv",
-            ["TMDB_TOKEN"] = "tmdb-token",
+            ["TMDB_API_KEY"] = "tmdb-api-key",
             ["RADARR_API_KEY"] = "radarr-key",
         });
 
@@ -103,8 +103,8 @@ public sealed class EnvironmentSettingSourceTests
         source.TryGet(SettingsKeys.SonarrDefaults, out var defaults).ShouldBeTrue();
         defaults.ShouldContain("\"qualityProfileId\":4");
         defaults.ShouldContain("\"rootFolderPath\":\"/tv\"");
-        source.TryGet(SettingsKeys.TmdbToken, out var tmdb).ShouldBeTrue();
-        tmdb.ShouldBe("\"tmdb-token\"");
+        source.TryGet(SettingsKeys.TmdbApiKey, out var tmdb).ShouldBeTrue();
+        tmdb.ShouldBe("\"tmdb-api-key\"");
         source.TryGet(SettingsKeys.RadarrApiKey, out var radarr).ShouldBeTrue();
         radarr.ShouldBe("\"radarr-key\"");
     }

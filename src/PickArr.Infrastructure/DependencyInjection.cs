@@ -114,6 +114,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         services.Configure<TmdbOptions>(configuration.GetSection(TmdbOptions.SectionName));
+        services.AddSingleton<TmdbRateGate>();
         services.AddTransient<TmdbAuthHandler>();
         services.AddTransient<TmdbApiUsageHandler>();
         services.AddTransient<TmdbRateLimitHandler>();
@@ -141,8 +142,9 @@ public static class DependencyInjection
                 o.Retry.UseJitter = true;
                 o.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(60);
                 o.CircuitBreaker.MinimumThroughput = 5;
-                o.RateLimiter.DefaultRateLimiterOptions.PermitLimit = 8;
-                o.RateLimiter.DefaultRateLimiterOptions.QueueLimit = 32;
+                // Serialize with TmdbRateGate — avoid a concurrent burst ahead of the gate.
+                o.RateLimiter.DefaultRateLimiterOptions.PermitLimit = 1;
+                o.RateLimiter.DefaultRateLimiterOptions.QueueLimit = 64;
             });
         }
 

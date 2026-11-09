@@ -104,7 +104,7 @@ public sealed class CatalogBootstrap(
 
             var sourceId = source.Id;
             backgroundJobs.Enqueue<CatalogIncrementalSyncJob>(j =>
-                j.ExecuteAsync(sourceId, false, CancellationToken.None));
+                j.ExecuteAsync(sourceId, false, null, CancellationToken.None));
             logger.LogInformation(
                 "Queued first catalog pages for {Country} (source {SourceId})",
                 source.CountryCode,

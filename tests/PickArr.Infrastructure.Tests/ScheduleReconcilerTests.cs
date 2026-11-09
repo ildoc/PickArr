@@ -86,11 +86,12 @@ public sealed class ScheduleReconcilerTests
         recurring.ShouldContain(ScheduleReconciler.ResumeJobId);
         recurring.ShouldContain(ScheduleReconciler.IncrementalJobId(usId));
         recurring.ShouldContain(ScheduleReconciler.FullJobId(usId));
-        recurring.ShouldContain(LeavingSyncJob.JobId(usId));
+        recurring.ShouldContain(LeavingSyncJob.JobId("US"));
         recurring.ShouldContain(ArrSyncJob.SonarrJobId);
         recurring.ShouldContain(ArrSyncJob.RadarrJobId);
         recurring.ShouldNotContain(ScheduleReconciler.IncrementalJobId(itId));
         recurring.ShouldNotContain(ScheduleReconciler.FullJobId(itId));
-        recurring.ShouldNotContain(LeavingSyncJob.JobId(itId));
+        recurring.ShouldNotContain(LeavingSyncJob.JobId("IT"));
+        recurring.ShouldNotContain($"catalog-leaving-{usId}");
     }
 }

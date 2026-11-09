@@ -64,7 +64,10 @@ public static class RecoExplore
         return result;
     }
 
-    /// <summary>Pick onboarding cover set: greedy genre coverage on popular pool titles.</summary>
+    /// <summary>
+    /// Pick onboarding cover set: greedy genre coverage on popular pool titles.
+    /// Callers that refresh proposals should omit previously shown ids from <paramref name="pool"/>.
+    /// </summary>
     public static IReadOnlyList<int> PickOnboarding(
         IReadOnlyList<RecoOnboardingCandidate> pool,
         int count = 24)

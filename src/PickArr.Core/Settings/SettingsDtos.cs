@@ -25,7 +25,7 @@ public sealed class WatchmodeSettingsDto
 
 public sealed class TmdbSettingsDto
 {
-    public required SecretStatus Token { get; init; }
+    public required SecretStatus ApiKey { get; init; }
 }
 
 public sealed class OmdbSettingsDto
@@ -115,7 +115,7 @@ public sealed class WatchmodeUpdateDto
 
 public sealed class TmdbUpdateDto
 {
-    public string? Token { get; init; }
+    public string? ApiKey { get; init; }
 }
 
 public sealed class OmdbUpdateDto

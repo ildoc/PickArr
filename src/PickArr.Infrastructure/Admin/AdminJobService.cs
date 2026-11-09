@@ -57,14 +57,20 @@ public sealed class AdminJobService(
                 recurring,
                 activity,
                 cancellationToken));
+        }
 
+        foreach (var countryGroup in sources
+                     .GroupBy(s => s.CountryCode.Trim().ToUpperInvariant(), StringComparer.Ordinal)
+                     .OrderBy(g => g.Key, StringComparer.Ordinal))
+        {
+            var anchor = countryGroup.OrderBy(s => s.Id).First();
             jobs.Add(await BuildJobAsync(
-                LeavingSyncJob.JobId(source.Id),
-                JobText.LeavingName(source.CountryCode),
-                JobText.LeavingDescription(source.CountryCode),
+                LeavingSyncJob.JobId(countryGroup.Key),
+                JobText.LeavingName(countryGroup.Key),
+                JobText.LeavingDescription(countryGroup.Key),
                 SyncRunKinds.Leaving,
-                source.Id,
-                source.CountryCode,
+                anchor.Id,
+                countryGroup.Key,
                 LeavingSyncJob.Cron,
                 includeRuns: true,
                 canTrigger: true,
@@ -202,8 +208,8 @@ public sealed class AdminJobService(
 
         if (jobKey.StartsWith("catalog-leaving-", StringComparison.OrdinalIgnoreCase))
         {
-            var sourceId = ParseTrailingId(jobKey, "catalog-leaving-");
-            return await TriggerLeavingAsync(sourceId, cancellationToken);
+            var country = ParseTrailingCountry(jobKey, "catalog-leaving-");
+            return await TriggerLeavingAsync(country, cancellationToken);
         }
 
         if (string.Equals(jobKey, EnrichmentJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
@@ -323,7 +329,7 @@ public sealed class AdminJobService(
     {
         await EnsureSourceExistsAsync(sourceId, cancellationToken);
         await EnsureNotRunningAsync(SyncRunKinds.CatalogIncremental, sourceId, cancellationToken);
-        var hf = backgroundJobs.Enqueue<CatalogIncrementalSyncJob>(j => j.ExecuteAsync(sourceId, true, CancellationToken.None));
+        var hf = backgroundJobs.Enqueue<CatalogIncrementalSyncJob>(j => j.ExecuteAsync(sourceId, true, null, CancellationToken.None));
         var runId = await WaitForRunAsync(SyncRunKinds.CatalogIncremental, sourceId, cancellationToken);
         return new TriggerJobResult(runId, hf);
     }
@@ -337,12 +343,19 @@ public sealed class AdminJobService(
         return new TriggerJobResult(runId, hf);
     }
 
-    private async Task<TriggerJobResult> TriggerLeavingAsync(int sourceId, CancellationToken cancellationToken)
+    private async Task<TriggerJobResult> TriggerLeavingAsync(string countryCode, CancellationToken cancellationToken)
     {
-        await EnsureSourceExistsAsync(sourceId, cancellationToken);
-        await EnsureNotRunningAsync(SyncRunKinds.Leaving, sourceId, cancellationToken);
-        var hf = backgroundJobs.Enqueue<LeavingSyncJob>(j => j.ExecuteAsync(sourceId, true, CancellationToken.None));
-        var runId = await WaitForRunAsync(SyncRunKinds.Leaving, sourceId, cancellationToken);
+        var normalized = countryCode.Trim().ToUpperInvariant();
+        var anchorId = await db.CatalogSources.AsNoTracking()
+            .Where(s => s.IsEnabled && s.CountryCode == normalized)
+            .OrderBy(s => s.Id)
+            .Select(s => (int?)s.Id)
+            .FirstOrDefaultAsync(cancellationToken)
+            ?? throw new ArgumentException($"No enabled catalog source for country {normalized}.");
+
+        await EnsureNotRunningAsync(SyncRunKinds.Leaving, anchorId, cancellationToken);
+        var hf = backgroundJobs.Enqueue<LeavingSyncJob>(j => j.ExecuteAsync(normalized, true, CancellationToken.None));
+        var runId = await WaitForRunAsync(SyncRunKinds.Leaving, anchorId, cancellationToken);
         return new TriggerJobResult(runId, hf);
     }
 
@@ -462,7 +475,7 @@ public sealed class AdminJobService(
         }
     }
 
-    private static bool TryResolveJobFilter(string? jobKey, out string kind, out int? sourceId)
+    private bool TryResolveJobFilter(string? jobKey, out string kind, out int? sourceId)
     {
         kind = "";
         sourceId = null;
@@ -489,7 +502,13 @@ public sealed class AdminJobService(
         if (jobKey.StartsWith("catalog-leaving-", StringComparison.OrdinalIgnoreCase))
         {
             kind = SyncRunKinds.Leaving;
-            sourceId = ParseTrailingId(jobKey, "catalog-leaving-");
+            var country = ParseTrailingCountry(jobKey, "catalog-leaving-");
+            // Runs are anchored on the lowest enabled source id for that country.
+            sourceId = db.CatalogSources.AsNoTracking()
+                .Where(s => s.IsEnabled && s.CountryCode == country)
+                .OrderBy(s => s.Id)
+                .Select(s => (int?)s.Id)
+                .FirstOrDefault();
             return true;
         }
 
@@ -524,6 +543,17 @@ public sealed class AdminJobService(
         }
 
         return id;
+    }
+
+    private static string ParseTrailingCountry(string jobKey, string prefix)
+    {
+        var raw = jobKey[prefix.Length..].Trim();
+        if (string.IsNullOrWhiteSpace(raw) || raw.All(char.IsDigit))
+        {
+            throw new ArgumentException($"Invalid leaving jobKey '{jobKey}' (expected country code).");
+        }
+
+        return raw.ToUpperInvariant();
     }
 
     private static AdminRunSummaryDto ToSummary(Core.Domain.Entities.SyncRun run, string? countryCode) =>

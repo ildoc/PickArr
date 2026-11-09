@@ -64,7 +64,7 @@ public sealed class AdminApiTests
     [Fact]
     public async Task Jobs_show_running_state_and_failure_log()
     {
-        var sourceId = await GetEnabledSourceIdAsync();
+        var (sourceId, countryCode) = await GetEnabledSourceAsync();
         var failedId = Guid.NewGuid();
         var runningId = Guid.NewGuid();
         using (var scope = _factory.Services.CreateScope())
@@ -102,7 +102,7 @@ public sealed class AdminApiTests
             full.GetProperty("executionState").GetString().ShouldBe(JobExecutionStates.Failed);
             full.GetProperty("lastError").GetString().ShouldBe("integration-failure-marker");
 
-            var leaving = body.EnumerateArray().First(j => j.GetProperty("jobKey").GetString() == $"catalog-leaving-{sourceId}");
+            var leaving = body.EnumerateArray().First(j => j.GetProperty("jobKey").GetString() == $"catalog-leaving-{countryCode}");
             leaving.GetProperty("executionState").GetString().ShouldBe(JobExecutionStates.Running);
         }
         finally
@@ -188,6 +188,12 @@ public sealed class AdminApiTests
 
     private async Task<int> GetEnabledSourceIdAsync()
     {
+        var (sourceId, _) = await GetEnabledSourceAsync();
+        return sourceId;
+    }
+
+    private async Task<(int SourceId, string CountryCode)> GetEnabledSourceAsync()
+    {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
         var source = await db.CatalogSources.FirstOrDefaultAsync(s => s.IsEnabled)
@@ -198,6 +204,6 @@ public sealed class AdminApiTests
             await db.SaveChangesAsync();
         }
 
-        return source.Id;
+        return (source.Id, source.CountryCode.Trim().ToUpperInvariant());
     }
 }

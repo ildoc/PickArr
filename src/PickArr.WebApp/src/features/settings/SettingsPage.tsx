@@ -38,7 +38,7 @@ export function SettingsPage() {
   const [sonarr, setSonarr] = useState<ArrForm>(emptyArr())
   const [radarr, setRadarr] = useState<ArrForm>(emptyArr())
   const [watchmodeKey, setWatchmodeKey] = useState('')
-  const [tmdbToken, setTmdbToken] = useState('')
+  const [tmdbApiKey, setTmdbApiKey] = useState('')
   const [recoEnabled, setRecoEnabled] = useState(true)
   const [recoUseImplicit, setRecoUseImplicit] = useState(true)
   const [saved, setSaved] = useState(false)
@@ -127,7 +127,7 @@ export function SettingsPage() {
           },
         },
         watchmode: watchmodeKey.length > 0 ? { apiKey: watchmodeKey } : undefined,
-        tmdb: tmdbToken.length > 0 ? { token: tmdbToken } : undefined,
+        tmdb: tmdbApiKey.length > 0 ? { apiKey: tmdbApiKey } : undefined,
         reco: {
           enabled: recoEnabled,
           useImplicit: recoUseImplicit,
@@ -135,7 +135,7 @@ export function SettingsPage() {
       }),
     onSuccess: async () => {
       setWatchmodeKey('')
-      setTmdbToken('')
+      setTmdbApiKey('')
       setSonarr((s) => ({ ...s, apiKey: '' }))
       setRadarr((s) => ({ ...s, apiKey: '' }))
       setSaved(true)
@@ -276,16 +276,16 @@ export function SettingsPage() {
       <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
         <h2 className="text-lg font-medium">{t('settings.tmdb')}</h2>
         <label className="block space-y-1 text-sm">
-          <span className="text-[var(--muted)]">{t('settings.token')}</span>
+          <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
           <input
             type="password"
             autoComplete="off"
-            value={tmdbToken}
-            onChange={(e) => setTmdbToken(e.target.value)}
-            placeholder={settings.data?.tmdb.token.isSet ? t('settings.tokenSet') : ''}
+            value={tmdbApiKey}
+            onChange={(e) => setTmdbApiKey(e.target.value)}
+            placeholder={settings.data?.tmdb.apiKey.isSet ? t('settings.apiKeySet') : ''}
             className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
           />
-          <p className="text-xs text-[var(--muted)]">{t('settings.tokenHint')}</p>
+          <p className="text-xs text-[var(--muted)]">{t('settings.tmdbApiKeyHint')}</p>
         </label>
       </section>
 

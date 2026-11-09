@@ -149,9 +149,13 @@ internal static class HangfireJobKeyMapper
             return ScheduleReconciler.FullJobId(fullId);
         }
 
-        if (name == nameof(LeavingSyncJob) && sourceId is int leavingId)
+        if (name == nameof(LeavingSyncJob))
         {
-            return LeavingSyncJob.JobId(leavingId);
+            var country = AsString(job.Args.Count > 0 ? job.Args[0] : null);
+            if (!string.IsNullOrWhiteSpace(country))
+            {
+                return LeavingSyncJob.JobId(country);
+            }
         }
 
         if (name == nameof(CatalogResumeJob))
@@ -194,5 +198,11 @@ internal static class HangfireJobKeyMapper
         short s => s,
         string text when int.TryParse(text, out var parsed) => parsed,
         _ => null,
+    };
+
+    private static string? AsString(object? value) => value switch
+    {
+        string text => text,
+        _ => value?.ToString(),
     };
 }

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
@@ -13,17 +13,23 @@ export function TastePage() {
   const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
   const sourceId = loadPreferredSourceId()
   const [votes, setVotes] = useState<Record<number, 'like' | 'dislike' | null>>({})
+  const [excludeIds, setExcludeIds] = useState<number[]>([])
 
   const onboarding = useQuery({
-    queryKey: ['onboarding', sourceId],
-    queryFn: () => fetchOnboarding(sourceId),
+    queryKey: ['onboarding', sourceId, excludeIds],
+    queryFn: () => fetchOnboarding(sourceId, excludeIds),
     enabled: settings.data?.reco.enabled !== false,
+    placeholderData: keepPreviousData,
   })
+
+  const ratedEntries = Object.entries(votes).filter(([, value]) => value !== null)
+  const canSubmit = ratedEntries.length > 0
+  const canRefresh = (onboarding.data?.items.length ?? 0) > 0 && !onboarding.isFetching
 
   const submit = useMutation({
     mutationFn: () =>
       postOnboardingRatings(
-        Object.entries(votes).map(([titleId, value]) => ({
+        ratedEntries.map(([titleId, value]) => ({
           titleId: Number(titleId),
           value,
         })),
@@ -34,6 +40,15 @@ export function TastePage() {
       navigate('/for-you')
     },
   })
+
+  function refreshProposals() {
+    const shown = onboarding.data?.items.map((item) => item.id) ?? []
+    if (shown.length === 0) {
+      return
+    }
+
+    setExcludeIds((prev) => [...new Set([...prev, ...shown])])
+  }
 
   if (settings.data && !settings.data.reco.enabled) {
     return <p className="text-[var(--muted)]">{t('reco.disabled')}</p>
@@ -49,7 +64,11 @@ export function TastePage() {
       {onboarding.isLoading && <p className="text-[var(--muted)]">{t('catalog.loading')}</p>}
       {onboarding.isError && <p>{t('reco.loadError')}</p>}
 
-      {onboarding.data && (
+      {onboarding.data && onboarding.data.items.length === 0 && (
+        <p className="text-[var(--muted)]">{t('reco.tasteEmpty')}</p>
+      )}
+
+      {onboarding.data && onboarding.data.items.length > 0 && (
         <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
           {onboarding.data.items.map((item) => {
             const vote = votes[item.id] ?? null
@@ -87,14 +106,28 @@ export function TastePage() {
         </ul>
       )}
 
+      {canSubmit && (
+        <p className="text-sm text-[var(--muted)]">
+          {t('reco.tasteRatedCount', { count: ratedEntries.length })}
+        </p>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          disabled={submit.isPending || Object.keys(votes).length === 0}
+          disabled={submit.isPending || !canSubmit}
           onClick={() => submit.mutate()}
           className="rounded-md bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
           {t('reco.tasteSubmit')}
+        </button>
+        <button
+          type="button"
+          disabled={!canRefresh || submit.isPending}
+          onClick={refreshProposals}
+          className="rounded-md bg-white/10 px-4 py-2 text-sm font-medium disabled:opacity-50"
+        >
+          {t('reco.tasteRefresh')}
         </button>
         <Link to="/for-you" className="text-sm text-[var(--muted)] underline">
           {t('reco.tasteSkip')}

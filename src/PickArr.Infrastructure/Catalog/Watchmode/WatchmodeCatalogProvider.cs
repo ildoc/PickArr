@@ -123,12 +123,8 @@ public sealed class WatchmodeCatalogProvider(
         var body = await response.Content.ReadFromJsonAsync<WatchmodeLeavingResponse>(JsonOptions, cancellationToken)
             ?? new WatchmodeLeavingResponse();
 
-        return body.LeavingDates
-            .Where(x =>
-                x.ProviderId is null ||
-                string.Equals(x.ProviderId.ToString(), source.ProviderExternalId, StringComparison.Ordinal))
-            .Select(WatchmodeMapping.ToLeavingEntry)
-            .ToList();
+        // Country-scoped preview; LeavingSync filters by provider when fanning out to sources.
+        return body.LeavingDates.Select(WatchmodeMapping.ToLeavingEntry).ToList();
     }
 
     public async Task<IReadOnlyList<CatalogEntry>> GetChangedTitlesAsync(

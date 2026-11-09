@@ -65,8 +65,8 @@ public sealed class JobStateTests
             .ShouldBe("catalog-incr-4");
         HangfireJobKeyMapper.Resolve(JobFor(typeof(CatalogFullSyncJob), nameof(CatalogFullSyncJob.ExecuteAsync), 8))
             .ShouldBe("catalog-full-8");
-        HangfireJobKeyMapper.Resolve(JobFor(typeof(LeavingSyncJob), nameof(LeavingSyncJob.ExecuteAsync), 3))
-            .ShouldBe("catalog-leaving-3");
+        HangfireJobKeyMapper.Resolve(JobForLeaving("US"))
+            .ShouldBe("catalog-leaving-US");
         HangfireJobKeyMapper.Resolve(JobFor(typeof(CatalogResumeJob), nameof(CatalogResumeJob.ExecuteAsync)))
             .ShouldBe("catalog-resume");
         HangfireJobKeyMapper.Resolve(JobFor(typeof(CatalogBootstrapJob), nameof(CatalogBootstrapJob.ExecuteAsync)))
@@ -75,6 +75,15 @@ public sealed class JobStateTests
             .ShouldBe("arr-sync-sonarr");
         HangfireJobKeyMapper.Resolve(JobFor(typeof(ArrSyncJob), nameof(ArrSyncJob.ExecuteRadarrAsync)))
             .ShouldBe("arr-sync-radarr");
+    }
+
+    private static Job JobForLeaving(string countryCode)
+    {
+        var method = typeof(LeavingSyncJob).GetMethod(
+                nameof(LeavingSyncJob.ExecuteAsync),
+                BindingFlags.Instance | BindingFlags.Public)
+            ?? throw new InvalidOperationException("Missing LeavingSyncJob.ExecuteAsync");
+        return new Job(typeof(LeavingSyncJob), method, [countryCode, false, CancellationToken.None]);
     }
 
     private static Job JobFor(Type type, string methodName, int? sourceId = null)
