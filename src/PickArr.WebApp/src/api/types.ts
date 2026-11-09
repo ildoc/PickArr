@@ -1,3 +1,5 @@
+export type RatingValue = 'love' | 'like' | 'dislike' | 'not_interested'
+
 export type CatalogSource = {
   id: number
   providerKey: string
@@ -56,7 +58,7 @@ export type TitleListItem = {
   ratingImdb: number | null
   isFavorite: boolean
   isWatched?: boolean
-  rating?: 'love' | 'like' | 'dislike' | null
+  rating?: RatingValue | null
   availability: AvailabilitySummary | null
   arr: ArrSummary | null
   places?: Array<{ providerName: string; countryCode: string; removedAt?: string | null }>
@@ -121,7 +123,7 @@ export type TitleDetail = {
   links: { tmdb: string | null; imdb: string | null; tvdb: string | null }
   isFavorite: boolean
   isWatched?: boolean
-  rating?: 'love' | 'like' | 'dislike' | null
+  rating?: RatingValue | null
   metadataStatus: string
   availability: Array<{
     sourceId: number

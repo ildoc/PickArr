@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPost, apiPut, buildQuery } from './client'
-import type { PagedTitles, TitleQueryParams } from './types'
+import type { PagedTitles, RatingValue, TitleQueryParams } from './types'
 
-export type RatingValue = 'love' | 'like' | 'dislike' | 'not_interested'
+export type { RatingValue }
 
 export function setRating(titleId: number, value: RatingValue) {
   return apiPut(`/api/v1/titles/${titleId}/rating`, { value })
