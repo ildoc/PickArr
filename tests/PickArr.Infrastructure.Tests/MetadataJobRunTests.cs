@@ -89,6 +89,28 @@ public sealed class MetadataJobRunTests
         run.ErrorMessage.ShouldNotBeNull().ShouldContain("401");
     }
 
+    [Fact]
+    public async Task Enrichment_succeeds_when_titles_are_only_unmapped_not_auth_errors()
+    {
+        await using var db = await CreateDbAsync();
+        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+        var job = new EnrichmentJob(
+            new ScriptedEnrichment(
+                new EnrichmentBatchResult(3, 0, 0, 3),
+                new EnrichmentBatchResult(2, 2, 0, 0),
+                new EnrichmentBatchResult(0, 0, 0, 0)),
+            store,
+            NullLogger<EnrichmentJob>.Instance);
+
+        await job.ExecuteAsync(isManual: true);
+
+        var run = await db.SyncRuns.SingleAsync();
+        run.Status.ShouldBe(SyncRunStatuses.Succeeded);
+        run.TitlesUpdated.ShouldBe(2);
+        run.PagesFetched.ShouldBe(5);
+        run.ErrorMessage.ShouldBeNull();
+    }
+
     private static async Task<PickArrDbContext> CreateDbAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");

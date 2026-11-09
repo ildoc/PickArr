@@ -20,6 +20,7 @@ internal static class MetadataJobRun
             var processed = 0;
             var ready = 0;
             var failed = 0;
+            var unmapped = 0;
             string? lastError = null;
             for (var i = 0; i < maxBatches; i++)
             {
@@ -27,12 +28,16 @@ internal static class MetadataJobRun
                 processed += result.Processed;
                 ready += result.Ready;
                 failed += result.Failed;
+                unmapped += result.Unmapped;
                 if (!string.IsNullOrWhiteSpace(result.LastError))
                 {
                     lastError = result.LastError;
                 }
 
-                if (result.Processed == 0 || (result.Ready == 0 && result.Failed > 0))
+                // Empty batch: done. Hard failures with no successes: stop (likely bad credentials).
+                // Unmapped-only batches (TMDB 404 / unknown ids) keep going so later titles can enrich.
+                if (result.Processed == 0
+                    || (result.Ready == 0 && result.Failed > 0 && !string.IsNullOrWhiteSpace(result.LastError)))
                 {
                     break;
                 }
@@ -46,16 +51,14 @@ internal static class MetadataJobRun
                 await syncRuns.UpdateAsync(tracked, cancellationToken);
             }
 
-            if (processed > 0 && ready == 0 && failed > 0)
+            // Fail the run only when TMDB rejected requests (auth/network), not when ids are unknown.
+            if (processed > 0 && ready == 0 && failed > 0 && !string.IsNullOrWhiteSpace(lastError))
             {
-                await syncRuns.FailAsync(
-                    run.Id,
-                    lastError ?? "TMDB metadata request failed. Check the token in Settings.",
-                    cancellationToken);
+                await syncRuns.FailAsync(run.Id, lastError, cancellationToken);
                 return;
             }
 
-            if (failed > 0 && !string.IsNullOrWhiteSpace(lastError))
+            if ((failed > 0 || unmapped > 0) && !string.IsNullOrWhiteSpace(lastError))
             {
                 var current = await syncRuns.GetAsync(run.Id, cancellationToken);
                 if (current is not null)

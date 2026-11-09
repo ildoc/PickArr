@@ -201,8 +201,13 @@ public sealed class EnrichmentService(
 
         if (primary is null)
         {
-            title.MetadataAttempts++;
-            title.MetadataStatus = MetadataStatuses.Failed;
+            // TMDB 404 / unknown id — not a credential problem. Stop retrying as Failed.
+            logger.LogInformation(
+                "TMDB has no details for title {TitleId} ({TmdbType}/{TmdbId}); marking Unmapped",
+                title.Id,
+                title.TmdbType,
+                title.TmdbId);
+            title.MetadataStatus = MetadataStatuses.Unmapped;
             title.UpdatedAt = clock.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             return;
@@ -251,10 +256,51 @@ public sealed class EnrichmentService(
         string language,
         CancellationToken cancellationToken)
     {
+        var tmdbId = title.TmdbId!.Value;
         var isMovie = string.Equals(title.TmdbType, "movie", StringComparison.OrdinalIgnoreCase);
-        return isMovie
-            ? await metadata.GetMovieAsync(title.TmdbId!.Value, language, cancellationToken)
-            : await metadata.GetTvAsync(title.TmdbId!.Value, language, cancellationToken);
+        var details = isMovie
+            ? await metadata.GetMovieAsync(tmdbId, language, cancellationToken)
+            : await metadata.GetTvAsync(tmdbId, language, cancellationToken);
+        if (details is not null)
+        {
+            return details;
+        }
+
+        // Watchmode occasionally stores the wrong TMDB media type; try the other endpoint once.
+        var alternate = isMovie
+            ? await metadata.GetTvAsync(tmdbId, language, cancellationToken)
+            : await metadata.GetMovieAsync(tmdbId, language, cancellationToken);
+        if (alternate is null)
+        {
+            return null;
+        }
+
+        var newType = isMovie ? "tv" : "movie";
+        var conflict = await db.Titles.AsNoTracking().AnyAsync(
+            t => t.Id != title.Id
+                 && t.TmdbId == tmdbId
+                 && t.TmdbType == newType,
+            cancellationToken);
+        if (conflict)
+        {
+            logger.LogWarning(
+                "Title {TitleId} resolves as {NewType}/{TmdbId} but that key already exists; leaving type unchanged",
+                title.Id,
+                newType,
+                tmdbId);
+            return alternate;
+        }
+
+        logger.LogInformation(
+            "Correcting TMDB type for title {TitleId}: {OldType} → {NewType} (id {TmdbId})",
+            title.Id,
+            title.TmdbType,
+            newType,
+            tmdbId);
+        title.TmdbType = newType;
+        title.MediaType = isMovie ? MediaTypes.Series : MediaTypes.Movie;
+        title.Category = isMovie ? TitleCategories.Series : TitleCategories.Movie;
+        return alternate;
     }
 
     private static List<string> ResolveLanguages(Title title)

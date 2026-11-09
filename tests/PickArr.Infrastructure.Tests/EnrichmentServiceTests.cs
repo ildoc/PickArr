@@ -237,6 +237,48 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         title.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
     }
 
+    [Fact]
+    public async Task Enrich_marks_Unmapped_when_tmdb_returns_404_for_both_types()
+    {
+        _server.Given(Request.Create().WithPath("/3/movie/1727694").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(404));
+        _server.Given(Request.Create().WithPath("/3/tv/1727694").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(404));
+
+        var titleId = await SeedTitleAsync(1727694, "movie", "en-US");
+        var result = await _services!.GetRequiredService<IEnrichmentService>()
+            .EnrichPendingBatchAsync(limit: 10);
+
+        result.Unmapped.ShouldBe(1);
+        result.Failed.ShouldBe(0);
+        result.Ready.ShouldBe(0);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var title = await db.Titles.SingleAsync(t => t.Id == titleId);
+        title.MetadataStatus.ShouldBe(MetadataStatuses.Unmapped);
+    }
+
+    [Fact]
+    public async Task Enrich_corrects_wrong_tmdb_type_when_alternate_endpoint_succeeds()
+    {
+        var tv = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "tv-1396-en.json"));
+        _server.Given(Request.Create().WithPath("/3/movie/1396").UsingGet())
+            .RespondWith(Response.Create().WithStatusCode(404));
+        _server.Given(Request.Create().WithPath("/3/tv/1396").UsingGet()).RespondWith(Json(tv));
+
+        var titleId = await SeedTitleAsync(1396, "movie", "en-US");
+        await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(titleId);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickArrDbContext>();
+        var title = await db.Titles.SingleAsync(t => t.Id == titleId);
+        title.MetadataStatus.ShouldBe(MetadataStatuses.Ready);
+        title.TmdbType.ShouldBe("tv");
+        title.MediaType.ShouldBe(MediaTypes.Series);
+        title.TvdbId.ShouldBe(81189);
+    }
+
     private static IResponseBuilder Json(string body) =>
         Response.Create().WithStatusCode(200).WithHeader("Content-Type", "application/json").WithBody(body);
 

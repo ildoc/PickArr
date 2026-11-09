@@ -644,15 +644,18 @@ Operazione idempotente: rieseguire la stessa pagina non cambia lo stato (salvo `
 batch = Titles con MetadataStatus in (Pending, Failed con attempts < 5) ORDER BY CreatedAt LIMIT 100
 foreach t in batch (parallelismo limitato, es. 4):
     details = tmdb.Get(t.TmdbType, t.TmdbId, lang = lingua della sorgente)
+    if 404: riprova l’altro tipo (movie↔tv) e corregge TmdbType se non c’è conflitto
+    if ancora assente: MetadataStatus = Unmapped (id sconosciuto, non è un errore di API key)
     if overview/name vuoti: details_en = tmdb.Get(..., "en-US")
     salva Title (anno, durata/stagioni, voti, id, path immagini, categoria), localizzazioni, generi
     t.MetadataStatus = Ready
-on error: MetadataAttempts++, MetadataStatus = Failed
+on error di rete/auth: MetadataAttempts++, MetadataStatus = Failed
 ```
 
 - La lingua è per sorgente: se un titolo è in più sorgenti con lingue diverse, si memorizza una localizzazione per ciascuna lingua richiesta.
 - `MetadataRefreshJob`: ogni giorno rinfresca un lotto di titoli con `MetadataFetchedAt` più vecchio di 30 giorni e disponibilità attiva (FR-MET-05).
 - Fallback di mappatura: `tmdb_id` assente e `ImdbId` presente → `/find`; altrimenti `Unmapped` (FR-CAT-12).
+- Il `SyncRun` di enrichment fallisce solo se TMDB rifiuta le richieste (es. 401) e nessun titolo diventa Ready; i soli 404/`Unmapped` lasciano il run in Succeeded.
 
 ### 6.7 Sync libreria Sonarr/Radarr (`ArrSyncJob`)
 
