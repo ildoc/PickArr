@@ -81,14 +81,19 @@ describe('TitleDialog ratings', () => {
       availability: [],
       arr: {
         kind: 'radarr',
+        arrId: null,
         state: 'notInLibrary',
         canAdd: false,
         canDelete: false,
         addBlockedReason: 'notConfigured',
         monitored: null,
         progress: null,
+        sizeOnDisk: null,
+        path: null,
+        fileCount: null,
         syncedAt: null,
         seasons: null,
+        externalUrl: null,
       },
     } as TitleDetail)
   })

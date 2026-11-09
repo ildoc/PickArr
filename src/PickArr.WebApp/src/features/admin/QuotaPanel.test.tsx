@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { fetchAdminQuota } from '../../api/admin'
 import i18n from '../../i18n'
 import { QuotaPanel } from './QuotaPanel'
 
@@ -19,6 +20,7 @@ vi.mock('../../api/admin', () => ({
     periodEnd: '2026-12-01T00:00:00Z',
   })),
 }))
+
 
 function wrap(ui: ReactNode) {
   const client = new QueryClient({
@@ -41,7 +43,16 @@ describe('QuotaPanel', () => {
     await waitFor(() => {
       expect(screen.getByText(/412 \/ 2500/)).toBeTruthy()
     })
+    expect(fetchAdminQuota).toHaveBeenCalled()
     expect(screen.getByText('1838')).toBeTruthy()
     expect(screen.getByText('1980')).toBeTruthy()
+    expect(screen.getByText(/spendable/i)).toBeTruthy()
+  })
+
+  it('shows the quota error when the request fails', async () => {
+    vi.mocked(fetchAdminQuota).mockRejectedValue(new Error('boom'))
+    wrap(<QuotaPanel />)
+    expect(await screen.findByText('Could not load quota.')).toBeTruthy()
   })
 })
+

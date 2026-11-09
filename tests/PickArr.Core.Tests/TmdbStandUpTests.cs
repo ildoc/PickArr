@@ -29,4 +29,13 @@ public sealed class TmdbStandUpTests
     {
         TextNormalizer.NormalizeName("Caffè").ShouldBe("caffe");
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void TextNormalizer_empty_inputs_become_empty_string(string? value)
+    {
+        TextNormalizer.NormalizeName(value).ShouldBe(string.Empty);
+    }
 }

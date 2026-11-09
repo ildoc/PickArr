@@ -1,16 +1,20 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PickArr.Core.Abstractions;
 using PickArr.Core.Domain;
 using PickArr.Core.Domain.Entities;
+using PickArr.Core.Settings;
 using PickArr.Infrastructure.Persistence;
 using Shouldly;
 
 namespace PickArr.Integration.Tests;
 
-[Collection("api")]
+[CollectionDefinition("arr-action-api")]
+public sealed class ArrActionApiCollection : ICollectionFixture<ApiFactory>;
+
+[Collection("arr-action-api")]
 public sealed class ArrActionApiTests
 {
     private readonly ApiFactory _factory;
@@ -39,9 +43,9 @@ public sealed class ArrActionApiTests
     {
         using (var scope = _factory.Services.CreateScope())
         {
-            var store = scope.ServiceProvider.GetRequiredService<PickArr.Core.Abstractions.ISettingsStore>();
-            await store.DeleteAsync(PickArr.Core.Settings.SettingsKeys.SonarrUrl);
-            await store.DeleteAsync(PickArr.Core.Settings.SettingsKeys.SonarrApiKey);
+            var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
+            await store.DeleteAsync(SettingsKeys.SonarrUrl);
+            await store.DeleteAsync(SettingsKeys.SonarrApiKey);
         }
 
         var titleId = await SeedSeriesAsync();

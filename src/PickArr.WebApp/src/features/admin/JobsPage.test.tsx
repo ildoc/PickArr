@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchAdminJobs, fetchAdminQuota, fetchAdminRuns } from '../../api/admin'
+import { fetchAdminJobs, fetchAdminQuota, fetchAdminRuns, triggerAdminJob } from '../../api/admin'
 import i18n from '../../i18n'
 import { JobsPage } from './JobsPage'
 
@@ -13,6 +14,7 @@ vi.mock('../../api/admin', () => ({
   fetchAdminQuota: vi.fn(),
   triggerAdminJob: vi.fn(),
 }))
+
 
 function wrap(ui: ReactNode) {
   const client = new QueryClient({
@@ -43,6 +45,7 @@ describe('JobsPage', () => {
   })
 
   it('shows queued, running, and failure logs with plain job names', async () => {
+    const user = userEvent.setup()
     vi.mocked(fetchAdminJobs).mockResolvedValue([
       {
         jobKey: 'catalog-incr-1',
@@ -135,5 +138,19 @@ describe('JobsPage', () => {
         expect.objectContaining({ jobKey: 'catalog-incr-1' }),
       )
     })
+
+    vi.mocked(triggerAdminJob).mockResolvedValue({ hangfireJobId: 'hf-1', runId: 'run-9' })
+    const runButtons = screen.getAllByRole('button', { name: 'Run now' })
+    await user.click(runButtons[0]!)
+
+    await waitFor(() => {
+      expect(triggerAdminJob).toHaveBeenCalledWith('catalog-incr-1', {
+        sourceId: 1,
+        mode: 'incremental',
+      })
+    })
+    expect(await screen.findByText(/Job started — run run-9/)).toBeTruthy()
   })
 })
+
+

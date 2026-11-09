@@ -3,15 +3,20 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using PickArr.Core.Abstractions;
 using PickArr.Core.Domain;
 using PickArr.Core.Domain.Entities;
 using PickArr.Core.Metadata;
+using PickArr.Core.Settings;
 using PickArr.Infrastructure.Persistence;
 using Shouldly;
 
 namespace PickArr.Integration.Tests;
 
-[Collection("api")]
+[CollectionDefinition("catalog-api")]
+public sealed class CatalogApiCollection : ICollectionFixture<ApiFactory>;
+
+[Collection("catalog-api")]
 public sealed class CatalogApiTests
 {
     private readonly ApiFactory _factory;
@@ -26,6 +31,7 @@ public sealed class CatalogApiTests
     [Fact]
     public async Task Titles_empty_until_Arr_configured_then_filters_by_media_type()
     {
+        await ClearArrSettingsAsync();
         var sourceId = await SeedSourceWithTitlesAsync();
 
         var before = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles");
@@ -143,6 +149,16 @@ public sealed class CatalogApiTests
         itBody.GetProperty("total").GetInt32().ShouldBe(0);
     }
 
+    private async Task ClearArrSettingsAsync()
+    {
+        using var scope = _factory.Services.CreateScope();
+        var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
+        await store.DeleteAsync(SettingsKeys.SonarrUrl);
+        await store.DeleteAsync(SettingsKeys.SonarrApiKey);
+        await store.DeleteAsync(SettingsKeys.RadarrUrl);
+        await store.DeleteAsync(SettingsKeys.RadarrApiKey);
+    }
+
     private async Task<int> SeedSourceWithTitlesAsync()
     {
         using var scope = _factory.Services.CreateScope();
@@ -152,15 +168,18 @@ public sealed class CatalogApiTests
         source.BaselineCompletedAt = DateTime.UtcNow;
         source.LastFullAt = DateTime.UtcNow;
 
-        if (!await db.Titles.AnyAsync())
+        const string movieTitle = "Caffè Film";
+        const string seriesTitle = "Serie Test";
+        var now = DateTime.UtcNow;
+
+        if (!await db.Titles.AnyAsync(t => t.OriginalTitle == movieTitle))
         {
-            var now = DateTime.UtcNow;
             var movie = new Title
             {
                 MediaType = MediaTypes.Movie,
                 Category = TitleCategories.Movie,
-                OriginalTitle = "Caffè Film",
-                OriginalTitleNormalized = TextNormalizer.NormalizeName("Caffè Film"),
+                OriginalTitle = movieTitle,
+                OriginalTitleNormalized = TextNormalizer.NormalizeName(movieTitle),
                 ReleaseYear = 2024,
                 TmdbId = 603,
                 TmdbType = "movie",
@@ -168,11 +187,33 @@ public sealed class CatalogApiTests
                 CreatedAt = now,
                 UpdatedAt = now,
             };
+            db.Titles.Add(movie);
+            await db.SaveChangesAsync();
+            movie.Localizations.Add(new TitleLocalization
+            {
+                TitleId = movie.Id,
+                Language = "it-IT",
+                Name = movieTitle,
+                NameNormalized = TextNormalizer.NormalizeName(movieTitle),
+                FetchedAt = now,
+            });
+            db.Availabilities.Add(new Availability
+            {
+                TitleId = movie.Id,
+                CatalogSourceId = source.Id,
+                FirstSeenAt = now,
+                LastSeenAt = now,
+                AddedAt = now,
+            });
+        }
+
+        if (!await db.Titles.AnyAsync(t => t.OriginalTitle == seriesTitle))
+        {
             var series = new Title
             {
                 MediaType = MediaTypes.Series,
                 Category = TitleCategories.Series,
-                OriginalTitle = "Serie Test",
+                OriginalTitle = seriesTitle,
                 OriginalTitleNormalized = "serie test",
                 ReleaseYear = 2023,
                 TvdbId = 121361,
@@ -182,44 +223,34 @@ public sealed class CatalogApiTests
                 CreatedAt = now,
                 UpdatedAt = now,
             };
-            db.Titles.AddRange(movie, series);
+            db.Titles.Add(series);
             await db.SaveChangesAsync();
-            movie.Localizations.Add(new TitleLocalization
-            {
-                TitleId = movie.Id,
-                Language = "it-IT",
-                Name = "Caffè Film",
-                NameNormalized = TextNormalizer.NormalizeName("Caffè Film"),
-                FetchedAt = now,
-            });
             series.Localizations.Add(new TitleLocalization
             {
                 TitleId = series.Id,
                 Language = "it-IT",
-                Name = "Serie Test",
+                Name = seriesTitle,
                 NameNormalized = "serie test",
                 FetchedAt = now,
             });
-            db.Availabilities.AddRange(
-                new Availability
-                {
-                    TitleId = movie.Id,
-                    CatalogSourceId = source.Id,
-                    FirstSeenAt = now,
-                    LastSeenAt = now,
-                    AddedAt = now,
-                },
-                new Availability
-                {
-                    TitleId = series.Id,
-                    CatalogSourceId = source.Id,
-                    FirstSeenAt = now,
-                    LastSeenAt = now,
-                    AddedAt = now,
-                });
+            db.Availabilities.Add(new Availability
+            {
+                TitleId = series.Id,
+                CatalogSourceId = source.Id,
+                FirstSeenAt = now,
+                LastSeenAt = now,
+                AddedAt = now,
+            });
         }
 
         await db.SaveChangesAsync();
+
+        var italyTitleCount = await db.Availabilities.CountAsync(a =>
+            a.CatalogSourceId == source.Id
+            && a.RemovedAt == null
+            && (a.Title!.OriginalTitle == movieTitle || a.Title.OriginalTitle == seriesTitle));
+        italyTitleCount.ShouldBe(2);
+
         return source.Id;
     }
 }
