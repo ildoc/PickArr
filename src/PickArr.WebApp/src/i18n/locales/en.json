@@ -200,9 +200,16 @@
     "remove": "Remove from My list",
     "hint": "A short watch-later list: titles you might want to see, then remove once watched."
   },
+  "watched": {
+    "add": "Mark as watched",
+    "remove": "Clear watched",
+    "marked": "Watched"
+  },
   "ratings": {
+    "love": "Love",
     "like": "Like",
     "dislike": "Dislike",
+    "tabLove": "Loved",
     "tabLike": "Liked",
     "tabDislike": "Disliked",
     "empty": "No ratings in this tab yet.",
@@ -345,11 +352,13 @@
     "recoN0": "Learning target (N0)",
     "recoExploreRate": "Explore rate",
     "recoMmrLambda": "MMR lambda",
+    "recoWeightLove": "Weight: love",
     "recoWeightLike": "Weight: like",
     "recoWeightDislike": "Weight: dislike",
     "recoWeightFavorite": "Weight: My list (watch later)",
     "recoWeightArrAdd": "Weight: Arr add",
     "recoWeightDownloaded": "Weight: downloaded",
+    "recoWeightWatched": "Weight: watched",
     "recoLocalNote": "Recommendations are calculated on this machine. No taste data leaves your install.",
     "recoStatus": "Status",
     "recoStage": "Stage",

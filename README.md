@@ -71,6 +71,7 @@ tmdb.apiKey                →  TMDB_API_KEY
 sonarr.url                 →  SONARR_URL
 sonarr.apiKey              →  SONARR_API_KEY
 radarr.url                 →  RADARR_URL
+reco.weights.love          →  RECO_WEIGHTS_LOVE
 reco.weights.like          →  RECO_WEIGHTS_LIKE
 sonarr.syncIntervalMinutes →  SONARR_SYNC_INTERVAL_MINUTES
 ```
@@ -126,11 +127,13 @@ A trailing `/` on `sonarr.url` and `radarr.url` is removed. `catalog.initialImpo
 | `reco.useImplicit` | `true` | Treat favorites and library adds as signals. |
 | `reco.excludeInLibrary` | `true` | Drop titles already in Sonarr or Radarr. |
 | `reco.n0` | `30` | Ratings before the personal score takes over from the prior. |
+| `reco.weights.love` | `1.5` | Strong like. |
 | `reco.weights.like` | `1` | |
 | `reco.weights.dislike` | `-1` | |
 | `reco.weights.favorite` | `0.5` | |
 | `reco.weights.arrAdd` | `0.6` | |
 | `reco.weights.downloaded` | `0.4` | |
+| `reco.weights.watched` | `0.35` | Marked as watched (implicit). |
 | `reco.mmr.lambda` | `0.7` | Diversity. `0` turns MMR off. |
 | `reco.explore.rate` | `0.1` | Share of exploratory slots. `0` turns exploration off. |
 | `reco.ml.minRatings` | `100` | Explicit ratings required before the supervised model is used. |

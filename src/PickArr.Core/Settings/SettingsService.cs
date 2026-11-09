@@ -57,11 +57,13 @@ public sealed class SettingsService(ISettingsStore store)
                 EmbeddingsEnabled = await GetOrDefaultAsync(SettingsKeys.RecoEmbeddingsEnabled, true, cancellationToken),
                 ExcludeInLibrary = await GetOrDefaultAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken),
                 N0 = await GetOrDefaultAsync(SettingsKeys.RecoN0, 30, cancellationToken),
+                WeightLove = await GetOrDefaultAsync(SettingsKeys.RecoWeightLove, 1.5, cancellationToken),
                 WeightLike = await GetOrDefaultAsync(SettingsKeys.RecoWeightLike, 1.0, cancellationToken),
                 WeightDislike = await GetOrDefaultAsync(SettingsKeys.RecoWeightDislike, -1.0, cancellationToken),
                 WeightFavorite = await GetOrDefaultAsync(SettingsKeys.RecoWeightFavorite, 0.5, cancellationToken),
                 WeightArrAdd = await GetOrDefaultAsync(SettingsKeys.RecoWeightArrAdd, 0.6, cancellationToken),
                 WeightDownloaded = await GetOrDefaultAsync(SettingsKeys.RecoWeightDownloaded, 0.4, cancellationToken),
+                WeightWatched = await GetOrDefaultAsync(SettingsKeys.RecoWeightWatched, 0.35, cancellationToken),
                 MmrLambda = await GetOrDefaultAsync(SettingsKeys.RecoMmrLambda, 0.7, cancellationToken),
                 ExploreRate = await GetOrDefaultAsync(SettingsKeys.RecoExploreRate, RecoExplore.DefaultRate, cancellationToken),
                 MlMinRatings = await GetOrDefaultAsync(SettingsKeys.RecoMlMinRatings, RecoLevel3.DefaultMinRatings, cancellationToken),
@@ -176,6 +178,11 @@ public sealed class SettingsService(ISettingsStore store)
                 await store.SetAsync(SettingsKeys.RecoN0, ToJson(n0), isSecret: false, cancellationToken);
             }
 
+            if (reco.WeightLove is { } love)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightLove, ToJson(love), isSecret: false, cancellationToken);
+            }
+
             if (reco.WeightLike is { } like)
             {
                 await store.SetAsync(SettingsKeys.RecoWeightLike, ToJson(like), isSecret: false, cancellationToken);
@@ -199,6 +206,11 @@ public sealed class SettingsService(ISettingsStore store)
             if (reco.WeightDownloaded is { } downloaded)
             {
                 await store.SetAsync(SettingsKeys.RecoWeightDownloaded, ToJson(downloaded), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightWatched is { } watched)
+            {
+                await store.SetAsync(SettingsKeys.RecoWeightWatched, ToJson(watched), isSecret: false, cancellationToken);
             }
 
             if (reco.MmrLambda is { } mmrLambda)

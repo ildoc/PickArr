@@ -963,6 +963,19 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.ToTable("TitleLocalizations", (string)null);
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Watched", b =>
+                {
+                    b.Property<int>("TitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("WatchedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("TitleId");
+
+                    b.ToTable("Watched", (string)null);
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrLibraryItem", b =>
                 {
                     b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
@@ -1180,6 +1193,17 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
+            modelBuilder.Entity("PickArr.Core.Domain.Entities.Watched", b =>
+                {
+                    b.HasOne("PickArr.Core.Domain.Entities.Title", "Title")
+                        .WithOne("Watched")
+                        .HasForeignKey("PickArr.Core.Domain.Entities.Watched", "TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Title");
+                });
+
             modelBuilder.Entity("PickArr.Core.Domain.Entities.ArrLibraryItem", b =>
                 {
                     b.Navigation("Seasons");
@@ -1227,6 +1251,8 @@ namespace PickArr.Infrastructure.Persistence.Migrations
                     b.Navigation("TitleGenres");
 
                     b.Navigation("TitleKeywords");
+
+                    b.Navigation("Watched");
                 });
 #pragma warning restore 612, 618
         }

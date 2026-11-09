@@ -68,7 +68,11 @@ public sealed class RatingService(
         await db.SaveChangesAsync(cancellationToken);
         await eventLog.LogAsync(
             titleId,
-            normalized == RatingValues.Dislike ? RecoEventKinds.Disliked : RecoEventKinds.Liked,
+            normalized == RatingValues.Dislike
+                ? RecoEventKinds.Disliked
+                : normalized == RatingValues.Love
+                    ? RecoEventKinds.Loved
+                    : RecoEventKinds.Liked,
             cancellationToken: cancellationToken);
         rebuildScheduler.ScheduleDebouncedRebuild();
     }

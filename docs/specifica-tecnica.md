@@ -954,7 +954,8 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 
 | Metodo | Percorso | Descrizione |
 |---|---|---|
-| `PUT` / `DELETE` | `/titles/{id}/rating` | Imposta o rimuove Like/Dislike. |
+| `PUT` / `DELETE` | `/titles/{id}/rating` | Imposta o rimuove Love/Like/Dislike. |
+| `PUT` / `DELETE` | `/titles/{id}/watched` | Marca o toglie *Visto* (`isWatched`). |
 | `GET` | `/ratings` | Elenco voti (pagina). |
 | `GET` | `/ratings/export` | Export JSON. |
 | `POST` | `/ratings/import` | Import; id TMDB sconosciuti → `unknown`. |
@@ -1000,6 +1001,7 @@ src/PickArr.WebApp/src/
 │  ├─ title/       TitleDialog, SeasonTable, ArrStatusBadge, SimilarRow
 │  ├─ arr/         AddToArrDialog, DeleteFromArrDialog
 │  ├─ favorites/   FavoriteButton
+│  ├─ watched/     WatchedButton
 │  ├─ ratings/     RatingButtons, MyRatingsPage
 │  ├─ reco/        ForYouPage, TastePage, LearningProgress, ReasonChips
 │  ├─ settings/    SettingsLayout, SettingsPage, CatalogSourcesPage, RecommendationsSettingsPage
@@ -1122,7 +1124,7 @@ Se la variabile è impostata e non vuota, quel valore è quello effettivo per tu
 
 ### 12.2 Impostazioni applicative (tabella `Settings`)
 
-Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, più chiavi reco: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*`, `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (elenco completo in `raccomandazioni.md` §16).
+Chiavi con il loro default: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (come Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, più chiavi reco: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*` (incluso `reco.weights.watched=0.35`), `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (elenco completo in `raccomandazioni.md` §16).
 
 Alla modifica delle impostazioni rilevanti per le schedulazioni, `SettingsService` emette un evento che attiva `ScheduleReconciler`.
 

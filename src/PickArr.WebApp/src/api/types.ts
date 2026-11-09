@@ -55,7 +55,8 @@ export type TitleListItem = {
   ratingTmdb: number | null
   ratingImdb: number | null
   isFavorite: boolean
-  rating?: 'like' | 'dislike' | null
+  isWatched?: boolean
+  rating?: 'love' | 'like' | 'dislike' | null
   availability: AvailabilitySummary | null
   arr: ArrSummary | null
   places?: Array<{ providerName: string; countryCode: string; removedAt?: string | null }>
@@ -119,7 +120,8 @@ export type TitleDetail = {
   ratings: { tmdb: number | null; tmdbVotes: number | null; imdb: number | null }
   links: { tmdb: string | null; imdb: string | null; tvdb: string | null }
   isFavorite: boolean
-  rating?: 'like' | 'dislike' | null
+  isWatched?: boolean
+  rating?: 'love' | 'like' | 'dislike' | null
   metadataStatus: string
   availability: Array<{
     sourceId: number
@@ -186,11 +188,13 @@ export type SettingsResponse = {
     embeddingsEnabled: boolean
     excludeInLibrary: boolean
     n0: number
+    weightLove: number
     weightLike: number
     weightDislike: number
     weightFavorite: number
     weightArrAdd: number
     weightDownloaded: number
+    weightWatched: number
     mmrLambda: number
     exploreRate: number
     mlMinRatings: number

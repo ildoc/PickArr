@@ -59,7 +59,7 @@ public sealed class RecoEvalService(
             .Select(r => new { r.TitleId, r.Value })
             .ToListAsync(cancellationToken);
 
-        var likeCount = ratings.Count(r => r.Value == RatingValues.Like);
+        var likeCount = ratings.Count(r => RatingValues.IsPositive(r.Value));
         var dislikeCount = ratings.Count(r => r.Value == RatingValues.Dislike);
         var ratingCount = ratings.Count;
         var lowSample = ratingCount < RecoEvalMetrics.LowSampleWarningThreshold;
@@ -132,9 +132,7 @@ public sealed class RecoEvalService(
 
         var explicitSignals = ratings.ToDictionary(
             r => r.TitleId,
-            r => r.Value == RatingValues.Dislike
-                ? RecoSignals.DefaultWeightDislike
-                : RecoSignals.DefaultWeightLike);
+            r => RecoSignals.WeightForExplicit(r.Value, RecoSignals.DefaultWeights));
 
         var unratedPool = poolTitleIds.Where(id => !explicitSignals.ContainsKey(id)).OrderBy(id => id).ToList();
         var foldIds = ratings

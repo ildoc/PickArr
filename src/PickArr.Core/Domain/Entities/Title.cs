@@ -38,5 +38,6 @@ public sealed class Title
     public ICollection<TitleKeyword> TitleKeywords { get; set; } = new List<TitleKeyword>();
     public ICollection<TitleCredit> TitleCredits { get; set; } = new List<TitleCredit>();
     public Favorite? Favorite { get; set; }
+    public Watched? Watched { get; set; }
     public Rating? Rating { get; set; }
 }

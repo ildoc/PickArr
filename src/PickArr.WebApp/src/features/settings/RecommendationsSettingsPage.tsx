@@ -26,11 +26,13 @@ export function RecommendationsSettingsPage() {
   const [exploreRate, setExploreRate] = useState(DEFAULT_EXPLORE_RATE)
   const [excludeInLibrary, setExcludeInLibrary] = useState(true)
   const [n0, setN0] = useState(30)
+  const [weightLove, setWeightLove] = useState(1.5)
   const [weightLike, setWeightLike] = useState(1)
   const [weightDislike, setWeightDislike] = useState(-1)
   const [weightFavorite, setWeightFavorite] = useState(0.5)
   const [weightArrAdd, setWeightArrAdd] = useState(0.6)
   const [weightDownloaded, setWeightDownloaded] = useState(0.4)
+  const [weightWatched, setWeightWatched] = useState(0.35)
   const [mmrLambda, setMmrLambda] = useState(0.7)
   const [eventsEnabled, setEventsEnabled] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -45,11 +47,13 @@ export function RecommendationsSettingsPage() {
     setExploreRate(typeof reco.exploreRate === 'number' ? reco.exploreRate : DEFAULT_EXPLORE_RATE)
     setExcludeInLibrary(reco.excludeInLibrary !== false)
     setN0(reco.n0 ?? 30)
+    setWeightLove(reco.weightLove ?? 1.5)
     setWeightLike(reco.weightLike ?? 1)
     setWeightDislike(reco.weightDislike ?? -1)
     setWeightFavorite(reco.weightFavorite ?? 0.5)
     setWeightArrAdd(reco.weightArrAdd ?? 0.6)
     setWeightDownloaded(reco.weightDownloaded ?? 0.4)
+    setWeightWatched(reco.weightWatched ?? 0.35)
     setMmrLambda(reco.mmrLambda ?? 0.7)
     setEventsEnabled(reco.eventsEnabled === true)
   }, [settings.data])
@@ -66,11 +70,13 @@ export function RecommendationsSettingsPage() {
           exploreRate,
           excludeInLibrary,
           n0,
+          weightLove,
           weightLike,
           weightDislike,
           weightFavorite,
           weightArrAdd,
           weightDownloaded,
+          weightWatched,
           mmrLambda,
           eventsEnabled,
         },
@@ -192,6 +198,13 @@ export function RecommendationsSettingsPage() {
               step={0.05}
             />
             <NumberField
+              label={t('settings.recoWeightLove')}
+              value={weightLove}
+              disabled={!enabled}
+              onChange={setWeightLove}
+              step={0.1}
+            />
+            <NumberField
               label={t('settings.recoWeightLike')}
               value={weightLike}
               disabled={!enabled}
@@ -224,6 +237,13 @@ export function RecommendationsSettingsPage() {
               value={weightDownloaded}
               disabled={!enabled}
               onChange={setWeightDownloaded}
+              step={0.1}
+            />
+            <NumberField
+              label={t('settings.recoWeightWatched')}
+              value={weightWatched}
+              disabled={!enabled}
+              onChange={setWeightWatched}
               step={0.1}
             />
           </div>

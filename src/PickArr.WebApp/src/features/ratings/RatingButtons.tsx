@@ -14,10 +14,12 @@ function stopCardNavigation(e: SyntheticEvent) {
 export function RatingButtons({
   titleId,
   rating,
+  variant = 'compact',
   className = '',
 }: {
   titleId: number
   rating: UserRating
+  variant?: 'compact' | 'dialog'
   className?: string
 }) {
   const { t } = useTranslation()
@@ -33,6 +35,52 @@ export function RatingButtons({
     mutation.mutate(next)
   }
 
+  if (variant === 'dialog') {
+    return (
+      <div className={`flex flex-wrap items-center gap-2 ${className}`}>
+        <button
+          type="button"
+          aria-pressed={rating === 'love'}
+          aria-busy={mutation.isPending}
+          onClick={() => toggle('love')}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            rating === 'love'
+              ? 'bg-amber-500 text-white hover:bg-amber-400'
+              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
+          }`}
+        >
+          {t('ratings.love')}
+        </button>
+        <button
+          type="button"
+          aria-pressed={rating === 'like'}
+          aria-busy={mutation.isPending}
+          onClick={() => toggle('like')}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            rating === 'like'
+              ? 'bg-emerald-600 text-white hover:bg-emerald-500'
+              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
+          }`}
+        >
+          {t('ratings.like')}
+        </button>
+        <button
+          type="button"
+          aria-pressed={rating === 'dislike'}
+          aria-busy={mutation.isPending}
+          onClick={() => toggle('dislike')}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            rating === 'dislike'
+              ? 'bg-rose-600 text-white hover:bg-rose-500'
+              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
+          }`}
+        >
+          {t('ratings.dislike')}
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
       className={`flex items-center gap-0.5 ${className}`}
@@ -40,6 +88,19 @@ export function RatingButtons({
       onPointerDown={stopCardNavigation}
       onKeyDown={(e) => e.stopPropagation()}
     >
+      <button
+        type="button"
+        aria-pressed={rating === 'love'}
+        aria-label={t('ratings.love')}
+        title={t('ratings.love')}
+        aria-busy={mutation.isPending}
+        onClick={() => toggle('love')}
+        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
+          rating === 'love' ? 'text-amber-400' : 'text-white/50'
+        }`}
+      >
+        ★
+      </button>
       <button
         type="button"
         aria-pressed={rating === 'like'}

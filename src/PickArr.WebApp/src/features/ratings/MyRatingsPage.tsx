@@ -27,7 +27,8 @@ export function MyRatingsPage() {
   const type = params.get('type') ?? ''
   const genre = params.get('genre') ?? ''
   const tabParam = params.get('tab')
-  const tab: RatingValue = tabParam === 'dislike' ? 'dislike' : 'like'
+  const tab: RatingValue =
+    tabParam === 'dislike' ? 'dislike' : tabParam === 'love' ? 'love' : 'like'
   const sort = params.get('sort') ?? (q ? 'relevance' : 'added')
   const dirParam = params.get('dir')
   const dir: 'asc' | 'desc' =
@@ -152,6 +153,16 @@ export function MyRatingsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={tab === 'love'}
+            onClick={() => patchParams({ tab: 'love' })}
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              tab === 'love' ? 'bg-white/15 text-[var(--text)]' : 'text-[var(--muted)] hover:bg-white/5'
+            }`}
+          >
+            {t('ratings.tabLove')}
+          </button>
           <button
             type="button"
             aria-pressed={tab === 'like'}

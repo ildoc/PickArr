@@ -72,6 +72,10 @@ public sealed class RecoQueryService(
                 .Select(r => r.TitleId)
                 .ToListAsync(cancellationToken))
             .ToHashSet();
+        var watchedIds = (await db.Watched.AsNoTracking()
+                .Select(w => w.TitleId)
+                .ToListAsync(cancellationToken))
+            .ToHashSet();
 
         var excludeInLibrary = !query.IncludeInLibrary
             && await GetBoolSettingAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken);
@@ -131,6 +135,7 @@ public sealed class RecoQueryService(
         bool IsEligible(int titleId) =>
             memberIds.Contains(titleId)
             && !ratedIds.Contains(titleId)
+            && !watchedIds.Contains(titleId)
             && (libraryIds is null || !libraryIds.Contains(titleId))
             && (titleFilterIds is null || titleFilterIds.Contains(titleId));
 
@@ -224,6 +229,7 @@ public sealed class RecoQueryService(
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
             .Include(t => t.Favorite)
+            .Include(t => t.Watched)
             .Include(t => t.Rating)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => titleIds.Contains(t.Id))
@@ -608,6 +614,11 @@ public sealed class RecoQueryService(
 
         var rated = await db.Ratings.AsNoTracking().Select(r => r.TitleId).ToListAsync(cancellationToken);
         var skipSet = rated.ToHashSet();
+        foreach (var id in await db.Watched.AsNoTracking().Select(w => w.TitleId).ToListAsync(cancellationToken))
+        {
+            skipSet.Add(id);
+        }
+
         if (excludeTitleIds is { Count: > 0 })
         {
             foreach (var id in excludeTitleIds)
@@ -660,6 +671,7 @@ public sealed class RecoQueryService(
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
             .Include(t => t.Favorite)
+            .Include(t => t.Watched)
             .Include(t => t.Rating)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => picked.Contains(t.Id))
@@ -794,6 +806,7 @@ public sealed class RecoQueryService(
             title.VoteTmdb,
             RatingImdb: null,
             title.Favorite is not null,
+            title.Watched is not null,
             RatingValues.ToApiOrNull(title.Rating?.Value),
             availability,
             BuildArrSummary(title.MediaType, arrItem),
@@ -833,6 +846,11 @@ public sealed class RecoQueryService(
 
         var ratedIds = await db.Ratings.AsNoTracking().Select(r => r.TitleId).ToListAsync(cancellationToken);
         var exclude = ratedIds.ToHashSet();
+        foreach (var id in await db.Watched.AsNoTracking().Select(w => w.TitleId).ToListAsync(cancellationToken))
+        {
+            exclude.Add(id);
+        }
+
         exclude.Add(query.TitleId);
 
         var excludeInLibrary = await GetBoolSettingAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken);
@@ -914,6 +932,7 @@ public sealed class RecoQueryService(
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
             .Include(t => t.Favorite)
+            .Include(t => t.Watched)
             .Include(t => t.Rating)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => titleIds.Contains(t.Id))

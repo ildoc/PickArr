@@ -33,6 +33,7 @@ public sealed record RecommendationItemDto(
     double? RatingTmdb,
     double? RatingImdb,
     bool IsFavorite,
+    bool IsWatched,
     string? Rating,
     AvailabilitySummaryDto? Availability,
     ArrSummaryDto? Arr,

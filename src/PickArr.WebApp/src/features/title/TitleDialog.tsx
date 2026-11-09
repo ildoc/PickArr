@@ -7,10 +7,12 @@ import { fetchTitle } from '../../api/catalog'
 import { categoryLabelKey, formatDate, formatRuntime, formatYear } from '../../lib/format'
 import { AddToArrDialog } from '../arr/AddToArrDialog'
 import { DeleteFromArrDialog } from '../arr/DeleteFromArrDialog'
+import { addWatched, removeWatched } from '../../api/watched'
 import { FavoriteButton } from '../favorites/FavoriteButton'
 import { RatingButtons } from '../ratings/RatingButtons'
 import { useRatingMutation } from '../ratings/useRatingMutation'
 import { SimilarRow } from '../reco/SimilarRow'
+import { WatchedButton } from '../watched/WatchedButton'
 import { ArrStatusBadge } from './ArrStatusBadge'
 import { SeasonTable } from './SeasonTable'
 import { SeriesSeasons } from './SeriesSeasons'
@@ -42,6 +44,20 @@ export function TitleDialog({
     await queryClient.invalidateQueries({ queryKey: ['title', titleId] })
     await queryClient.invalidateQueries({ queryKey: ['titles'] })
   }
+
+  const watchedMutation = useMutation({
+    mutationFn: async (next: boolean) => {
+      if (next) await addWatched(titleId)
+      else await removeWatched(titleId)
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        invalidateTitle(),
+        queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
+        queryClient.invalidateQueries({ queryKey: ['reco-status'] }),
+      ])
+    },
+  })
 
   const refresh = useMutation({
     mutationFn: () => refreshTitleArr(titleId),
@@ -82,10 +98,17 @@ export function TitleDialog({
         return
       }
       const key = event.key.toLowerCase()
-      if (key !== 'l' && key !== 'd') return
+      if (key !== 'l' && key !== 'd' && key !== 'w' && key !== 'o') return
       event.preventDefault()
+      if (key === 'w') {
+        watchedMutation.mutate(!(detail.data.isWatched ?? false))
+        return
+      }
+
       const current = detail.data.rating ?? null
-      if (key === 'l') {
+      if (key === 'o') {
+        ratingMutation.mutate(current === 'love' ? null : 'love')
+      } else if (key === 'l') {
         ratingMutation.mutate(current === 'like' ? null : 'like')
       } else {
         ratingMutation.mutate(current === 'dislike' ? null : 'dislike')
@@ -93,7 +116,7 @@ export function TitleDialog({
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [detail.data, ratingMutation])
+  }, [detail.data, ratingMutation, watchedMutation])
 
   const close = () => dialogRef.current?.close()
 
@@ -163,10 +186,16 @@ export function TitleDialog({
                       </p>
                     )}
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <RatingButtons
                     titleId={detail.data.id}
                     rating={detail.data.rating ?? null}
+                    variant="dialog"
+                  />
+                  <WatchedButton
+                    titleId={detail.data.id}
+                    isWatched={detail.data.isWatched ?? false}
+                    variant="dialog"
                   />
                   <FavoriteButton
                     titleId={detail.data.id}

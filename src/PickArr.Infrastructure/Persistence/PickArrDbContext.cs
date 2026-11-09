@@ -22,6 +22,7 @@ public sealed class PickArrDbContext(DbContextOptions<PickArrDbContext> options)
     public DbSet<Availability> Availabilities => Set<Availability>();
     public DbSet<AvailabilityEvent> AvailabilityEvents => Set<AvailabilityEvent>();
     public DbSet<Favorite> Favorites => Set<Favorite>();
+    public DbSet<Watched> Watched => Set<Watched>();
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<RatingEvent> RatingEvents => Set<RatingEvent>();
     public DbSet<Recommendation> Recommendations => Set<Recommendation>();

@@ -115,11 +115,13 @@ public sealed class RecoBuildService(
 
         var useImplicit = await GetBoolSettingAsync(SettingsKeys.RecoUseImplicit, true, cancellationToken);
         var weights = new RecoSignalWeights(
+            await GetDoubleSettingAsync(SettingsKeys.RecoWeightLove, RecoSignals.DefaultWeightLove, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightLike, RecoSignals.DefaultWeightLike, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightDislike, RecoSignals.DefaultWeightDislike, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightFavorite, RecoSignals.DefaultWeightFavorite, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightArrAdd, RecoSignals.DefaultWeightArrAdd, cancellationToken),
-            await GetDoubleSettingAsync(SettingsKeys.RecoWeightDownloaded, RecoSignals.DefaultWeightDownloaded, cancellationToken));
+            await GetDoubleSettingAsync(SettingsKeys.RecoWeightDownloaded, RecoSignals.DefaultWeightDownloaded, cancellationToken),
+            await GetDoubleSettingAsync(SettingsKeys.RecoWeightWatched, RecoSignals.DefaultWeightWatched, cancellationToken));
         var n0 = await GetDoubleSettingAsync(SettingsKeys.RecoN0, RecoLearning.DefaultN0, cancellationToken);
 
         // Signals are global (all titles), not limited to the current pool.
@@ -199,7 +201,7 @@ public sealed class RecoBuildService(
                 var priorT = priorById.TryGetValue(row.TitleId, out var ps) ? ps.Prior : 0.5;
                 examples.Add(new RecoLevel3Example(
                     row.TitleId,
-                    row.Value == RatingValues.Like,
+                    RatingValues.IsPositive(row.Value),
                     RecoLevel3.BuildFeatures(
                         titleVectors.GetValueOrDefault(row.TitleId),
                         sparse,
@@ -347,6 +349,11 @@ public sealed class RecoBuildService(
             .ToListAsync(cancellationToken);
         var favoriteSet = favorites.ToHashSet();
 
+        var watched = await db.Watched.AsNoTracking()
+            .Select(w => w.TitleId)
+            .ToListAsync(cancellationToken);
+        var watchedSet = watched.ToHashSet();
+
         var arrAdds = await db.ArrAuditLogs.AsNoTracking()
             .Where(a => a.TitleId != null
                         && a.Action == ArrAuditActions.Add
@@ -365,6 +372,7 @@ public sealed class RecoBuildService(
 
         var titleIds = ratings.Select(r => r.TitleId)
             .Concat(favoriteSet)
+            .Concat(watchedSet)
             .Concat(arrAddSet)
             .Concat(downloadedSet)
             .Distinct()
@@ -376,7 +384,8 @@ public sealed class RecoBuildService(
             ratingByTitle.GetValueOrDefault(id),
             favoriteSet.Contains(id),
             arrAddSet.Contains(id),
-            downloadedSet.Contains(id))).ToList();
+            downloadedSet.Contains(id),
+            watchedSet.Contains(id))).ToList();
     }
 
     private async Task<IReadOnlyDictionary<int, string>> LoadTitleNamesAsync(

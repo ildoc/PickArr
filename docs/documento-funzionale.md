@@ -306,7 +306,7 @@ Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi pr
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RT | L'utente può mettere *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; il voto è globale sul `Title`. Mutazione ottimistica in UI. | M |
+| FR-REC-RT | L'utente può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; può marcare *Visto* dalla scheda. Voto e visto sono globali sul `Title` e indipendenti. Mutazione ottimistica in UI. | M |
 | FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
 | FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
 | FR-REC-SIM | Riga *Simili* in scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |

@@ -12,7 +12,7 @@ export function TastePage() {
   const queryClient = useQueryClient()
   const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
   const sourceId = loadPreferredSourceId()
-  const [votes, setVotes] = useState<Record<number, 'like' | 'dislike' | null>>({})
+  const [votes, setVotes] = useState<Record<number, 'love' | 'like' | 'dislike' | null>>({})
   const [excludeIds, setExcludeIds] = useState<number[]>([])
 
   const onboarding = useQuery({
@@ -80,7 +80,16 @@ export function TastePage() {
                   <div className="aspect-[2/3] w-full rounded-lg bg-white/5" />
                 )}
                 <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-1">
+                  <button
+                    type="button"
+                    className={`rounded px-2 py-1 text-xs ${vote === 'love' ? 'bg-amber-500 text-white' : 'bg-white/10'}`}
+                    onClick={() =>
+                      setVotes((v) => ({ ...v, [item.id]: vote === 'love' ? null : 'love' }))
+                    }
+                  >
+                    {t('ratings.love')}
+                  </button>
                   <button
                     type="button"
                     className={`rounded px-2 py-1 text-xs ${vote === 'like' ? 'bg-emerald-600 text-white' : 'bg-white/10'}`}

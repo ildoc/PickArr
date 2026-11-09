@@ -21,7 +21,7 @@ public static class TitlesEndpoints
         {
             if (body?.Value is null || !RatingValues.IsValid(body.Value))
             {
-                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be like or dislike." });
+                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, or dislike." });
             }
 
             try
@@ -53,6 +53,31 @@ public static class TitlesEndpoints
             {
                 return Results.Json(new { code = "RECO_DISABLED", detail = "Recommendations feature is disabled." }, statusCode: StatusCodes.Status409Conflict);
             }
+        });
+
+        endpoints.MapPut("/api/v1/titles/{id:int}/watched", async (
+            int id,
+            IWatchedService watched,
+            CancellationToken ct) =>
+        {
+            try
+            {
+                await watched.AddAsync(id, ct);
+                return Results.NoContent();
+            }
+            catch (KeyNotFoundException)
+            {
+                return Results.NotFound();
+            }
+        });
+
+        endpoints.MapDelete("/api/v1/titles/{id:int}/watched", async (
+            int id,
+            IWatchedService watched,
+            CancellationToken ct) =>
+        {
+            await watched.RemoveAsync(id, ct);
+            return Results.NoContent();
         });
 
         endpoints.MapGet("/api/v1/titles/{id:int}", async (

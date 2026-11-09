@@ -20,7 +20,7 @@ vi.mock('../../api/settings', () => ({
 import { clearRating, setRating } from '../../api/ratings'
 import { fetchSettings } from '../../api/settings'
 
-function renderButtons(rating: 'like' | 'dislike' | null) {
+function renderButtons(rating: 'love' | 'like' | 'dislike' | null) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -39,6 +39,13 @@ describe('RatingButtons', () => {
     vi.mocked(fetchSettings).mockResolvedValue({
       reco: { enabled: true },
     } as Awaited<ReturnType<typeof fetchSettings>>)
+  })
+
+  it('sets love when inactive', async () => {
+    const user = userEvent.setup()
+    renderButtons(null)
+    await user.click(await screen.findByRole('button', { name: 'Love' }))
+    expect(setRating).toHaveBeenCalledWith(7, 'love')
   })
 
   it('sets like when inactive', async () => {

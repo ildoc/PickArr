@@ -29,11 +29,13 @@ public static class SettingsKeys
     public const string UiLanguage = "ui.language";
     public const string RecoEnabled = "reco.enabled";
     public const string RecoUseImplicit = "reco.useImplicit";
+    public const string RecoWeightLove = "reco.weights.love";
     public const string RecoWeightLike = "reco.weights.like";
     public const string RecoWeightDislike = "reco.weights.dislike";
     public const string RecoWeightFavorite = "reco.weights.favorite";
     public const string RecoWeightArrAdd = "reco.weights.arrAdd";
     public const string RecoWeightDownloaded = "reco.weights.downloaded";
+    public const string RecoWeightWatched = "reco.weights.watched";
     public const string RecoN0 = "reco.n0";
     public const string RecoExcludeInLibrary = "reco.excludeInLibrary";
     public const string RecoEmbeddingsEnabled = "reco.embeddings.enabled";

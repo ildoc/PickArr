@@ -9,6 +9,7 @@ import { fetchTitle } from '../../api/catalog'
 import { setRating } from '../../api/ratings'
 import { fetchSettings } from '../../api/settings'
 import type { TitleDetail } from '../../api/types'
+import { addWatched } from '../../api/watched'
 import i18n from '../../i18n'
 import { TitleDialog } from './TitleDialog'
 
@@ -19,6 +20,11 @@ vi.mock('../../api/catalog', () => ({
 vi.mock('../../api/ratings', () => ({
   setRating: vi.fn(async () => undefined),
   clearRating: vi.fn(async () => undefined),
+}))
+
+vi.mock('../../api/watched', () => ({
+  addWatched: vi.fn(async () => undefined),
+  removeWatched: vi.fn(async () => undefined),
 }))
 
 vi.mock('../../api/settings', () => ({
@@ -76,6 +82,7 @@ describe('TitleDialog ratings', () => {
       ratings: { tmdb: null, tmdbVotes: null, imdb: null },
       links: { tmdb: null, imdb: null, tvdb: null },
       isFavorite: false,
+      isWatched: false,
       rating: null,
       metadataStatus: 'ready',
       availability: [],
@@ -106,5 +113,15 @@ describe('TitleDialog ratings', () => {
     await user.click(screen.getByRole('button', { name: 'Like' }))
 
     await waitFor(() => expect(setRating).toHaveBeenCalledWith(42, 'like'))
+  })
+
+  it('lets the user mark a title as watched from the detail dialog', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    expect(await screen.findByRole('button', { name: 'Mark as watched' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Mark as watched' }))
+
+    await waitFor(() => expect(addWatched).toHaveBeenCalledWith(42))
   })
 })

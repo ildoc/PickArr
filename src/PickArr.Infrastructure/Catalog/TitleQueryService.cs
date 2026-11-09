@@ -232,6 +232,7 @@ public sealed class TitleQueryService(
         var titles = await db.Titles.AsNoTracking()
             .Where(t => pageIds.Contains(t.Id))
             .Include(t => t.Favorite)
+            .Include(t => t.Watched)
             .Include(t => t.Rating)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
@@ -381,6 +382,7 @@ public sealed class TitleQueryService(
     {
         var title = await db.Titles.AsNoTracking()
             .Include(t => t.Favorite)
+            .Include(t => t.Watched)
             .Include(t => t.Rating)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
@@ -434,6 +436,7 @@ public sealed class TitleQueryService(
                 string.IsNullOrWhiteSpace(title.ImdbId) ? null : $"https://www.imdb.com/title/{title.ImdbId}/",
                 title.TvdbId is { } tvdb ? $"https://thetvdb.com/?tab=series&id={tvdb}" : null),
             title.Favorite is not null,
+            title.Watched is not null,
             RatingValues.ToApiOrNull(title.Rating?.Value),
             ToApiMetadataStatus(title.MetadataStatus),
             title.Availabilities
@@ -538,6 +541,7 @@ public sealed class TitleQueryService(
             title.VoteTmdb,
             RatingImdb: null,
             title.Favorite is not null,
+            title.Watched is not null,
             RatingValues.ToApiOrNull(title.Rating?.Value),
             availabilityDto,
             BuildArrSummary(title.MediaType, arrItem),

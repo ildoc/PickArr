@@ -29,7 +29,7 @@ public static class RatingsEndpoints
         {
             if (string.IsNullOrWhiteSpace(value) || !RatingValues.IsValid(value))
             {
-                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be like or dislike." });
+                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, or dislike." });
             }
 
             if (await IsRecoDisabledAsync(settings, ct))

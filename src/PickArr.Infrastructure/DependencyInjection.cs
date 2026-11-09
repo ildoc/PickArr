@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<ITitleQueryService, TitleQueryService>();
         services.AddScoped<CatalogConfigurationService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IWatchedService, WatchedService>();
         services.AddScoped<IRatingService, RatingService>();
         services.AddScoped<IRecoBuildService, RecoBuildService>();
         services.AddScoped<IRecoQueryService, RecoQueryService>();

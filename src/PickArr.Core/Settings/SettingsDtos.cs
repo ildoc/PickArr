@@ -64,11 +64,13 @@ public sealed class RecoSettingsDto
     public required bool EmbeddingsEnabled { get; init; }
     public required bool ExcludeInLibrary { get; init; }
     public required int N0 { get; init; }
+    public required double WeightLove { get; init; }
     public required double WeightLike { get; init; }
     public required double WeightDislike { get; init; }
     public required double WeightFavorite { get; init; }
     public required double WeightArrAdd { get; init; }
     public required double WeightDownloaded { get; init; }
+    public required double WeightWatched { get; init; }
     public required double MmrLambda { get; init; }
     public required double ExploreRate { get; init; }
     public required int MlMinRatings { get; init; }
@@ -93,11 +95,13 @@ public sealed class RecoUpdateDto
     public bool? EmbeddingsEnabled { get; init; }
     public bool? ExcludeInLibrary { get; init; }
     public int? N0 { get; init; }
+    public double? WeightLove { get; init; }
     public double? WeightLike { get; init; }
     public double? WeightDislike { get; init; }
     public double? WeightFavorite { get; init; }
     public double? WeightArrAdd { get; init; }
     public double? WeightDownloaded { get; init; }
+    public double? WeightWatched { get; init; }
     public double? MmrLambda { get; init; }
     public double? ExploreRate { get; init; }
     public int? MlMinRatings { get; init; }
