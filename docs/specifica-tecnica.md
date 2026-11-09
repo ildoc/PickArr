@@ -1016,9 +1016,9 @@ src/PickArr.WebApp/src/
 | Percorso | Contenuto |
 |---|---|
 | `/` | Redirect a `/catalog` |
-| `/catalog` | Griglia della sorgente selezionata; filtri (`q`, `view=all\|new\|leaving\|removed`, `type`, `genre`, …). `view=favorites` reindirizza a `/list` |
-| `/list` | Preferiti globali (cross-provider / cross-country) |
-| `/for-you` | Raccomandazioni (*Per te*) |
+| `/catalog` | Griglia della sorgente selezionata; filtri (`q`, `view=all\|new\|leaving\|removed`, `type`, `genre`, …). Con reco attive e `view=all` senza `q`, riga *For you* (scope `source`, max 25). `view=favorites` reindirizza a `/list` |
+| `/list` | Preferiti globali (cross-provider / cross-country); segnale implicito temporaneo per le reco |
+| `/for-you` | Raccomandazioni sull’unione delle sorgenti abilitate (scope `enabled`) |
 | `/taste` | Onboarding gusto |
 | `/ratings` | Le mie valutazioni + export/import |
 | `/settings` | Impostazioni generali |
@@ -1026,7 +1026,7 @@ src/PickArr.WebApp/src/
 | `/settings/recommendations` | Stato/azioni raccomandazioni |
 | `/settings/jobs` | Job e crediti (`/admin/jobs` reindirizza qui) |
 
-La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usata da catalogo e *Per te*.
+La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usata dal catalogo (riga *For you* inclusa) e da *Per te* per preferenza/scheda.
 
 ### 9.3 Gestione dello stato
 
@@ -1116,9 +1116,9 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 | `PickArr__Models__DownloadBaseUrl` | (repo modello) | Mirror download. |
 | `PickArr__Reco__MaxThreads` | `2` | Tetto thread ONNX (vince se più basso del setting). |
 
-Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con `PickArr__Settings__` e la chiave in cui ogni `.` è sostituito da `__`. Esempi: `PickArr__Settings__watchmode__apiKey`, `PickArr__Settings__watchmode__quota`, `PickArr__Settings__reco__enabled`, `PickArr__Settings__reco__weights__like`, `PickArr__Settings__sonarr__url`. I default di Sonarr e Radarr si passano annidati (`PickArr__Settings__sonarr__defaults__qualityProfileId`, `PickArr__Settings__sonarr__defaults__rootFolderPath`) oppure come oggetto JSON in `PickArr__Settings__sonarr__defaults`.
+Le chiavi di §12.2, tranne lo stato operativo `catalog.initialImportStarted`, si dichiarano con nomi flat `SCREAMING_SNAKE` derivati dalla chiave (`.` e camelCase → `_`). Esempi: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_TOKEN`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. Resta accettata la forma legacy `PickArr__Settings__` con ogni `.` sostituito da `__`. Se entrambe sono impostate, vince il nome flat. I default di Sonarr e Radarr si passano come `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` oppure come JSON in `SONARR_DEFAULTS` (e analoghi per Radarr).
 
-Se la variabile è impostata e non vuota, quel valore è quello effettivo per tutta l'esecuzione: vince sul valore salvato e un aggiornamento dalla UI non lo sostituisce. I segreti dichiarati così non vengono scritti nel database e le API continuano a esporre solo `isSet`. Un numero o un booleano non interpretabile, o una chiave sconosciuta, impedisce l'avvio. I booleani sono `true` o `false`; i numeri usano il punto decimale. Senza la variabile resta il valore nel database (o il default).
+Se la variabile è impostata e non vuota, quel valore è quello effettivo per tutta l'esecuzione: vince sul valore salvato e un aggiornamento dalla UI non lo sostituisce. I segreti dichiarati così non vengono scritti nel database e le API continuano a esporre solo `isSet`. Un numero o un booleano non interpretabile, o una chiave nested sconosciuta, impedisce l'avvio. I booleani sono `true` o `false`; i numeri usano il punto decimale. Senza la variabile resta il valore nel database (o il default).
 
 ### 12.2 Impostazioni applicative (tabella `Settings`)
 
@@ -1177,6 +1177,7 @@ services:
     environment:
       - TZ=Europe/Rome
       - PickArr__BaseUrl=http://PickArr:8080   # usato per generare gli URL dei webhook
+      # WATCHMODE_API_KEY / TMDB_TOKEN / SONARR_URL / … (default DataPath=/config, URLS=:8080)
     volumes:
       - ./config:/config
 ```

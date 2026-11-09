@@ -40,6 +40,7 @@ public sealed class CatalogBootstrap(
                 throw new ArgumentException("Save a Watchmode API key before running the initial catalog import.");
             }
 
+            logger.LogInformation("Initial catalog import skipped: Watchmode API key is not set");
             return null;
         }
 
@@ -50,6 +51,9 @@ public sealed class CatalogBootstrap(
 
         await EnableDefaultCatalogsAsync(cancellationToken);
         await reconciler.ReconcileAsync(cancellationToken);
+        // Queue country imports here so a Watchmode key declared only via configuration
+        // does not depend on Hangfire picking up CatalogBootstrapJob first.
+        await ImportAsync(cancellationToken);
         var jobId = backgroundJobs.Enqueue<CatalogBootstrapJob>(j => j.ExecuteAsync(CancellationToken.None));
         if (!force)
         {

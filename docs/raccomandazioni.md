@@ -71,7 +71,7 @@ Aggiungere a PickArr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 - Consigli di titoli che non hanno nessuna riga `Availability` su una sorgente abilitata. Non si importano candidati da TMDB `recommendations`, `similar` o `discover` solo per consigliarli.
 - Scope «tutto TMDB», etichetta *Fuori catalogo*, watch providers TMDB/JustWatch.
 - Stato *Nascondi*. I voti sono *Mi piace* e *Non mi piace*. Togliere il voto riporta il titolo a «non valutato».
-- Ordinamento *Per te* dentro la griglia del catalogo. I consigli stanno nella pagina dedicata.
+- Ordinamento *Per te* mescolato nella griglia del catalogo. I consigli per **una** sorgente stanno in una **riga dedicata** su `/catalog` (al più 25 titoli). La pagina `/for-you` copre l’unione delle sorgenti abilitate.
 - Raccomandazioni collaborative, profili multipli, sync di cronologia esterna (Trakt, Plex, Jellyfin).
 - Fine-tuning di modelli di linguaggio. Il modello di embedding, se usato, è in sola inferenza.
 - Notifiche push.
@@ -83,7 +83,7 @@ Aggiungere a PickArr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 | **Titolo** | Riga `Titles`. Una sola per identità (BR-01): id Watchmode e, quando nota, coppia (tipo TMDB, id TMDB). I provider non duplicano il titolo: aggiungono una `Availability`. |
 | **Sorgente** | `CatalogSource`: un provider e un paese (Netflix IT, Netflix US, Prime Video IT sono sorgenti diverse). |
 | **Voto** | *Mi piace* o *Non mi piace* sul `Title.Id`. Al più uno. Vale per ogni sorgente in cui il titolo compare. |
-| **Segnale implicito** | Interesse senza voto: preferito, aggiunta a Sonarr/Radarr, download completato. Letto dalle tabelle già esistenti. |
+| **Segnale implicito** | Interesse senza voto: *La mia lista* (interesse temporaneo / da guardare), aggiunta a Sonarr/Radarr, download completato. Letto dalle tabelle già esistenti. Non sostituisce un voto esplicito. |
 | **Profilo** | Gusti dell’utente, costruiti da voti e segnali di qualunque sorgente. |
 | **Pool** | Titoli tra cui si calcola il punteggio: i `Title` che hanno almeno una `Availability` su una sorgente abilitata. |
 | **Scope** | Filtro applicato ai punteggi già calcolati. `source`: la sorgente selezionata. `enabled`: tutte le sorgenti abilitate. |
@@ -128,7 +128,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-SG-01 | Segnali positivi letti dai dati già presenti: riga in `Favorites`; `ArrAuditLog` con azione `Add` ed esito `Success`; `ArrLibraryItem.State = Downloaded`. I pesi sono in BR-REC-02. | M |
+| FR-REC-SG-01 | Segnali positivi letti dai dati già presenti: riga in `Favorites` (interesse temporaneo: «potrebbe interessarmi / da guardare», non un gusto permanente); `ArrAuditLog` con azione `Add` ed esito `Success`; `ArrLibraryItem.State = Downloaded`. I pesi sono in BR-REC-02. | M |
 | FR-REC-SG-02 | Se il titolo ha un voto esplicito, il profilo usa solo quel voto. | M |
 | FR-REC-SG-03 | L’utente può disattivare i segnali impliciti nelle impostazioni. | S |
 | FR-REC-SG-04 | L’eliminazione da Sonarr/Radarr (`ArrAuditLog` azione `Delete`) non è un segnale negativo. Il segnale «aggiunto» resta. | M |
@@ -137,8 +137,8 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RC-01 | Pagina **Per te**, titoli ordinati per punteggio, scorrimento infinito. | M |
-| FR-REC-RC-02 | Scope **Questa sorgente** (default): titoli con una `Availability` sulla sorgente selezionata nel catalogo. Scope **Tutte le sorgenti abilitate**: titoli con una `Availability` su almeno una sorgente con provider e sorgente accesi. | M |
+| FR-REC-RC-01 | Pagina **Per te** (`/for-you`): titoli ordinati per punteggio sull’unione delle sorgenti abilitate, scorrimento infinito. | M |
+| FR-REC-RC-02 | Sul catalogo della sorgente selezionata (`/catalog`), una **riga dedicata** mostra fino a **25** consigli con scope `source`. La pagina `/for-you` usa lo scope `enabled` (titoli con `Availability` su almeno una sorgente abilitata). | M |
 | FR-REC-RC-03 | Nello scope *Tutte le sorgenti abilitate* un titolo compare una volta, con `places` (nome provider e paese) per ogni sorgente abilitata in cui ha una `Availability`. | M |
 | FR-REC-RC-04 | Un titolo senza `Availability` su sorgenti abilitate non è mai restituito. | M |
 | FR-REC-RC-05 | Senza voti né segnali, *Per te* mostra il prior (livello 0) e lo dichiara, con l’indicatore di apprendimento. | M |
@@ -214,7 +214,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 | ID | Regola |
 |---|---|
 | BR-REC-01 | **Un voto per titolo.** Valori `Like` o `Dislike`. Una nuova scelta sostituisce la precedente. La rimozione cancella la riga. Ogni variazione è una riga in `RatingEvents`. |
-| BR-REC-02 | **Pesi.** *Mi piace* **+1,0**. *Non mi piace* **−1,0**. *Preferito* **+0,5**. *Aggiunto a Sonarr/Radarr* **+0,6**. *Scaricato* **+0,4**. I segnali impliciti si sommano e si limitano a **[0, +1]**. Con un voto esplicito vale solo quello. Pesi configurabili. |
+| BR-REC-02 | **Pesi.** *Mi piace* **+1,0**. *Non mi piace* **−1,0**. *La mia lista* **+0,5** (segnale temporaneo di interesse / watch-later: sparisce dal profilo quando si toglie il preferito o si assegna un voto). *Aggiunto a Sonarr/Radarr* **+0,6**. *Scaricato* **+0,4**. I segnali impliciti si sommano e si limitano a **[0, +1]**. Con un voto esplicito vale solo quello. Pesi configurabili. |
 | BR-REC-03 | **Decadimento.** Opzionale, emivita in giorni. Default: nessuno. |
 | BR-REC-04 | **Numerosità efficace.** `N_eff = Σ \|s_i\|` sui titoli con segnale. Governa il peso del profilo rispetto al prior (§12.2). |
 | BR-REC-05 | **Stadi.** `cold` se `N_eff < 5`; `warming` se `5 ≤ N_eff < N0` (default 30); `personalized` se `N_eff ≥ N0`. Informativi in UI. Il peso cresce in modo continuo. |
@@ -240,9 +240,10 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 - CA1: esiste una sola riga di voto per quel `Title`.
 - CA2: toglierlo da una sorgente lo toglie anche dall’altra.
 
-**US-REC-03 — Consigli nel catalogo che sto guardando.** Mentre consulto Netflix Italia, *Per te* contiene titoli che hanno una disponibilità su Netflix Italia.
-- CA1: un titolo solo su Prime Video non compare in quello scope.
+**US-REC-03 — Consigli nel catalogo che sto guardando.** Mentre consulto Netflix Italia, la riga *For you* sul catalogo contiene titoli con disponibilità su Netflix Italia (al più 25).
+- CA1: un titolo solo su Prime Video non compare in quella riga.
 - CA2: un titolo rimosso di recente da Netflix Italia può ancora comparire.
+- CA3: l’unione delle sorgenti abilitate resta su `/for-you`.
 
 **US-REC-04 — Consigli sul primo giorno.** Senza voti vedo titoli apprezzati e popolari del catalogo, con l’avviso che non è ancora personale.
 - CA1: l’indicatore è in stato `cold`.

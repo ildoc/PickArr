@@ -4,6 +4,7 @@ using Hangfire.InMemory;
 using Hangfire.States;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
@@ -13,6 +14,7 @@ using PickArr.Core.Domain.Entities;
 using PickArr.Core.Settings;
 using PickArr.Infrastructure.Jobs;
 using PickArr.Infrastructure.Persistence;
+using PickArr.Infrastructure.Settings;
 using Shouldly;
 
 namespace PickArr.Infrastructure.Tests;
@@ -52,7 +54,9 @@ public sealed class CatalogBootstrapTests
         await fixture.Db.SaveChangesAsync();
         var third = await fixture.Bootstrap.StartAsync(force: false);
         third.ShouldBeNull();
-        fixture.Jobs.Received(2).Create(Arg.Any<Job>(), Arg.Any<IState>());
+        fixture.Jobs.Received(2).Create(
+            Arg.Is<Job>(job => job.Type == typeof(CatalogBootstrapJob)),
+            Arg.Any<IState>());
     }
 
     [Fact]
@@ -102,6 +106,34 @@ public sealed class CatalogBootstrapTests
         jobId.ShouldBeNull();
         (await fixture.Db.CatalogSources.CountAsync(s => s.IsEnabled)).ShouldBe(0);
         fixture.Jobs.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
+    }
+
+    [Fact]
+    public async Task StartAsync_sees_a_watchmode_key_declared_by_the_environment_store()
+    {
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: false);
+        var source = CreateEnvSource(new Dictionary<string, string?>
+        {
+            ["PickArr:Settings:watchmode:apiKey"] = "from-env",
+        });
+        var bootstrap = new CatalogBootstrap(
+            fixture.Db,
+            new EnvironmentSettingsStore(fixture.Settings, source),
+            fixture.Jobs,
+            fixture.Reconciler,
+            Options.Create(new CatalogBootstrapOptions { AutoInitialImport = true }),
+            NullLogger<CatalogBootstrap>.Instance);
+
+        var jobId = await bootstrap.StartAsync(force: false);
+
+        jobId.ShouldNotBeNull();
+        (await fixture.Db.CatalogSources.CountAsync(s => s.IsEnabled)).ShouldBe(2);
+        fixture.Jobs.Received().Create(
+            Arg.Is<Job>(job => job.Type == typeof(CatalogBootstrapJob)),
+            Arg.Any<IState>());
+        fixture.Jobs.Received().Create(
+            Arg.Is<Job>(job => job.Type == typeof(CatalogIncrementalSyncJob)),
+            Arg.Any<IState>());
     }
 
     [Fact]
@@ -171,12 +203,20 @@ public sealed class CatalogBootstrapTests
             Arg.Any<IState>());
     }
 
+    private static EnvironmentSettingSource CreateEnvSource(Dictionary<string, string?> values)
+    {
+        var configuration = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        return new EnvironmentSettingSource(configuration, NullLogger<EnvironmentSettingSource>.Instance);
+    }
+
     private sealed class Fixture : IAsyncDisposable
     {
         private readonly SqliteConnection _connection;
         public required PickArrDbContext Db { get; init; }
         public required CatalogBootstrap Bootstrap { get; init; }
         public required IBackgroundJobClient Jobs { get; init; }
+        public required MemorySettings Settings { get; init; }
+        public required ScheduleReconciler Reconciler { get; init; }
 
         private Fixture(SqliteConnection connection) => _connection = connection;
 
@@ -226,11 +266,16 @@ public sealed class CatalogBootstrapTests
 
             var jobs = Substitute.For<IBackgroundJobClient>();
             jobs.Create(Arg.Any<Job>(), Arg.Any<IState>()).Returns("hf-1");
+            var reconciler = new ScheduleReconciler(
+                db,
+                new RecurringJobManager(storage),
+                settings,
+                NullLogger<ScheduleReconciler>.Instance);
             var bootstrap = new CatalogBootstrap(
                 db,
                 settings,
                 jobs,
-                new ScheduleReconciler(db, new RecurringJobManager(storage), settings, NullLogger<ScheduleReconciler>.Instance),
+                reconciler,
                 Options.Create(new CatalogBootstrapOptions { AutoInitialImport = auto }),
                 NullLogger<CatalogBootstrap>.Instance);
 
@@ -239,6 +284,8 @@ public sealed class CatalogBootstrapTests
                 Db = db,
                 Bootstrap = bootstrap,
                 Jobs = jobs,
+                Settings = settings,
+                Reconciler = reconciler,
             };
         }
 
@@ -272,3 +319,4 @@ public sealed class CatalogBootstrapTests
         }
     }
 }
+

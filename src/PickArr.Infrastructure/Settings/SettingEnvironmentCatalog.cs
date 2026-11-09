@@ -1,3 +1,4 @@
+using System.Text;
 using PickArr.Core.Settings;
 
 namespace PickArr.Infrastructure.Settings;
@@ -13,7 +14,8 @@ internal enum SettingValueKind
 }
 
 /// <summary>
-/// Settings that can be declared with <c>PickArr__Settings__…</c>.
+/// Settings that can be declared with flat names (<c>WATCHMODE_API_KEY</c>, <c>SONARR_URL</c>)
+/// or the legacy <c>PickArr__Settings__…</c> form.
 /// <c>catalog.initialImportStarted</c> is runtime state and is not included.
 /// </summary>
 internal static class SettingEnvironmentCatalog
@@ -69,6 +71,9 @@ internal static class SettingEnvironmentCatalog
 
     public static IEnumerable<string> CanonicalKeys => Keys.Keys;
 
+    public static IEnumerable<(string Canonical, SettingValueKind Kind)> Entries =>
+        Keys.Select(pair => (pair.Key, pair.Value));
+
     public static bool TryGet(string key, out string canonical, out SettingValueKind kind)
     {
         foreach (var pair in Keys)
@@ -115,5 +120,45 @@ internal static class SettingEnvironmentCatalog
         defaultsKey = "";
         field = "";
         return false;
+    }
+
+    /// <summary>
+    /// <c>watchmode.apiKey</c> → <c>WATCHMODE_API_KEY</c>;
+    /// <c>sonarr.defaults.qualityProfileId</c> → <c>SONARR_DEFAULTS_QUALITY_PROFILE_ID</c>.
+    /// </summary>
+    public static string ToEnvironmentVariableName(string dottedKey)
+    {
+        var parts = dottedKey.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var builder = new StringBuilder();
+        foreach (var part in parts)
+        {
+            if (builder.Length > 0)
+            {
+                builder.Append('_');
+            }
+
+            AppendCamelAsSnake(builder, part);
+        }
+
+        return builder.ToString();
+    }
+
+    private static void AppendCamelAsSnake(StringBuilder builder, string part)
+    {
+        for (var i = 0; i < part.Length; i++)
+        {
+            var c = part[i];
+            if (i > 0 && char.IsUpper(c) && !char.IsUpper(part[i - 1]))
+            {
+                builder.Append('_');
+            }
+            else if (i > 0 && char.IsUpper(c) && char.IsUpper(part[i - 1])
+                     && i + 1 < part.Length && char.IsLower(part[i + 1]))
+            {
+                builder.Append('_');
+            }
+
+            builder.Append(char.ToUpperInvariant(c));
+        }
     }
 }

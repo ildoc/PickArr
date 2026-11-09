@@ -18,8 +18,8 @@ public static class RecoSignals
 
     /// <summary>
     /// Builds s_i for every title that has an explicit rating and/or (when enabled) implicit signals.
-    /// Explicit rating replaces implicits. Arr Delete does not contribute and does not cancel Add.
-    /// Implicit sum is clamped to [0, +1].
+    /// Explicit rating replaces implicits. Favorites are a temporary “watch later” signal (BR-REC-02).
+    /// Arr Delete does not contribute and does not cancel Add. Implicit sum is clamped to [0, +1].
     /// </summary>
     public static RecoSignalResult Compute(
         IReadOnlyList<RecoSignalTitleFacts> titles,

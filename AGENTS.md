@@ -43,7 +43,7 @@ EF migrations are generated from `src/PickArr.Infrastructure` with startup proje
 
 ## Local database and the running API
 
-`PickArr:DataPath` (env `PickArr__DataPath`) is the SQLite and Data Protection directory. When unset it is `%LOCALAPPDATA%/PickArr`. The checkout used for development keeps data in `.data` (`PickArr__DataPath` in `src/PickArr.Api/Properties/launchSettings.json`); pass that path explicitly so a debug session and the agent do not open two databases.
+`PickArr:DataPath` (env `PickArr__DataPath`) is the SQLite and Data Protection directory. Default is `/config`. The checkout used for development keeps data in `.data` (`PickArr__DataPath` in `src/PickArr.Api/Properties/launchSettings.json`); pass that path explicitly so a debug session and the agent do not open two databases. Application settings from the environment use flat names (`WATCHMODE_API_KEY`, `SONARR_URL`, …); the legacy `PickArr__Settings__…` form still works.
 
 `PickArr.Api` locks the DLLs in `src/PickArr.Api/bin`. Stop that process before `dotnet build`, `dotnet test` of a project that references the API, or `dotnet ef`. A file-lock error is not a compile error.
 

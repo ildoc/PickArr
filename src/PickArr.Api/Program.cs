@@ -15,9 +15,7 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     var configuredPath = builder.Configuration["PickArr:DataPath"];
-    var dataPath = string.IsNullOrWhiteSpace(configuredPath)
-        ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PickArr")
-        : configuredPath;
+    var dataPath = string.IsNullOrWhiteSpace(configuredPath) ? "/config" : configuredPath;
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(Path.Combine(dataPath, "logs"));
 
@@ -43,8 +41,8 @@ try
         await initializer.InitializeAsync();
 
         // Schedules are owned by app state and re-applied after storage init (T12).
+        // Initial catalog import runs in CatalogBootstrapHostedService after Hangfire starts.
         await scope.ServiceProvider.GetRequiredService<ScheduleReconciler>().ReconcileAsync();
-        await scope.ServiceProvider.GetRequiredService<CatalogBootstrap>().StartAsync(force: false);
     }
 
     if (app.Environment.IsDevelopment())

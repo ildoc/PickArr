@@ -26,9 +26,7 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         var configuredPath = configuration["PickArr:DataPath"];
-        var dataPath = string.IsNullOrWhiteSpace(configuredPath)
-            ? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PickArr")
-            : configuredPath;
+        var dataPath = string.IsNullOrWhiteSpace(configuredPath) ? "/config" : configuredPath;
         Directory.CreateDirectory(dataPath);
 
         var dbPath = Path.Combine(dataPath, "PickArr.db");
@@ -100,6 +98,8 @@ public static class DependencyInjection
         services.AddScoped<ISeriesGuide, SeriesGuideService>();
         services.AddScoped<ITmdbImageUrlBuilder, TmdbImageUrlBuilder>();
         services.AddPickArrHangfire(configuration, dataPath);
+        // After Hangfire so workers exist before the initial import is queued.
+        services.AddHostedService<CatalogBootstrapHostedService>();
         services.AddHealthChecks()
             .AddDbContextCheck<PickArrDbContext>("database");
 

@@ -91,6 +91,7 @@ export function MyListPage() {
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-[var(--muted)]">{t('favorite.hint')}</p>
       <FilterBar
         q={q}
         onQChange={(value) =>

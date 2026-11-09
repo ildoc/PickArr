@@ -8,8 +8,10 @@ using PickArr.Core.Settings;
 namespace PickArr.Infrastructure.Settings;
 
 /// <summary>
-/// Values declared under <c>PickArr:Settings</c> (environment <c>PickArr__Settings__…</c>).
+/// Values declared as flat environment variables (<c>WATCHMODE_API_KEY</c>, <c>SONARR_URL</c>)
+/// or under <c>PickArr:Settings</c> (legacy <c>PickArr__Settings__…</c>).
 /// A set variable is the effective value for the process; the database is not consulted for that key.
+/// Flat names win when both forms are present.
 /// </summary>
 internal sealed class EnvironmentSettingSource
 {
@@ -84,8 +86,11 @@ internal sealed class EnvironmentSettingSource
             }
 
             throw new InvalidOperationException(
-                $"Unknown setting '{dotted}'. Declare it as PickArr__Settings__ plus the settings key, with each dot replaced by '__'.");
+                $"Unknown setting '{dotted}'. Use {SettingEnvironmentCatalog.ToEnvironmentVariableName(dotted)} " +
+                "or PickArr__Settings__ with each '.' replaced by '__'.");
         }
+
+        ApplyFlatEnvironmentVariables(configuration, result, defaultsFields);
 
         foreach (var (key, fields) in defaultsFields)
         {
@@ -93,6 +98,62 @@ internal sealed class EnvironmentSettingSource
         }
 
         return result;
+    }
+
+    private static void ApplyFlatEnvironmentVariables(
+        IConfiguration configuration,
+        Dictionary<string, string> result,
+        Dictionary<string, Dictionary<string, string>> defaultsFields)
+    {
+        foreach (var (canonical, kind) in SettingEnvironmentCatalog.Entries)
+        {
+            var envName = SettingEnvironmentCatalog.ToEnvironmentVariableName(canonical);
+            var raw = configuration[envName];
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                if (kind == SettingValueKind.Defaults)
+                {
+                    if (defaultsFields.ContainsKey(canonical))
+                    {
+                        throw BothForms(canonical);
+                    }
+
+                    result[canonical] = EncodeDefaultsJson(canonical, raw);
+                }
+                else
+                {
+                    result[canonical] = EncodeScalar(canonical, kind, raw);
+                }
+            }
+
+            if (kind != SettingValueKind.Defaults)
+            {
+                continue;
+            }
+
+            foreach (var field in new[] { "qualityProfileId", "rootFolderPath" })
+            {
+                var fieldEnv = SettingEnvironmentCatalog.ToEnvironmentVariableName(canonical + "." + field);
+                var fieldRaw = configuration[fieldEnv];
+                if (string.IsNullOrWhiteSpace(fieldRaw))
+                {
+                    continue;
+                }
+
+                if (result.ContainsKey(canonical))
+                {
+                    throw BothForms(canonical);
+                }
+
+                if (!defaultsFields.TryGetValue(canonical, out var fields))
+                {
+                    fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    defaultsFields[canonical] = fields;
+                }
+
+                fields[field] = fieldRaw;
+            }
+        }
     }
 
     private static void Collect(IConfigurationSection section, string path, List<(string Path, string Value)> leaves)

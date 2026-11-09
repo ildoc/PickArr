@@ -173,7 +173,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 |---|---|---|
 | FR-UI-01 | Interfaccia **solo desktop** (larghezza minima supportata 1280 px) con **tema scuro**. | M |
 | FR-UI-02 | Un selettore nell'intestazione permette di scegliere la sorgente di catalogo (servizio + paese). La scelta è ricordata tra una sessione e l'altra. | M |
-| FR-UI-03 | La home è una **vista a griglia** del catalogo della sorgente selezionata, con barra di ricerca e filtri rapidi: *Tutti*, *Novità*, *In scadenza*, *Rimossi di recente*. *La mia lista* e *Per te* sono route dedicate (`/list`, `/for-you`), non viste del catalogo. | M |
+| FR-UI-03 | La home è una **vista a griglia** del catalogo della sorgente selezionata, con barra di ricerca e filtri rapidi: *Tutti*, *Novità*, *In scadenza*, *Rimossi di recente*. Con le raccomandazioni attive, su *Tutti* (senza ricerca) compare una **riga dedicata** di consigli per quella sorgente (max 25). *La mia lista* e *Per te* (unione delle sorgenti) sono route dedicate (`/list`, `/for-you`). | M |
 | FR-UI-04 | Ogni card mostra poster, titolo, anno, badge del tipo (film/serie/stand-up), badge dello **stato libreria**, icona preferito e controlli di **voto** (*Mi piace* / *Non mi piace*) quando le raccomandazioni sono abilitate. | M |
 | FR-UI-05 | La griglia usa scorrimento infinito con caricamento a pagine. Deve restare fluida con cataloghi di alcune migliaia di titoli. | M |
 | FR-UI-06 | Il clic su una card apre la **scheda di dettaglio** in una finestra modale, raggiungibile anche tramite URL diretto. | M |
@@ -308,7 +308,7 @@ Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi pr
 |---|---|---|
 | FR-REC-RT | L'utente può mettere *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; il voto è globale sul `Title`. Mutazione ottimistica in UI. | M |
 | FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
-| FR-REC-FY | Pagina *Per te* (`/for-you`) con scope sorgente o unione abilitata, motivi, diversità (MMR) ed esplorazione. | M |
+| FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
 | FR-REC-SIM | Riga *Simili* in scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
 | FR-REC-ML | Embedding ONNX locali opzionali (modello scaricato o copiato); senza modello restano prior e livello sparse. | M |
 | FR-REC-AD | Impostazioni *Raccomandazioni*: stato, rebuild, embedding, download modello, valutazione offline, reset; eventi locali disattivabili (default off). | M |

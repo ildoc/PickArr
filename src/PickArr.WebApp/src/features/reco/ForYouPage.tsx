@@ -17,8 +17,8 @@ export function ForYouPage() {
 
   const type = params.get('type') ?? ''
   const genre = params.get('genre') ?? ''
-  const scopeParam = params.get('scope')
-  const scope: 'source' | 'enabled' = scopeParam === 'enabled' ? 'enabled' : 'source'
+  // Per-source picks live on /catalog; this page is cross-provider.
+  const scope = 'enabled' as const
   const includeInLibrary = params.get('includeInLibrary') === '1'
   const sourceParam = params.get('source')
   const titleParam = params.get('title')
@@ -54,13 +54,6 @@ export function ForYouPage() {
     }
   }, [sourceId, sourceParam, params, setParams])
 
-  useEffect(() => {
-    if (scopeParam === 'source' || scopeParam === 'enabled') return
-    const next = new URLSearchParams(params)
-    next.set('scope', 'source')
-    setParams(next, { replace: true })
-  }, [scopeParam, params, setParams])
-
   const patchParams = useCallback(
     (patch: Record<string, string | null>) => {
       const next = new URLSearchParams(params)
@@ -72,13 +65,6 @@ export function ForYouPage() {
     },
     [params, setParams],
   )
-
-  const showEnabledScope = (sourcesQuery.data?.length ?? 0) > 1
-
-  useEffect(() => {
-    if (showEnabledScope || scope !== 'enabled') return
-    patchParams({ scope: 'source' })
-  }, [showEnabledScope, scope, patchParams])
 
   const typesQuery = useQuery({
     queryKey: ['catalog-types', sourceId],
@@ -114,7 +100,7 @@ export function ForYouPage() {
 
   const recoQuery = useInfiniteQuery({
     queryKey: ['recommendations', scope, sourceId, type, genre, includeInLibrary],
-    enabled: recoEnabled && (scope === 'enabled' || sourceId != null),
+    enabled: recoEnabled,
     initialPageParam: 1,
     placeholderData: keepPreviousData,
     queryFn: ({ pageParam }) =>
@@ -149,34 +135,9 @@ export function ForYouPage() {
     <div className="space-y-6">
       {statusQuery.data && <LearningProgress status={statusQuery.data} />}
 
+      <p className="text-sm text-[var(--muted)]">{t('reco.enabledScopeIntro')}</p>
+
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm text-[var(--muted)]">{t('reco.scopeLabel')}</span>
-          <button
-            type="button"
-            aria-pressed={scope === 'source'}
-            onClick={() => patchParams({ scope: 'source' })}
-            className={`rounded-md px-3 py-1.5 text-sm ${
-              scope === 'source' ? 'bg-white/15 text-[var(--text)]' : 'text-[var(--muted)] hover:bg-white/5'
-            }`}
-          >
-            {t('reco.scopeSource')}
-          </button>
-          {showEnabledScope && (
-            <button
-              type="button"
-              aria-pressed={scope === 'enabled'}
-              onClick={() => patchParams({ scope: 'enabled' })}
-              className={`rounded-md px-3 py-1.5 text-sm ${
-                scope === 'enabled'
-                  ? 'bg-white/15 text-[var(--text)]'
-                  : 'text-[var(--muted)] hover:bg-white/5'
-              }`}
-            >
-              {t('reco.scopeEnabled')}
-            </button>
-          )}
-        </div>
         <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
           <input
             type="checkbox"
@@ -232,12 +193,12 @@ export function ForYouPage() {
           hasMore={Boolean(recoQuery.hasNextPage)}
           isFetchingNextPage={recoQuery.isFetchingNextPage}
           onLoadMore={onLoadMore}
-          showPlaces={scope === 'enabled'}
+          showPlaces
         />
       )}
 
       {titleId != null && Number.isFinite(titleId) && (
-        <TitleDialog titleId={titleId} sourceId={scope === 'source' ? sourceId : null} />
+        <TitleDialog titleId={titleId} sourceId={sourceId} />
       )}
     </div>
   )

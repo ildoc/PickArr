@@ -197,7 +197,8 @@
   },
   "favorite": {
     "add": "Add to My list",
-    "remove": "Remove from My list"
+    "remove": "Remove from My list",
+    "hint": "A short watch-later list: titles you might want to see, then remove once watched."
   },
   "ratings": {
     "like": "Like",
@@ -219,6 +220,10 @@
     "disabled": "Recommendations are turned off in Settings.",
     "loadError": "Could not load recommendations.",
     "empty": "No recommendations yet. Rate a few titles or wait for the catalog prior.",
+    "catalogRowHeading": "For you",
+    "catalogRowLoading": "Loading picks for this catalog…",
+    "catalogRowMore": "All sources",
+    "enabledScopeIntro": "Across every enabled catalog. Picks for one provider stay on that catalog page.",
     "scopeLabel": "Scope",
     "scopeSource": "This source",
     "scopeEnabled": "All enabled sources",
@@ -325,8 +330,8 @@
     "recommendations": "Recommendations",
     "recoEnabled": "Enable recommendations and ratings",
     "recoEnabledHint": "When off, rating controls and For you stay hidden.",
-    "recoUseImplicit": "Use favorites and library as taste signals",
-    "recoUseImplicitHint": "Adds favorites, Arr adds, and downloads to your profile when you have not rated a title.",
+    "recoUseImplicit": "Use My list and library as temporary taste signals",
+    "recoUseImplicitHint": "My list means “might watch later”: it counts until you rate the title or remove it. Arr adds and downloads also help when there is no rating yet.",
     "recoEmbeddingsEnabled": "Use the local embedding model",
     "recoEmbeddingsEnabledHint": "When off, For you stays on sparse/profile scoring even if a model file is present.",
     "recoExploreEnabled": "Explore unfamiliar titles",
@@ -341,7 +346,7 @@
     "recoMmrLambda": "MMR lambda",
     "recoWeightLike": "Weight: like",
     "recoWeightDislike": "Weight: dislike",
-    "recoWeightFavorite": "Weight: favorite",
+    "recoWeightFavorite": "Weight: My list (watch later)",
     "recoWeightArrAdd": "Weight: Arr add",
     "recoWeightDownloaded": "Weight: downloaded",
     "recoLocalNote": "Recommendations are calculated on this machine. No taste data leaves your install.",

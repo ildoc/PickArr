@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchCatalogTypes, fetchGenres, fetchSources, fetchTitles } from '../../api/catalog'
 import { loadPreferredSourceId, savePreferredSourceId } from '../../lib/sourcePreference'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
+import { CatalogForYouRow } from '../reco/CatalogForYouRow'
 import { TitleDialog } from '../title/TitleDialog'
 import { FilterBar } from './FilterBar'
 import { TitleGrid } from './TitleGrid'
@@ -181,6 +182,10 @@ export function CatalogPage() {
 
       {!emptyReason && view === 'leaving' && (
         <p className="text-sm text-[var(--muted)]">{t('catalog.leavingFreeNote')}</p>
+      )}
+
+      {!emptyReason && sourceId != null && view === 'all' && !debouncedQ && (
+        <CatalogForYouRow sourceId={sourceId} />
       )}
 
       {!emptyReason && !titlesQuery.isLoading && items.length === 0 && (

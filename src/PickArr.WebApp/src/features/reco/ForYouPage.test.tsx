@@ -106,24 +106,22 @@ describe('ForYouPage', () => {
     })
   })
 
-  it('defaults to source scope and remembers source preference', async () => {
+  it('loads cross-provider recommendations and remembers source preference', async () => {
     renderPage('/for-you')
-    expect(await screen.findByRole('button', { name: 'This source' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
+    expect(
+      await screen.findByText(/Across every enabled catalog/i),
+    ).toBeTruthy()
     await waitFor(() =>
       expect(fetchRecommendations).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: 'source', sourceId: 1, includeInLibrary: false }),
+        expect.objectContaining({ scope: 'enabled', sourceId: 1, includeInLibrary: false }),
       ),
     )
     expect(localStorage.getItem('pickarr.sourceId')).toBe('1')
+    expect(screen.queryByRole('button', { name: 'This source' })).toBeNull()
   })
 
-  it('switches to enabled scope and keeps preferred source', async () => {
-    const user = userEvent.setup()
+  it('keeps preferred source when opened with a source query', async () => {
     renderPage('/for-you?source=2')
-    await user.click(await screen.findByRole('button', { name: 'All enabled sources' }))
     await waitFor(() =>
       expect(fetchRecommendations).toHaveBeenCalledWith(
         expect.objectContaining({ scope: 'enabled', sourceId: 2 }),

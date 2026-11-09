@@ -116,7 +116,7 @@ describe('SettingsPage', () => {
     wrap(<SettingsPage />)
     expect(await screen.findByRole('heading', { name: 'Recommendations' })).toBeTruthy()
     expect(screen.getByLabelText(/Enable recommendations and ratings/i)).toBeChecked()
-    expect(screen.getByLabelText(/Use favorites and library as taste signals/i)).toBeChecked()
+    expect(screen.getByLabelText(/Use My list and library as temporary taste signals/i)).toBeChecked()
   })
 
   it('keeps the lists empty when the connection test fails', async () => {

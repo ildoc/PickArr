@@ -29,6 +29,23 @@ public sealed class EnvironmentSettingSourceTests
     }
 
     [Fact]
+    public void Flat_environment_names_match_the_settings_keys()
+    {
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.WatchmodeApiKey)
+            .ShouldBe("WATCHMODE_API_KEY");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.SonarrUrl)
+            .ShouldBe("SONARR_URL");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.SonarrApiKey)
+            .ShouldBe("SONARR_API_KEY");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.TmdbToken)
+            .ShouldBe("TMDB_TOKEN");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.RecoWeightLike)
+            .ShouldBe("RECO_WEIGHTS_LIKE");
+        SettingEnvironmentCatalog.ToEnvironmentVariableName(SettingsKeys.SonarrDefaults + ".qualityProfileId")
+            .ShouldBe("SONARR_DEFAULTS_QUALITY_PROFILE_ID");
+    }
+
+    [Fact]
     public void Declared_values_win_and_are_json()
     {
         var source = Create(new Dictionary<string, string?>
@@ -55,6 +72,54 @@ public sealed class EnvironmentSettingSourceTests
         source.TryGet(SettingsKeys.SonarrDefaults, out var defaults).ShouldBeTrue();
         defaults.ShouldContain("\"qualityProfileId\":4");
         defaults.ShouldContain("\"rootFolderPath\":\"/tv\"");
+    }
+
+    [Fact]
+    public void Flat_environment_variable_names_are_accepted()
+    {
+        var source = Create(new Dictionary<string, string?>
+        {
+            ["WATCHMODE_API_KEY"] = "secret-key",
+            ["WATCHMODE_QUOTA"] = "1200",
+            ["RECO_ENABLED"] = "false",
+            ["RECO_WEIGHTS_DISLIKE"] = "-1.5",
+            ["SONARR_URL"] = "http://sonarr:8989/",
+            ["SONARR_DEFAULTS_QUALITY_PROFILE_ID"] = "4",
+            ["SONARR_DEFAULTS_ROOT_FOLDER_PATH"] = "/tv",
+            ["TMDB_TOKEN"] = "tmdb-token",
+            ["RADARR_API_KEY"] = "radarr-key",
+        });
+
+        source.TryGet(SettingsKeys.WatchmodeApiKey, out var apiKey).ShouldBeTrue();
+        apiKey.ShouldBe("\"secret-key\"");
+        source.TryGet(SettingsKeys.WatchmodeQuota, out var quota).ShouldBeTrue();
+        quota.ShouldBe("1200");
+        source.TryGet(SettingsKeys.RecoEnabled, out var enabled).ShouldBeTrue();
+        enabled.ShouldBe("false");
+        source.TryGet(SettingsKeys.RecoWeightDislike, out var dislike).ShouldBeTrue();
+        dislike.ShouldBe("-1.5");
+        source.TryGet(SettingsKeys.SonarrUrl, out var url).ShouldBeTrue();
+        url.ShouldBe("\"http://sonarr:8989\"");
+        source.TryGet(SettingsKeys.SonarrDefaults, out var defaults).ShouldBeTrue();
+        defaults.ShouldContain("\"qualityProfileId\":4");
+        defaults.ShouldContain("\"rootFolderPath\":\"/tv\"");
+        source.TryGet(SettingsKeys.TmdbToken, out var tmdb).ShouldBeTrue();
+        tmdb.ShouldBe("\"tmdb-token\"");
+        source.TryGet(SettingsKeys.RadarrApiKey, out var radarr).ShouldBeTrue();
+        radarr.ShouldBe("\"radarr-key\"");
+    }
+
+    [Fact]
+    public void Flat_names_override_the_legacy_section()
+    {
+        var source = Create(new Dictionary<string, string?>
+        {
+            ["PickArr:Settings:watchmode:apiKey"] = "legacy-key",
+            ["WATCHMODE_API_KEY"] = "flat-key",
+        });
+
+        source.TryGet(SettingsKeys.WatchmodeApiKey, out var apiKey).ShouldBeTrue();
+        apiKey.ShouldBe("\"flat-key\"");
     }
 
     [Fact]
@@ -105,6 +170,7 @@ public sealed class EnvironmentSettingSourceTests
         }));
 
         error.Message.ShouldContain("catalog.initialImportStarted");
+        error.Message.ShouldContain("CATALOG_INITIAL_IMPORT_STARTED");
     }
 
     [Fact]

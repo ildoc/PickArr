@@ -1,6 +1,7 @@
 # PickArr — example compose (linux/amd64)
 # Prefer a local bind mount or named volume for /config (SQLite WAL).
 # Avoid network filesystems (SMB/NFS) for the data directory.
+# The image defaults ASPNETCORE_URLS=http://+:8080 and PickArr__DataPath=/config.
 
 services:
   pickarr:
@@ -16,16 +17,14 @@ services:
       - "8080:8080"
     environment:
       - TZ=Europe/Rome
-      - ASPNETCORE_URLS=http://+:8080
-      - PickArr__DataPath=/config
       - PickArr__BaseUrl=http://localhost:8080
-      # Impostazioni applicative: vincono sul database. I punti della chiave diventano __.
-      # - PickArr__Settings__watchmode__apiKey=
-      # - PickArr__Settings__tmdb__token=
-      # - PickArr__Settings__sonarr__url=http://sonarr:8989
-      # - PickArr__Settings__sonarr__apiKey=
-      # - PickArr__Settings__radarr__url=http://radarr:7878
-      # - PickArr__Settings__radarr__apiKey=
+      # Application settings (flat names). Non-empty values override the database.
+      # - WATCHMODE_API_KEY=
+      # - TMDB_TOKEN=
+      # - SONARR_URL=http://sonarr:8989
+      # - SONARR_API_KEY=
+      # - RADARR_URL=http://radarr:7878
+      # - RADARR_API_KEY=
     volumes:
       - pickarr-config:/config
     healthcheck:

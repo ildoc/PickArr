@@ -35,16 +35,17 @@ Tags from the default branch are `edge` and the build version `X.Y.Z.N` (`N` com
 docker run -d --name pickarr \
   -p 8080:8080 \
   -e TZ=Europe/Rome \
-  -e PickArr__DataPath=/config \
-  -e PickArr__Settings__watchmode__apiKey=YOUR_KEY \
-  -e PickArr__Settings__tmdb__token=YOUR_TOKEN \
-  -e PickArr__Settings__sonarr__url=http://sonarr:8989 \
-  -e PickArr__Settings__sonarr__apiKey=YOUR_SONARR_KEY \
-  -e PickArr__Settings__radarr__url=http://radarr:7878 \
-  -e PickArr__Settings__radarr__apiKey=YOUR_RADARR_KEY \
+  -e WATCHMODE_API_KEY=YOUR_KEY \
+  -e TMDB_TOKEN=YOUR_TOKEN \
+  -e SONARR_URL=http://sonarr:8989 \
+  -e SONARR_API_KEY=YOUR_SONARR_KEY \
+  -e RADARR_URL=http://radarr:7878 \
+  -e RADARR_API_KEY=YOUR_RADARR_KEY \
   -v pickarr-config:/config \
   ghcr.io/<owner>/<repo>:edge
 ```
+
+`ASPNETCORE_URLS` defaults to `http://+:8080` and `PickArr__DataPath` defaults to `/config` in the image and in app settings.
 
 Inside the container, the healthcheck calls `/usr/local/bin/wget`. From the host, `curl -fsS http://localhost:8080/health` is enough.
 
@@ -62,25 +63,31 @@ Two layers. Process settings come from the environment and the ASP.NET configura
 
 ### Declaring application settings
 
-Prefix the key with `PickArr__Settings__` and replace each `.` with `__`:
+Use flat `SCREAMING_SNAKE` names derived from the settings key (`.` and camelCase become `_`):
 
 ```text
-watchmode.apiKey          →  PickArr__Settings__watchmode__apiKey
-reco.weights.like         →  PickArr__Settings__reco__weights__like
-sonarr.syncIntervalMinutes → PickArr__Settings__sonarr__syncIntervalMinutes
+watchmode.apiKey           →  WATCHMODE_API_KEY
+tmdb.token                 →  TMDB_TOKEN
+sonarr.url                 →  SONARR_URL
+sonarr.apiKey              →  SONARR_API_KEY
+radarr.url                 →  RADARR_URL
+reco.weights.like          →  RECO_WEIGHTS_LIKE
+sonarr.syncIntervalMinutes →  SONARR_SYNC_INTERVAL_MINUTES
 ```
 
-A non-empty value wins over the database for the life of the process. Saving the same key in the UI does not replace it, and a declared secret is not written to the database. An empty variable is ignored. `true` and `false` are the only booleans. Numbers use a decimal point (`0.8`, not `0,8`). An unknown key, or a number or boolean that does not parse, stops startup.
+The legacy form `PickArr__Settings__` with each `.` replaced by `__` still works. When both are set, the flat name wins.
+
+A non-empty value wins over the database for the life of the process. Saving the same key in the UI does not replace it, and a declared secret is not written to the database. An empty variable is ignored. `true` and `false` are the only booleans. Numbers use a decimal point (`0.8`, not `0,8`). An unknown nested key, or a number or boolean that does not parse, stops startup.
 
 Sonarr and Radarr defaults are either nested fields or one JSON object:
 
 ```text
-PickArr__Settings__sonarr__defaults__qualityProfileId=1
-PickArr__Settings__sonarr__defaults__rootFolderPath=/tv
+SONARR_DEFAULTS_QUALITY_PROFILE_ID=1
+SONARR_DEFAULTS_ROOT_FOLDER_PATH=/tv
 ```
 
 ```text
-PickArr__Settings__sonarr__defaults={"qualityProfileId":1,"rootFolderPath":"/tv"}
+SONARR_DEFAULTS={"qualityProfileId":1,"rootFolderPath":"/tv"}
 ```
 
 A trailing `/` on `sonarr.url` and `radarr.url` is removed. `catalog.initialImportStarted` is runtime state and cannot be set this way.
@@ -141,8 +148,8 @@ On the free Watchmode plan, leaving dates are a short preview (about ten titles 
 
 | Variable | Default | |
 | --- | --- | --- |
-| `ASPNETCORE_URLS` | `http://+:8080` in the image | Listen address. |
-| `PickArr__DataPath` | `/config` in the image; `%LOCALAPPDATA%/PickArr` when unset outside Docker | SQLite, Data Protection keys, and logs. |
+| `ASPNETCORE_URLS` | `http://+:8080` | Listen address. |
+| `PickArr__DataPath` | `/config` | SQLite, Data Protection keys, and logs. Local `dotnet run` overrides this via `launchSettings.json` (`.data`). |
 | `TZ` | `UTC` in the image | Time zone for schedules and timestamps. The image includes tzdata. |
 | `PickArr__Models__Path` | `<DataPath>/models` | ONNX model files. |
 | `PickArr__Catalog__AutoInitialImport` | `true` | Queue the first catalog import once a Watchmode key is available. |

@@ -10,6 +10,7 @@ using WireMock.Server;
 
 namespace PickArr.Integration.Tests;
 
+[Collection("env-initial-import")]
 public sealed class InitialCatalogImportTests : IAsyncLifetime
 {
     private readonly WireMockServer _server = WireMockServer.Start();
@@ -53,6 +54,11 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
         });
         put.StatusCode.ShouldBe(HttpStatusCode.OK);
 
+        await WaitForInitialImportAsync(client);
+    }
+
+    private static async Task WaitForInitialImportAsync(HttpClient client)
+    {
         JsonElement sources = default;
         for (var attempt = 0; attempt < 20; attempt++)
         {
@@ -147,4 +153,5 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
             }
         }
     }
+
 }
