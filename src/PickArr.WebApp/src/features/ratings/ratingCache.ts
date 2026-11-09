@@ -1,7 +1,7 @@
 import type { InfiniteData, QueryClient } from '@tanstack/react-query'
 import type { PagedTitles, RecommendationsPage, TitleDetail, TitleListItem } from '../../api/types'
 
-export type UserRating = 'love' | 'like' | 'dislike' | null
+export type UserRating = 'love' | 'like' | 'dislike' | 'not_interested' | null
 
 function isPagedTitles(data: unknown): data is InfiniteData<PagedTitles> {
   return (

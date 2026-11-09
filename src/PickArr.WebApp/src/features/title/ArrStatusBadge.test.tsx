@@ -10,9 +10,14 @@ function wrap(ui: ReactNode) {
 }
 
 describe('ArrStatusBadge', () => {
-  it('renders translated library state', () => {
+  it('renders translated library state when present', () => {
     wrap(<ArrStatusBadge state="downloaded" />)
     expect(screen.getByText('Downloaded')).toBeTruthy()
+  })
+
+  it('hides the default not-in-library state', () => {
+    const { container } = wrap(<ArrStatusBadge state="notInLibrary" />)
+    expect(container).toBeEmptyDOMElement()
   })
 
   it('shows download progress', () => {

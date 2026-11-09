@@ -53,6 +53,7 @@ internal static class SettingEnvironmentCatalog
         [SettingsKeys.RecoWeightLove] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightLike] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightDislike] = SettingValueKind.Double,
+        [SettingsKeys.RecoWeightNotInterested] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightFavorite] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightArrAdd] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightDownloaded] = SettingValueKind.Double,

@@ -26,7 +26,10 @@ public sealed class RatingService(
 
         if (!RatingValues.IsValid(value))
         {
-            throw new ArgumentOutOfRangeException(nameof(value), value, "Rating must be Like or Dislike.");
+            throw new ArgumentOutOfRangeException(
+                nameof(value),
+                value,
+                "Rating must be Love, Like, Dislike, or NotInterested.");
         }
 
         var normalized = RatingValues.Normalize(value);
@@ -68,14 +71,19 @@ public sealed class RatingService(
         await db.SaveChangesAsync(cancellationToken);
         await eventLog.LogAsync(
             titleId,
-            normalized == RatingValues.Dislike
-                ? RecoEventKinds.Disliked
-                : normalized == RatingValues.Love
-                    ? RecoEventKinds.Loved
-                    : RecoEventKinds.Liked,
+            EventKindFor(normalized),
             cancellationToken: cancellationToken);
         rebuildScheduler.ScheduleDebouncedRebuild();
     }
+
+    private static string EventKindFor(string normalized) =>
+        normalized switch
+        {
+            RatingValues.Dislike => RecoEventKinds.Disliked,
+            RatingValues.NotInterested => RecoEventKinds.NotInterested,
+            RatingValues.Love => RecoEventKinds.Loved,
+            _ => RecoEventKinds.Liked,
+        };
 
     public async Task ClearAsync(int titleId, string origin, CancellationToken cancellationToken = default)
     {

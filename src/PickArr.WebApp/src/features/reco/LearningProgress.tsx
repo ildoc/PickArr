@@ -5,6 +5,7 @@ import type { RecoStatus } from '../../api/types'
 export function LearningProgress({ status }: { status: RecoStatus }) {
   const { t } = useTranslation()
   const ratio = status.targetN > 0 ? Math.min(1, status.effectiveN / status.targetN) : 0
+  const showTeachTaste = status.targetN <= 0 || status.effectiveN < status.targetN
 
   return (
     <div className="rounded-xl border border-white/10 bg-[var(--surface-2)] px-4 py-3">
@@ -20,9 +21,11 @@ export function LearningProgress({ status }: { status: RecoStatus }) {
             })}
           </p>
         </div>
-        <Link to="/taste" className="text-sm text-[var(--accent)] underline">
-          {t('reco.teachTaste')}
-        </Link>
+        {showTeachTaste && (
+          <Link to="/taste" className="text-sm text-[var(--accent)] underline">
+            {t('reco.teachTaste')}
+          </Link>
+        )}
       </div>
       <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-black/40">
         <div

@@ -12,6 +12,7 @@ import { FavoriteButton } from '../favorites/FavoriteButton'
 import { RatingButtons } from '../ratings/RatingButtons'
 import { useRatingMutation } from '../ratings/useRatingMutation'
 import { SimilarRow } from '../reco/SimilarRow'
+import { applyOptimisticWatched } from '../watched/watchedCache'
 import { WatchedButton } from '../watched/WatchedButton'
 import { ArrStatusBadge } from './ArrStatusBadge'
 import { SeasonTable } from './SeasonTable'
@@ -49,6 +50,10 @@ export function TitleDialog({
     mutationFn: async (next: boolean) => {
       if (next) await addWatched(titleId)
       else await removeWatched(titleId)
+    },
+    onMutate: async (next) => {
+      await queryClient.cancelQueries({ queryKey: ['recommendations'] })
+      applyOptimisticWatched(queryClient, titleId, next)
     },
     onSuccess: async () => {
       await Promise.all([
@@ -98,7 +103,7 @@ export function TitleDialog({
         return
       }
       const key = event.key.toLowerCase()
-      if (key !== 'l' && key !== 'd' && key !== 'w' && key !== 'o') return
+      if (key !== 'l' && key !== 'd' && key !== 'w' && key !== 'o' && key !== 'n') return
       event.preventDefault()
       if (key === 'w') {
         watchedMutation.mutate(!(detail.data.isWatched ?? false))
@@ -110,6 +115,8 @@ export function TitleDialog({
         ratingMutation.mutate(current === 'love' ? null : 'love')
       } else if (key === 'l') {
         ratingMutation.mutate(current === 'like' ? null : 'like')
+      } else if (key === 'n') {
+        ratingMutation.mutate(current === 'not_interested' ? null : 'not_interested')
       } else {
         ratingMutation.mutate(current === 'dislike' ? null : 'dislike')
       }

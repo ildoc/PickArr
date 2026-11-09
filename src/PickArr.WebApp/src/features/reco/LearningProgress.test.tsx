@@ -41,4 +41,20 @@ describe('LearningProgress', () => {
     const bar = container.querySelector('[style*="width"]') as HTMLElement | null
     expect(bar?.style.width).toBe('20%')
   })
+
+  it('hides teach your taste once effective ratings reach the target', () => {
+    wrap(
+      <LearningProgress
+        status={{
+          ...status,
+          stage: 'personalized',
+          effectiveN: 30,
+          ratingCount: 28,
+        }}
+      />,
+    )
+
+    expect(screen.queryByRole('link', { name: 'Teach your taste' })).toBeNull()
+    expect(screen.getByText('30 / 30 effective ratings')).toBeTruthy()
+  })
 })

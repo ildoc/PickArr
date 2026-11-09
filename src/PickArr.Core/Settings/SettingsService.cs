@@ -60,10 +60,17 @@ public sealed class SettingsService(ISettingsStore store)
                 WeightLove = await GetOrDefaultAsync(SettingsKeys.RecoWeightLove, 1.5, cancellationToken),
                 WeightLike = await GetOrDefaultAsync(SettingsKeys.RecoWeightLike, 1.0, cancellationToken),
                 WeightDislike = await GetOrDefaultAsync(SettingsKeys.RecoWeightDislike, -1.0, cancellationToken),
+                WeightNotInterested = await GetOrDefaultAsync(
+                    SettingsKeys.RecoWeightNotInterested,
+                    RecoSignals.DefaultWeightNotInterested,
+                    cancellationToken),
                 WeightFavorite = await GetOrDefaultAsync(SettingsKeys.RecoWeightFavorite, 0.5, cancellationToken),
                 WeightArrAdd = await GetOrDefaultAsync(SettingsKeys.RecoWeightArrAdd, 0.6, cancellationToken),
                 WeightDownloaded = await GetOrDefaultAsync(SettingsKeys.RecoWeightDownloaded, 0.4, cancellationToken),
-                WeightWatched = await GetOrDefaultAsync(SettingsKeys.RecoWeightWatched, 0.35, cancellationToken),
+                WeightWatched = await GetOrDefaultAsync(
+                    SettingsKeys.RecoWeightWatched,
+                    RecoSignals.DefaultWeightWatched,
+                    cancellationToken),
                 MmrLambda = await GetOrDefaultAsync(SettingsKeys.RecoMmrLambda, 0.7, cancellationToken),
                 ExploreRate = await GetOrDefaultAsync(SettingsKeys.RecoExploreRate, RecoExplore.DefaultRate, cancellationToken),
                 MlMinRatings = await GetOrDefaultAsync(SettingsKeys.RecoMlMinRatings, RecoLevel3.DefaultMinRatings, cancellationToken),
@@ -191,6 +198,15 @@ public sealed class SettingsService(ISettingsStore store)
             if (reco.WeightDislike is { } dislike)
             {
                 await store.SetAsync(SettingsKeys.RecoWeightDislike, ToJson(dislike), isSecret: false, cancellationToken);
+            }
+
+            if (reco.WeightNotInterested is { } notInterested)
+            {
+                await store.SetAsync(
+                    SettingsKeys.RecoWeightNotInterested,
+                    ToJson(notInterested),
+                    isSecret: false,
+                    cancellationToken);
             }
 
             if (reco.WeightFavorite is { } favorite)

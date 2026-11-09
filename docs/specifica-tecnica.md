@@ -1042,7 +1042,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 
 ### 9.4 Componenti chiave
 
-- **`TitleCard`**: poster con `loading="lazy"`, placeholder durante il caricamento, badge tipo e stato (colori: grigio *non in libreria*, giallo *mancante*, azzurro *in download* con progress, verde *scaricato*, arancione *parziale*), icona preferito.
+- **`TitleCard`**: poster con `loading="lazy"`, placeholder durante il caricamento, badge tipo e stato libreria solo se diverso da *non in libreria* (colori: giallo *mancante*, azzurro *in download* con progress, verde *scaricato*, arancione *parziale*), icona preferito.
 - **`AddToArrDialog`**: legge `arr-options`, genera il form con react-hook-form + zod in base a `kind`, preseleziona i default, abilita "Aggiungi" solo a form valido.
 - **`DeleteFromArrDialog`**: riepilogo (percorso, dimensione), due checkbox spente, pulsante `destructive` con testo che cambia se è attiva "elimina file"; richiede un click esplicito.
 - **`SeasonTable`**: righe per stagione con icona monitorato, `episodeFileCount/episodeCount`, badge di stato.
@@ -1059,6 +1059,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 
 - Solo tema scuro: `class="dark"` fissa su `<html>`, token colore in Tailwind (`surface`, `surface-2`, `accent`, `muted`).
 - Larghezza minima 1280 px: sotto la soglia compare un avviso non bloccante.
+- `Header` sticky in cima (`sticky top-0`) con sfondo semitrasparente e blur, così il menu resta raggiungibile durante lo scroll.
 - Griglia con colonne `repeat(auto-fill, minmax(180px, 1fr))`.
 - Accessibilità di base: dialog con focus trap (Radix), alternative testuali sui poster, contrasto adeguato nei badge.
 

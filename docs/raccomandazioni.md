@@ -70,7 +70,7 @@ Aggiungere a PickArr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 
 - Consigli di titoli che non hanno nessuna riga `Availability` su una sorgente abilitata. Non si importano candidati da TMDB `recommendations`, `similar` o `discover` solo per consigliarli.
 - Scope «tutto TMDB», etichetta *Fuori catalogo*, watch providers TMDB/JustWatch.
-- Stato *Nascondi* generico. I voti restano *Mi piace* / *Non mi piace*. Esiste invece il flag separato **Visto** (già guardato): esclusione da *Per te*/simili e segnale implicito, non un hide senza feedback.
+- ~~Stato *Nascondi* generico~~ — superseduto: **Hide** (`Watched`) esclude senza peso di gusto (default 0); **Not interested** è un voto esplicito negativo ed esclude.
 - Ordinamento *Per te* mescolato nella griglia del catalogo. I consigli per **una** sorgente stanno in una **riga dedicata** su `/catalog` (al più 25 titoli). La pagina `/for-you` copre l’unione delle sorgenti abilitate.
 - Raccomandazioni collaborative, profili multipli, sync di cronologia esterna (Trakt, Plex, Jellyfin).
 - Fine-tuning di modelli di linguaggio. Il modello di embedding, se usato, è in sola inferenza.
@@ -82,9 +82,9 @@ Aggiungere a PickArr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 |---|---|
 | **Titolo** | Riga `Titles`. Una sola per identità (BR-01): id Watchmode e, quando nota, coppia (tipo TMDB, id TMDB). I provider non duplicano il titolo: aggiungono una `Availability`. |
 | **Sorgente** | `CatalogSource`: un provider e un paese (Netflix IT, Netflix US, Prime Video IT sono sorgenti diverse). |
-| **Voto** | *Mi piace molto* (*Love*), *Mi piace* o *Non mi piace* sul `Title.Id`. Al più uno. Vale per ogni sorgente in cui il titolo compare. |
-| **Visto** | Flag separato sul `Title.Id` (*già guardato*). Coesiste col voto. Esclude da *Per te* e simili; senza voto esplicito contribuisce al profilo come segnale implicito. |
-| **Segnale implicito** | Interesse senza voto: *La mia lista* (interesse temporaneo / da guardare), *Visto*, aggiunta a Sonarr/Radarr, download completato. Non sostituisce un voto esplicito. |
+| **Voto** | *Mi piace molto* (*Love*), *Mi piace*, *Non mi piace* o *Non mi interessa* sul `Title.Id`. Al più uno. Vale per ogni sorgente in cui il titolo compare. |
+| **Hide** | Flag `Watched` sul `Title.Id` (nascondi / già visto). Coesiste col voto. Esclude da *Per te* e simili; con peso default 0 non aggiunge massa di gusto. |
+| **Segnale implicito** | Interesse senza voto: *La mia lista* (interesse temporaneo / da guardare), Hide se il peso è &gt; 0, aggiunta a Sonarr/Radarr, download completato. Non sostituisce un voto esplicito. |
 | **Profilo** | Gusti dell’utente, costruiti da voti e segnali di qualunque sorgente. |
 | **Pool** | Titoli tra cui si calcola il punteggio: i `Title` che hanno almeno una `Availability` su una sorgente abilitata. |
 | **Scope** | Filtro applicato ai punteggi già calcolati. `source`: la sorgente selezionata. `enabled`: tutte le sorgenti abilitate. |
@@ -115,17 +115,17 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RT-01 | L’utente assegna a un titolo **Mi piace molto**, **Mi piace** o **Non mi piace**. Può sostituirlo o rimuoverlo (nessun voto). | M |
+| FR-REC-RT-01 | L’utente assegna a un titolo **Mi piace molto**, **Mi piace**, **Non mi piace** o **Non mi interessa**. Può sostituirlo o rimuoverlo (nessun voto). | M |
 | FR-REC-RT-02 | Il voto è disponibile su card (catalogo, Per te, Le mie valutazioni) e sulla scheda di dettaglio. | M |
 | FR-REC-RT-03 | Il voto è **globale sul titolo** e persiste sul backend. È indipendente dal provider e dal paese. | M |
 | FR-REC-RT-04 | Un titolo già votato non compare in *Per te* né nei simili. Resta in *Le mie valutazioni*, nel catalogo e nei preferiti. Il *Non mi piace* resta un segnale negativo per il profilo. | M |
 | FR-REC-RT-05 | Pagina **Le mie valutazioni**: elenco globale dei titoli votati, tab *Mi piace* / *Non mi piace*, ricerca, modifica e rimozione del voto. Stessa presentazione trasversale di *La mia lista* (`places`). In più, lo stato rispetto alla sorgente selezionata: presente in quella sorgente (con `removedAt` se c’è) oppure assente da quella sorgente. | S |
 | FR-REC-RT-06 | Esportazione e importazione JSON. L’importazione aggiorna solo titoli **già nel database**, riconosciuti per (`tmdbType`, `tmdbId`). Non crea titoli. | S |
 | FR-REC-RT-07 | La UI aggiorna subito il voto (aggiornamento ottimistico) e lo ripristina se la richiesta fallisce. | M |
-| FR-REC-RT-08 | Scorciatoie nella scheda: `O` mi piace molto, `L` mi piace, `D` non mi piace, `W` visto. | C |
-| FR-REC-RT-09 | Onboarding **Insegnami i tuoi gusti**: una selezione varia di titoli **già nei cataloghi abilitati**, da votare in fretta (mi piace / non mi piace / salta). | S |
-| FR-REC-RT-10 | L’utente marca un titolo come **Visto** (o toglie il flag) dalla scheda. Il flag è globale sul titolo e indipendente dal voto Like/Dislike. | M |
-| FR-REC-RT-11 | Un titolo *Visto* non compare in *Per te*, nei simili né nell’onboarding `/taste`. Resta nel catalogo e può avere un voto. | M |
+| FR-REC-RT-08 | Scorciatoie nella scheda: `O` mi piace molto, `L` mi piace, `D` non mi piace, `N` non mi interessa, `W` hide. | C |
+| FR-REC-RT-09 | Onboarding **Insegnami i tuoi gusti**: una selezione varia di titoli **già nei cataloghi abilitati**, da votare in fretta (mi piace / non mi piace / salta). Il link da *Per te* si nasconde quando `N_eff ≥ N0`. | S |
+| FR-REC-RT-10 | L’utente marca un titolo come **Hide** (o toglie il flag) dalla scheda. Il flag è globale sul titolo e indipendente dal voto. | M |
+| FR-REC-RT-11 | Un titolo *Hide* non compare in *Per te*, nei simili né nell’onboarding `/taste`. Resta nel catalogo e può avere un voto. | M |
 
 ### 3.2 Segnali impliciti (FR-REC-SG)
 
@@ -216,12 +216,12 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Regola |
 |---|---|
-| BR-REC-01 | **Un voto per titolo.** Valori `Love`, `Like` o `Dislike`. Una nuova scelta sostituisce la precedente. La rimozione cancella la riga. Ogni variazione è una riga in `RatingEvents`. |
-| BR-REC-02 | **Pesi.** *Mi piace molto* **+1,5**. *Mi piace* **+1,0**. *Non mi piace* **−1,0**. *La mia lista* **+0,5** (segnale temporaneo di interesse / watch-later: sparisce dal profilo quando si toglie il preferito o si assegna un voto). *Visto* **+0,35**. *Aggiunto a Sonarr/Radarr* **+0,6**. *Scaricato* **+0,4**. I segnali impliciti si sommano e si limitano a **[0, +1]**. Con un voto esplicito vale solo quello. Pesi configurabili. |
+| BR-REC-01 | **Un voto per titolo.** Valori `Love`, `Like`, `Dislike` o `NotInterested`. Una nuova scelta sostituisce la precedente. La rimozione cancella la riga. Ogni variazione è una riga in `RatingEvents`. |
+| BR-REC-02 | **Pesi.** *Mi piace molto* **+1,5**. *Mi piace* **+1,0**. *Non mi piace* **−1,0**. *Non mi interessa* **−0,75**. *La mia lista* **+0,5** (segnale temporaneo di interesse / watch-later: sparisce dal profilo quando si toglie il preferito o si assegna un voto). *Hide* **0** (solo esclusione). *Aggiunto a Sonarr/Radarr* **+0,6**. *Scaricato* **+0,4**. I segnali impliciti si sommano e si limitano a **[0, +1]**. Con un voto esplicito vale solo quello. Pesi configurabili. |
 | BR-REC-03 | **Decadimento.** Opzionale, emivita in giorni. Default: nessuno. |
 | BR-REC-04 | **Numerosità efficace.** `N_eff = Σ \|s_i\|` sui titoli con segnale. Governa il peso del profilo rispetto al prior (§12.2). |
 | BR-REC-05 | **Stadi.** `cold` se `N_eff < 5`; `warming` se `5 ≤ N_eff < N0` (default 30); `personalized` se `N_eff ≥ N0`. Informativi in UI. Il peso cresce in modo continuo. |
-| BR-REC-06 | **Esclusioni dalla lista.** Titoli che hanno un voto o sono *Visto*. Per default anche i titoli con `ArrLibraryItem` in stato *Scaricato*, *In download*, *Parziale* o *Mancante* (filtro disattivabile). Il punteggio di quei titoli si può comunque calcolare: l’esclusione è in lettura. |
+| BR-REC-06 | **Esclusioni dalla lista.** Titoli che hanno un voto o sono *Hide*. L’injection *explore* non può reintrodurli. Per default anche i titoli con `ArrLibraryItem` in stato *Scaricato*, *In download*, *Parziale* o *Mancante* (filtro disattivabile). Il punteggio di quei titoli si può comunque calcolare: l’esclusione è in lettura. |
 | BR-REC-07 | **Appartenenza.** Scope `source`: esiste `Availability` con `CatalogSourceId` uguale alla sorgente richiesta. Scope `enabled`: esiste `Availability` la cui sorgente ha `IsEnabled` e il cui `Provider.IsEnabled` è vero. In entrambi i casi `RemovedAt` è irrilevante. |
 | BR-REC-08 | **Identità.** Il candidato è il `Title` già unificato da `CatalogUpserter` (Watchmode id, poi coppia TMDB). Due righe `Titles` restano due voti: succede solo se il catalogo non le ha collegate. Questa feature non aggiunge un altro criterio di merge. |
 | BR-REC-09 | **Testo degli embedding.** Si preferisce la localizzazione `en-US` in `TitleLocalizations`. Se manca, si usa la localizzazione già salvata per la lingua della sorgente. |
@@ -322,9 +322,9 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 **Card.** Accanto al cuore dei preferiti, due azioni (mi piace, non mi piace). Il voto attivo resta visibile. Su *Per te* in scope `enabled`, e sui simili, la card mostra `places` come *La mia lista*.
 
-**Scheda (`TitleDialog`).** Azioni etichettate *Mi piace* / *Non mi piace*, *Visto*, e preferito. Scorciatoie `L` / `D` / `W`. Blocco *Perché te lo consigliamo* se si arriva da *Per te*. In fondo, griglia *Titoli simili* su più righe.
+**Scheda (`TitleDialog`).** Azioni etichettate *Mi piace* / *Non mi piace* / *Non mi interessa*, *Hide*, e preferito. Scorciatoie `O` / `L` / `D` / `N` / `W`. Blocco *Perché te lo consigliamo* se si arriva da *Per te*. In fondo, griglia *Titoli simili* su più righe.
 
-**Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
+**Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0`; link *Insegnami i tuoi gusti* solo se `N_eff < N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
 
 **Onboarding (`/taste`).** Griglia di titoli del pool, azioni grandi, contatore, *Mostra altri titoli*, *Fatto*.
 
@@ -418,7 +418,7 @@ Opzionali, se il livello 1 le calcola e le tiene:
 | Colonna | Tipo | Note |
 |---|---|---|
 | TitleId | int PK, FK → Titles | |
-| Value | text | `Like` / `Dislike` |
+| Value | text | `Love` / `Like` / `Dislike` / `NotInterested` |
 | RatedAt | datetime | |
 
 **`RatingEvents`**
@@ -733,7 +733,7 @@ Il downloader sceglie `arm64` su `linux/arm64` e, su `amd64`, `avx512_vnni` > `a
 Prefisso `/api/v1`. Errori RFC 7807 come il resto dell’API. Campo nuovo sui DTO esistenti di elenco e scheda:
 
 ```json
-"rating": "like" | "dislike" | null
+"rating": "love" | "like" | "dislike" | "not_interested" | null
 ```
 
 Si aggiunge a `TitleListItemDto` e al DTO di dettaglio, così catalogo, lista e scheda mostrano lo stesso voto.
@@ -742,9 +742,9 @@ Si aggiunge a `TitleListItemDto` e al DTO di dettaglio, così catalogo, lista e 
 
 | Metodo | Percorso | Corpo / effetto |
 |---|---|---|
-| `PUT` | `/titles/{id}/rating` | `{ "value": "like" \| "dislike" }`. Idempotente. `204`. |
+| `PUT` | `/titles/{id}/rating` | `{ "value": "love" \| "like" \| "dislike" \| "not_interested" }`. Idempotente. `204`. |
 | `DELETE` | `/titles/{id}/rating` | Rimuove. Idempotente. `204`. |
-| `GET` | `/ratings?value=like\|dislike&q=&page=` | Elenco paginato, stessa forma di `TitleListItem` più `rating` e `places`. |
+| `GET` | `/ratings?value=love\|like\|dislike\|not_interested&q=&page=` | Elenco paginato, stessa forma di `TitleListItem` più `rating` e `places`. |
 | `GET` | `/ratings/export` | JSON: `tmdbType`, `tmdbId`, nome, valore, data. Solo titoli che hanno l’id TMDB. |
 | `POST` | `/ratings/import` | `{ "mode": "merge" \| "replace", "items": [...] }`. Contatori `imported`, `unknown`, `ignored`. `unknown` = id TMDB non presente in `Titles`. Nessun inserimento di titoli. |
 | `POST` | `/ratings/onboarding` | Lista `{ "titleId", "value" }`. Una ricostruzione a fine batch. `value` nullo = salto, non scrive un voto. |
@@ -904,7 +904,7 @@ In `AppRouter`, dentro `AppShell`:
 ### 15.5 Componenti
 
 - **`RatingButtons`**: due pulsanti. Il voto attivo è premuto. Un secondo click sullo stesso lo rimuove.
-- **`LearningProgress`**: `N_eff / targetN` e lo stadio. Link a `/taste`.
+- **`LearningProgress`**: `N_eff / targetN` e lo stadio. Link a `/taste` solo se `N_eff < targetN` (soglia di personalizzazione).
 - **`ReasonChips`**: chiavi i18n `reco.reason.similarTo`, `reco.reason.terms`, `reco.reason.popular`, `reco.reason.explore`.
 - **Scope**: due voci. Con una sola sorgente abilitata resta solo *Questa sorgente*.
 - **`OnboardingTaste`**: 24 card, *Mostra altri titoli*, *Fatto*, scorciatoie `L` e `D`.
@@ -923,11 +923,14 @@ Chiavi in `AppSetting` / `SettingsKeys`, lette come le altre impostazioni.
 |---|---|---|
 | `reco.enabled` | `true` | FR-REC-ST-01 |
 | `reco.useImplicit` | `true` | |
+| `reco.weights.love` | `1.5` | |
 | `reco.weights.like` | `1.0` | |
 | `reco.weights.dislike` | `-1.0` | |
+| `reco.weights.notInterested` | `-0.75` | |
 | `reco.weights.favorite` | `0.5` | |
 | `reco.weights.arrAdd` | `0.6` | |
 | `reco.weights.downloaded` | `0.4` | |
+| `reco.weights.watched` | `0` | Hide: esclusione senza massa di gusto |
 | `reco.halfLifeDays` | `0` | 0 = nessun decadimento |
 | `reco.n0` | `30` | |
 | `reco.priorResidual` | `0.1` | ε |
@@ -1039,7 +1042,7 @@ Se `reco.events.enabled`: (mi piace o aggiunte a Sonarr/Radarr tra i titoli most
 | D-REC-03 | Il profilo è unico. Il filtro di catalogo si applica alla lista, non all’apprendimento. |
 | D-REC-04 | I simili usano sempre l’unione delle sorgenti abilitate e mostrano `places`. |
 | D-REC-05 | `RemovedAt` non esclude. |
-| D-REC-06 | Voti: solo *Mi piace* e *Non mi piace*. |
+| D-REC-06 | Voti: *Mi piace molto*, *Mi piace*, *Non mi piace*, *Non mi interessa*; *Hide* separato. |
 | D-REC-07 | Pagina dedicata `/for-you`. L’ordinamento *Per te* nella griglia del catalogo è fuori ambito. |
 | D-REC-08 | *Le mie valutazioni* è globale, con badge sulla sorgente selezionata. L’onboarding pesca nel pool dei cataloghi accesi. |
 | D-REC-09 | Titoli già in libreria esclusi di default, con interruttore. |

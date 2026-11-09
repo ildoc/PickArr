@@ -191,8 +191,10 @@ public sealed class RecoQueryService(
 
         if (exploreRate > 0)
         {
-            var exploreCandidates = await PickExploreCandidatesAsync(orderedIds, cancellationToken);
-            orderedIds = RecoExplore.Inject(orderedIds, exploreCandidates, exploreRate, version).ToList();
+            var exploreCandidates = await PickExploreCandidatesAsync(orderedIds, IsEligible, cancellationToken);
+            orderedIds = RecoExplore.Inject(orderedIds, exploreCandidates, exploreRate, version)
+                .Where(IsEligible)
+                .ToList();
         }
 
         var pageIds = orderedIds
@@ -269,7 +271,7 @@ public sealed class RecoQueryService(
             }
             else
             {
-                // Explore injection may surface titles not in the filtered rank list.
+                // Explore may inject eligible titles that were not in the top filtered rank slice.
                 rec = new Recommendation
                 {
                     Version = version,
@@ -534,9 +536,11 @@ public sealed class RecoQueryService(
 
     private async Task<IReadOnlyList<int>> PickExploreCandidatesAsync(
         IReadOnlyList<int> rankedIds,
+        Func<int, bool> isEligible,
         CancellationToken cancellationToken)
     {
         // Mid-high prior titles not already near the top; prefer unseen genres vs profile.
+        // Candidates must still pass IsEligible so explore never reintroduces rated/watched titles.
         var top = rankedIds.Take(40).ToHashSet();
         var state = await db.RecoStates.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
@@ -572,20 +576,20 @@ public sealed class RecoQueryService(
             .Select(r => r.TitleId)
             .ToListAsync(cancellationToken);
 
+        var eligible = candidates.Where(id => !top.Contains(id) && isEligible(id)).ToList();
         if (profileGenres.Count == 0)
         {
-            return candidates.Where(id => !top.Contains(id)).Take(40).ToList();
+            return eligible.Take(40).ToList();
         }
 
         var genreRows = await db.TitleGenres.AsNoTracking()
-            .Where(tg => candidates.Contains(tg.TitleId))
+            .Where(tg => eligible.Contains(tg.TitleId))
             .Select(tg => new { tg.TitleId, tg.GenreId })
             .ToListAsync(cancellationToken);
         var genresByTitle = genreRows.GroupBy(g => g.TitleId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.GenreId).ToHashSet());
 
-        return candidates
-            .Where(id => !top.Contains(id))
+        return eligible
             .Where(id =>
                 !genresByTitle.TryGetValue(id, out var gs)
                 || gs.All(g => !profileGenres.Contains(g))

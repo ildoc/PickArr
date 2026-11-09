@@ -13,7 +13,7 @@ export function Header({ children }: { children?: ReactNode }) {
   const recoEnabled = settings.data?.reco.enabled !== false
 
   return (
-    <header className="flex items-center gap-8 border-b border-white/10 px-8 py-4">
+    <header className="sticky top-0 z-40 flex items-center gap-8 border-b border-white/10 bg-[var(--surface)]/95 px-8 py-4 backdrop-blur-sm">
       <NavLink to="/catalog" className="text-xl font-semibold tracking-tight text-[var(--text)]">
         {t('app.title')}
       </NavLink>

@@ -29,10 +29,11 @@ export function RecommendationsSettingsPage() {
   const [weightLove, setWeightLove] = useState(1.5)
   const [weightLike, setWeightLike] = useState(1)
   const [weightDislike, setWeightDislike] = useState(-1)
+  const [weightNotInterested, setWeightNotInterested] = useState(-0.75)
   const [weightFavorite, setWeightFavorite] = useState(0.5)
   const [weightArrAdd, setWeightArrAdd] = useState(0.6)
   const [weightDownloaded, setWeightDownloaded] = useState(0.4)
-  const [weightWatched, setWeightWatched] = useState(0.35)
+  const [weightWatched, setWeightWatched] = useState(0)
   const [mmrLambda, setMmrLambda] = useState(0.7)
   const [eventsEnabled, setEventsEnabled] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -50,10 +51,11 @@ export function RecommendationsSettingsPage() {
     setWeightLove(reco.weightLove ?? 1.5)
     setWeightLike(reco.weightLike ?? 1)
     setWeightDislike(reco.weightDislike ?? -1)
+    setWeightNotInterested(reco.weightNotInterested ?? -0.75)
     setWeightFavorite(reco.weightFavorite ?? 0.5)
     setWeightArrAdd(reco.weightArrAdd ?? 0.6)
     setWeightDownloaded(reco.weightDownloaded ?? 0.4)
-    setWeightWatched(reco.weightWatched ?? 0.35)
+    setWeightWatched(reco.weightWatched ?? 0)
     setMmrLambda(reco.mmrLambda ?? 0.7)
     setEventsEnabled(reco.eventsEnabled === true)
   }, [settings.data])
@@ -73,6 +75,7 @@ export function RecommendationsSettingsPage() {
           weightLove,
           weightLike,
           weightDislike,
+          weightNotInterested,
           weightFavorite,
           weightArrAdd,
           weightDownloaded,
@@ -216,6 +219,13 @@ export function RecommendationsSettingsPage() {
               value={weightDislike}
               disabled={!enabled}
               onChange={setWeightDislike}
+              step={0.1}
+            />
+            <NumberField
+              label={t('settings.recoWeightNotInterested')}
+              value={weightNotInterested}
+              disabled={!enabled}
+              onChange={setWeightNotInterested}
               step={0.1}
             />
             <NumberField

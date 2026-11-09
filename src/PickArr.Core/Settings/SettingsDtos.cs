@@ -67,6 +67,7 @@ public sealed class RecoSettingsDto
     public required double WeightLove { get; init; }
     public required double WeightLike { get; init; }
     public required double WeightDislike { get; init; }
+    public required double WeightNotInterested { get; init; }
     public required double WeightFavorite { get; init; }
     public required double WeightArrAdd { get; init; }
     public required double WeightDownloaded { get; init; }
@@ -98,6 +99,7 @@ public sealed class RecoUpdateDto
     public double? WeightLove { get; init; }
     public double? WeightLike { get; init; }
     public double? WeightDislike { get; init; }
+    public double? WeightNotInterested { get; init; }
     public double? WeightFavorite { get; init; }
     public double? WeightArrAdd { get; init; }
     public double? WeightDownloaded { get; init; }

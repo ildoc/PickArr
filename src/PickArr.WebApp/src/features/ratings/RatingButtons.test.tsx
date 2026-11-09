@@ -69,6 +69,13 @@ describe('RatingButtons', () => {
     expect(setRating).toHaveBeenCalledWith(7, 'dislike')
   })
 
+  it('sets not interested', async () => {
+    const user = userEvent.setup()
+    renderButtons(null)
+    await user.click(await screen.findByRole('button', { name: 'Not interested' }))
+    expect(setRating).toHaveBeenCalledWith(7, 'not_interested')
+  })
+
   it('hides when recommendations are disabled', async () => {
     vi.mocked(fetchSettings).mockResolvedValue({
       reco: { enabled: false },

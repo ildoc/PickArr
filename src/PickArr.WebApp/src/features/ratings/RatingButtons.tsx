@@ -77,6 +77,19 @@ export function RatingButtons({
         >
           {t('ratings.dislike')}
         </button>
+        <button
+          type="button"
+          aria-pressed={rating === 'not_interested'}
+          aria-busy={mutation.isPending}
+          onClick={() => toggle('not_interested')}
+          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+            rating === 'not_interested'
+              ? 'bg-zinc-500 text-white hover:bg-zinc-400'
+              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
+          }`}
+        >
+          {t('ratings.notInterested')}
+        </button>
       </div>
     )
   }
@@ -126,6 +139,19 @@ export function RatingButtons({
         }`}
       >
         ▼
+      </button>
+      <button
+        type="button"
+        aria-pressed={rating === 'not_interested'}
+        aria-label={t('ratings.notInterested')}
+        title={t('ratings.notInterested')}
+        aria-busy={mutation.isPending}
+        onClick={() => toggle('not_interested')}
+        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
+          rating === 'not_interested' ? 'text-zinc-300' : 'text-white/50'
+        }`}
+      >
+        ✕
       </button>
     </div>
   )

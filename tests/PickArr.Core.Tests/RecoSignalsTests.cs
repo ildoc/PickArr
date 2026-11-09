@@ -85,12 +85,38 @@ public sealed class RecoSignalsTests
     }
 
     [Fact]
-    public void Watched_alone_contributes_default_weight()
+    public void Watched_alone_with_default_zero_weight_adds_no_signal()
     {
         var result = RecoSignals.Compute(
         [
             new RecoSignalTitleFacts(1, null, IsFavorite: false, HasSuccessfulArrAdd: false, IsDownloaded: false, IsWatched: true),
         ]);
+
+        result.Signals.ContainsKey(1).ShouldBeFalse();
+        result.EffectiveN.ShouldBe(0);
+    }
+
+    [Fact]
+    public void Explicit_not_interested_uses_negative_weight()
+    {
+        var result = RecoSignals.Compute(
+        [
+            new RecoSignalTitleFacts(1, "NotInterested", IsFavorite: true, HasSuccessfulArrAdd: false, IsDownloaded: false),
+        ]);
+
+        result.Signals[1].ShouldBe(-0.75);
+        result.EffectiveN.ShouldBe(0.75);
+    }
+
+    [Fact]
+    public void Watched_with_custom_positive_weight_contributes()
+    {
+        var weights = RecoSignals.DefaultWeights with { Watched = 0.35 };
+        var result = RecoSignals.Compute(
+        [
+            new RecoSignalTitleFacts(1, null, IsFavorite: false, HasSuccessfulArrAdd: false, IsDownloaded: false, IsWatched: true),
+        ],
+            weights);
 
         result.Signals[1].ShouldBe(0.35);
         result.EffectiveN.ShouldBe(0.35);

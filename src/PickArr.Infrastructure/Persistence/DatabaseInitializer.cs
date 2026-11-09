@@ -135,10 +135,11 @@ public sealed class DatabaseInitializer(
         await EnsureSettingAsync(SettingsKeys.RecoWeightLove, "1.5", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoWeightLike, "1", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoWeightDislike, "-1", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightNotInterested, "-0.75", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoWeightFavorite, "0.5", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoWeightArrAdd, "0.6", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoWeightDownloaded, "0.4", false, now, cancellationToken);
-        await EnsureSettingAsync(SettingsKeys.RecoWeightWatched, "0.35", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.RecoWeightWatched, "0", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsEnabled, "true", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsModelId, "\"all-MiniLM-L6-v2@q8\"", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoEmbeddingsThreads, "2", false, now, cancellationToken);

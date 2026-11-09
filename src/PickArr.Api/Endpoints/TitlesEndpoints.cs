@@ -21,7 +21,7 @@ public static class TitlesEndpoints
         {
             if (body?.Value is null || !RatingValues.IsValid(body.Value))
             {
-                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, or dislike." });
+                return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, dislike, or not_interested." });
             }
 
             try

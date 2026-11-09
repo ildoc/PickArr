@@ -17,13 +17,15 @@ export function ArrStatusBadge({
   progress?: number | null
 }) {
   const { t } = useTranslation()
+  if (state === 'notInLibrary') return null
+
   const label = t(arrStateLabelKey(state))
   const suffix =
     state === 'downloading' && progress != null ? ` ${Math.round(progress)}%` : ''
 
   return (
     <span
-      className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${stateClass[state] ?? stateClass.notInLibrary}`}
+      className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide ${stateClass[state] ?? stateClass.missing}`}
     >
       {label}
       {suffix}

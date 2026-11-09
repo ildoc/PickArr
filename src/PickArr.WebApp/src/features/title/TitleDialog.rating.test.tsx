@@ -119,8 +119,8 @@ describe('TitleDialog ratings', () => {
     const user = userEvent.setup()
     renderDialog()
 
-    expect(await screen.findByRole('button', { name: 'Mark as watched' })).toBeTruthy()
-    await user.click(screen.getByRole('button', { name: 'Mark as watched' }))
+    expect(await screen.findByRole('button', { name: 'Hide' })).toBeTruthy()
+    await user.click(screen.getByRole('button', { name: 'Hide' }))
 
     await waitFor(() => expect(addWatched).toHaveBeenCalledWith(42))
   })

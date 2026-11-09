@@ -32,6 +32,7 @@ public static class SettingsKeys
     public const string RecoWeightLove = "reco.weights.love";
     public const string RecoWeightLike = "reco.weights.like";
     public const string RecoWeightDislike = "reco.weights.dislike";
+    public const string RecoWeightNotInterested = "reco.weights.notInterested";
     public const string RecoWeightFavorite = "reco.weights.favorite";
     public const string RecoWeightArrAdd = "reco.weights.arrAdd";
     public const string RecoWeightDownloaded = "reco.weights.downloaded";

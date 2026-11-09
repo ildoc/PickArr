@@ -28,7 +28,13 @@ export function MyRatingsPage() {
   const genre = params.get('genre') ?? ''
   const tabParam = params.get('tab')
   const tab: RatingValue =
-    tabParam === 'dislike' ? 'dislike' : tabParam === 'love' ? 'love' : 'like'
+    tabParam === 'dislike'
+      ? 'dislike'
+      : tabParam === 'not_interested'
+        ? 'not_interested'
+        : tabParam === 'love'
+          ? 'love'
+          : 'like'
   const sort = params.get('sort') ?? (q ? 'relevance' : 'added')
   const dirParam = params.get('dir')
   const dir: 'asc' | 'desc' =
@@ -184,6 +190,18 @@ export function MyRatingsPage() {
             }`}
           >
             {t('ratings.tabDislike')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={tab === 'not_interested'}
+            onClick={() => patchParams({ tab: 'not_interested' })}
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              tab === 'not_interested'
+                ? 'bg-white/15 text-[var(--text)]'
+                : 'text-[var(--muted)] hover:bg-white/5'
+            }`}
+          >
+            {t('ratings.tabNotInterested')}
           </button>
         </div>
         <div className="flex items-center gap-2">

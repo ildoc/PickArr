@@ -231,7 +231,7 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-ST-01 | Ogni titolo ha uno stato libreria: **Non in libreria**, **Mancante**, **In download** (con percentuale), **Scaricato**, **Parziale** (solo serie). Indicazione separata di **monitorato / non monitorato**. | M |
+| FR-ST-01 | Ogni titolo ha uno stato libreria: **Non in libreria** (default, non mostrato come badge), **Mancante**, **In download** (con percentuale), **Scaricato**, **Parziale** (solo serie). In UI il badge compare solo per stati diversi da *Non in libreria*. Indicazione separata di **monitorato / non monitorato**. | M |
 | FR-ST-02 | Lo stato è visibile su card e scheda ed è usabile come filtro. | M |
 | FR-ST-03 | Per le serie, la scheda mostra per ogni stagione: monitorata sì/no, episodi scaricati su totali e stato. | M |
 | FR-ST-04 | Lo stato proviene da una **cache** aggiornata da una sync periodica (default: ogni 15 minuti) e, se configurati, dai **webhook** di Sonarr/Radarr per aggiornamenti quasi in tempo reale. | M |
@@ -306,7 +306,7 @@ Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi pr
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RT | L'utente può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* (o togliere il voto) da card e scheda; può marcare *Visto* dalla scheda. Voto e visto sono globali sul `Title` e indipendenti. Mutazione ottimistica in UI. | M |
+| FR-REC-RT | L'utente può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa* (o togliere il voto) da card e scheda; può *Hide* dalla scheda. Voto e hide sono globali sul `Title` e indipendenti. Mutazione ottimistica in UI. I votati e gli hide non compaiono in *Per te*. | M |
 | FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
 | FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
 | FR-REC-SIM | Griglia *Simili* in fondo alla scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
@@ -508,7 +508,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 - **Flusso principale:**
   1. Lo scheduler sincronizza periodicamente la libreria e la coda di download di ciascuna istanza.
   2. Per ogni elemento calcola lo stato (BR-09/BR-10) e lo associa al titolo tramite id.
-  3. La UI mostra badge, percentuale e dettaglio per stagione.
+  3. La UI mostra badge (solo se diverso da *Non in libreria*), percentuale e dettaglio per stagione.
 - **Alternativi:**
   - *Webhook ricevuto:* il backend aggiorna subito l'elemento interessato.
   - *Istanza irraggiungibile:* ultimo stato noto con avviso di dato obsoleto.
@@ -516,7 +516,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 ### UC-08 — Eliminare un titolo da Sonarr/Radarr
 
 - **Attore:** Utente.
-- **Flusso principale:** clic su **Elimina** → dialog con riepilogo → l'utente sceglie le opzioni → conferma → il backend invia la cancellazione all'istanza con le opzioni scelte → aggiorna la cache → la UI mostra lo stato "Non in libreria".
+- **Flusso principale:** clic su **Elimina** → dialog con riepilogo → l'utente sceglie le opzioni → conferma → il backend invia la cancellazione all'istanza con le opzioni scelte → aggiorna la cache → la UI torna allo stato implicito *Non in libreria* (nessun badge).
 - **Alternativi:** *annullamento* (nessun effetto); *errore dell'istanza* (messaggio e nessuna modifica locale).
 
 ### UC-09 — Configurare l'applicazione
@@ -549,15 +549,15 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 Descrizione testuale (i mockup saranno prodotti in seguito).
 
-**Layout generale.** Intestazione con logo, selettore sorgente (es. "Netflix · Italia"), barra di ricerca, link a *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*. Piè di pagina con attribuzioni Watchmode/TMDB e versione.
+**Layout generale.** Intestazione fissa in cima (sticky) con logo e link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*). Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB e versione.
 
 **Home / Catalogo** (`/catalog`).
 - Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
 - Barra filtri: tipo, genere, anno, stato libreria, ordinamento, "includi rimossi".
 - Griglia di card poster 2:3 con scorrimento infinito.
-- Card: poster, tipo, titolo, anno, badge stato libreria, cuore, controlli *Mi piace* / *Non mi piace*.
+- Card: poster, tipo, titolo, anno, badge stato libreria (se presente in libreria), cuore, controlli *Mi piace* / *Non mi piace*.
 
-**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento, chip dei motivi e filtri tipo/genere. Onboarding su `/taste` se i voti sono pochi.
+**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento, chip dei motivi e filtri tipo/genere. Link all’onboarding `/taste` solo finché `N_eff` è sotto la soglia di personalizzazione.
 
 **La mia lista** (`/list`). Preferiti globali; badge rispetto alla sorgente selezionata.
 
@@ -635,7 +635,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-REC-03 | Profilo. | Unico; il filtro di catalogo si applica alla lista, non all'apprendimento. |
 | D-REC-04 | Simili. | Sempre sull'unione delle sorgenti abilitate; mostrano `places`. |
 | D-REC-05 | `RemovedAt`. | Non esclude dal pool raccomandazioni. |
-| D-REC-06 | Valori di voto. | Solo *Mi piace* e *Non mi piace*. |
+| D-REC-06 | Valori di voto. | *Mi piace molto*, *Mi piace*, *Non mi piace*, *Non mi interessa*; *Hide* separato. |
 | D-REC-07 | Superficie UI. | Pagina dedicata `/for-you` (non ordinamento in griglia catalogo). |
 | D-REC-08 | Valutazioni e onboarding. | `/ratings` globale; onboarding `/taste` sul pool abilitato. |
 | D-REC-09 | Libreria Arr. | Esclusa di default in *Per te*, con interruttore. |

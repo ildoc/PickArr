@@ -191,6 +191,7 @@ export type SettingsResponse = {
     weightLove: number
     weightLike: number
     weightDislike: number
+    weightNotInterested: number
     weightFavorite: number
     weightArrAdd: number
     weightDownloaded: number

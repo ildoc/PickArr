@@ -118,6 +118,10 @@ public sealed class RecoBuildService(
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightLove, RecoSignals.DefaultWeightLove, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightLike, RecoSignals.DefaultWeightLike, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightDislike, RecoSignals.DefaultWeightDislike, cancellationToken),
+            await GetDoubleSettingAsync(
+                SettingsKeys.RecoWeightNotInterested,
+                RecoSignals.DefaultWeightNotInterested,
+                cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightFavorite, RecoSignals.DefaultWeightFavorite, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightArrAdd, RecoSignals.DefaultWeightArrAdd, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightDownloaded, RecoSignals.DefaultWeightDownloaded, cancellationToken),
