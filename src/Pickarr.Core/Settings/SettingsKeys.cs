@@ -1,0 +1,52 @@
+namespace Pickarr.Core.Settings;
+
+public static class SettingsKeys
+{
+    public const string WatchmodeApiKey = "watchmode.apiKey";
+    public const string WatchmodePlan = "watchmode.plan";
+    public const string WatchmodeQuota = "watchmode.quota";
+    public const string WatchmodeReservePercent = "watchmode.reservePercent";
+    public const string WatchmodeMaxCreditsPerRun = "watchmode.maxCreditsPerRun";
+    public const string WatchmodeBillingDayOfMonth = "watchmode.billingDayOfMonth";
+    public const string CatalogMaxRemovalRatio = "catalog.maxRemovalRatio";
+    public const string CatalogRemovalConfirmations = "catalog.removalConfirmations";
+    public const string CatalogNewWindowDays = "catalog.newWindowDays";
+    public const string CatalogLeavingWindowDays = "catalog.leavingWindowDays";
+    public const string CatalogRemovedWindowDays = "catalog.removedWindowDays";
+    public const string CatalogStaleWarningDays = "catalog.staleWarningDays";
+    public const string CatalogInitialImportStarted = "catalog.initialImportStarted";
+    public const string TmdbApiKey = "tmdb.apiKey";
+    public const string OmdbApiKey = "omdb.apiKey";
+    public const string SonarrUrl = "sonarr.url";
+    public const string SonarrApiKey = "sonarr.apiKey";
+    public const string SonarrDefaults = "sonarr.defaults";
+    public const string SonarrSyncIntervalMinutes = "sonarr.syncIntervalMinutes";
+    public const string RadarrUrl = "radarr.url";
+    public const string RadarrApiKey = "radarr.apiKey";
+    public const string RadarrDefaults = "radarr.defaults";
+    public const string RadarrSyncIntervalMinutes = "radarr.syncIntervalMinutes";
+    public const string WebhooksToken = "webhooks.token";
+    public const string UiLanguage = "ui.language";
+    public const string RecoEnabled = "reco.enabled";
+    public const string RecoUseImplicit = "reco.useImplicit";
+    public const string RecoWeightLove = "reco.weights.love";
+    public const string RecoWeightLike = "reco.weights.like";
+    public const string RecoWeightDislike = "reco.weights.dislike";
+    public const string RecoWeightNotInterested = "reco.weights.notInterested";
+    public const string RecoWeightFavorite = "reco.weights.favorite";
+    public const string RecoWeightArrAdd = "reco.weights.arrAdd";
+    public const string RecoWeightDownloaded = "reco.weights.downloaded";
+    public const string RecoWeightWatched = "reco.weights.watched";
+    public const string RecoN0 = "reco.n0";
+    public const string RecoExcludeInLibrary = "reco.excludeInLibrary";
+    public const string RecoEmbeddingsEnabled = "reco.embeddings.enabled";
+    public const string RecoEmbeddingsModelId = "reco.embeddings.modelId";
+    public const string RecoEmbeddingsThreads = "reco.embeddings.threads";
+    public const string RecoEmbeddingsBatchSize = "reco.embeddings.batchSize";
+    public const string RecoEmbeddingsMinCoverage = "reco.embeddings.minCoverage";
+    public const string RecoEmbeddingsThrottle = "reco.embeddings.throttle";
+    public const string RecoMmrLambda = "reco.mmr.lambda";
+    public const string RecoExploreRate = "reco.explore.rate";
+    public const string RecoMlMinRatings = "reco.ml.minRatings";
+    public const string RecoEventsEnabled = "reco.events.enabled";
+}

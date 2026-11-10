@@ -1,0 +1,149 @@
+using Hangfire;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Pickarr.Core.Abstractions;
+using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Persistence;
+using System.Text.Json;
+
+namespace Pickarr.Infrastructure.Jobs;
+
+public sealed class ScheduleReconciler(
+    PickarrDbContext db,
+    IRecurringJobManager recurringJobs,
+    ISettingsStore settings,
+    ILogger<ScheduleReconciler> logger)
+{
+    public const string ResumeJobId = "catalog-resume";
+
+    public async Task ReconcileAsync(CancellationToken cancellationToken = default)
+    {
+        var sources = await db.CatalogSources.AsNoTracking()
+            .Include(source => source.Provider)
+            .ToListAsync(cancellationToken);
+        // Always drop legacy per-source leaving ids (pre country-dedupe).
+        foreach (var source in sources)
+        {
+            recurringJobs.RemoveIfExists($"catalog-leaving-{source.Id}");
+        }
+
+        foreach (var source in sources.Where(source => !source.IsEnabled || source.Provider?.IsEnabled != true))
+        {
+            recurringJobs.RemoveIfExists(IncrementalJobId(source.Id));
+            recurringJobs.RemoveIfExists(FullJobId(source.Id));
+        }
+
+        sources = sources.Where(source => source.IsEnabled && source.Provider?.IsEnabled == true).ToList();
+
+        var enabledCountries = sources
+            .Select(s => s.CountryCode.Trim().ToUpperInvariant())
+            .Distinct(StringComparer.Ordinal)
+            .ToHashSet(StringComparer.Ordinal);
+
+        // Drop country-level leaving jobs whose country no longer has an enabled source.
+        foreach (var source in await db.CatalogSources.AsNoTracking().ToListAsync(cancellationToken))
+        {
+            var country = source.CountryCode.Trim().ToUpperInvariant();
+            if (!enabledCountries.Contains(country))
+            {
+                recurringJobs.RemoveIfExists(LeavingSyncJob.JobId(country));
+            }
+        }
+
+        var incrementalCount = 0;
+        var fullCount = 0;
+
+        foreach (var source in sources)
+        {
+            var incrId = IncrementalJobId(source.Id);
+            var fullId = FullJobId(source.Id);
+
+            recurringJobs.AddOrUpdate<CatalogIncrementalSyncJob>(
+                incrId,
+                j => j.ExecuteAsync(source.Id, false, null, CancellationToken.None),
+                source.IncrementalCron);
+            incrementalCount++;
+
+            recurringJobs.AddOrUpdate<CatalogFullSyncJob>(
+                fullId,
+                j => j.ExecuteAsync(source.Id, false, null, CancellationToken.None),
+                source.FullSyncCron);
+            fullCount++;
+        }
+
+        foreach (var country in enabledCountries.OrderBy(c => c, StringComparer.Ordinal))
+        {
+            recurringJobs.AddOrUpdate<LeavingSyncJob>(
+                LeavingSyncJob.JobId(country),
+                j => j.ExecuteAsync(country, false, CancellationToken.None),
+                LeavingSyncJob.Cron);
+        }
+
+        recurringJobs.AddOrUpdate<CatalogResumeJob>(
+            ResumeJobId,
+            j => j.ExecuteAsync(CancellationToken.None),
+            Cron.Daily());
+
+        recurringJobs.AddOrUpdate<EnrichmentJob>(
+            EnrichmentJob.RecurringJobId,
+            j => j.ExecuteAsync(false, CancellationToken.None),
+            Cron.Hourly());
+
+        recurringJobs.AddOrUpdate<MetadataRefreshJob>(
+            MetadataRefreshJob.RecurringJobId,
+            j => j.ExecuteAsync(false, CancellationToken.None),
+            Cron.Daily());
+
+        recurringJobs.AddOrUpdate<RecoFeatureJob>(
+            RecoFeatureJob.RecurringJobId,
+            j => j.ExecuteAsync(false, CancellationToken.None),
+            Cron.Daily());
+
+        recurringJobs.AddOrUpdate<RecoBuildJob>(
+            RecoBuildJob.RecurringJobId,
+            j => j.ExecuteAsync(null, false, CancellationToken.None),
+            Cron.Hourly());
+
+        recurringJobs.AddOrUpdate<RecoEmbeddingJob>(
+            RecoEmbeddingJob.RecurringJobId,
+            j => j.ExecuteAsync(false, false, CancellationToken.None),
+            Cron.Hourly());
+
+        var sonarrMinutes = await GetIntervalAsync(SettingsKeys.SonarrSyncIntervalMinutes, 15, cancellationToken);
+        var radarrMinutes = await GetIntervalAsync(SettingsKeys.RadarrSyncIntervalMinutes, 15, cancellationToken);
+        recurringJobs.AddOrUpdate<ArrSyncJob>(
+            ArrSyncJob.SonarrJobId,
+            j => j.ExecuteSonarrAsync(CancellationToken.None),
+            $"*/{Math.Clamp(sonarrMinutes, 1, 1440)} * * * *");
+        recurringJobs.AddOrUpdate<ArrSyncJob>(
+            ArrSyncJob.RadarrJobId,
+            j => j.ExecuteRadarrAsync(CancellationToken.None),
+            $"*/{Math.Clamp(radarrMinutes, 1, 1440)} * * * *");
+
+        logger.LogInformation(
+            "ScheduleReconciler registered {Incremental} incremental, {Full} full, and leaving catalog jobs (+ resume/enrichment/refresh/arr/reco)",
+            incrementalCount,
+            fullCount);
+    }
+
+    public static string IncrementalJobId(int sourceId) => $"catalog-incr-{sourceId}";
+    public static string FullJobId(int sourceId) => $"catalog-full-{sourceId}";
+
+    private async Task<int> GetIntervalAsync(string key, int defaultValue, CancellationToken cancellationToken)
+    {
+        var raw = await settings.GetRawAsync(key, cancellationToken);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return defaultValue;
+        }
+
+        try
+        {
+            return JsonSerializer.Deserialize<int>(raw);
+        }
+        catch (JsonException)
+        {
+            return int.TryParse(raw, out var n) ? n : defaultValue;
+        }
+    }
+}
