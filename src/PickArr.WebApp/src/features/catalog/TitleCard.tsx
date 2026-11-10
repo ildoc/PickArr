@@ -1,29 +1,51 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { TitleListItem } from '../../api/types'
 import { categoryLabelKey, formatYear } from '../../lib/format'
 import { FavoriteButton } from '../favorites/FavoriteButton'
 import { RatingButtons } from '../ratings/RatingButtons'
+import { RECO_DISMISS_FADE_MS, RECO_DISMISS_HOLD_MS } from '../ratings/ratingCache'
 import { ReasonChips } from '../reco/ReasonChips'
 import { ArrStatusBadge } from '../title/ArrStatusBadge'
 
 export function TitleCard({
   title,
   showPlaces = false,
+  dismissOnRate = false,
 }: {
   title: TitleListItem
   showPlaces?: boolean
+  /** Fade the card out after a vote on For you / recommended rows. */
+  dismissOnRate?: boolean
 }) {
   const { t } = useTranslation()
   const { pathname } = useLocation()
   const [params] = useSearchParams()
   const detailParams = new URLSearchParams(params)
   detailParams.set('title', String(title.id))
+  const [exiting, setExiting] = useState(false)
+
+  useEffect(() => {
+    if (!dismissOnRate || title.rating == null) {
+      setExiting(false)
+      return
+    }
+    const timer = window.setTimeout(() => setExiting(true), RECO_DISMISS_HOLD_MS)
+    return () => window.clearTimeout(timer)
+  }, [dismissOnRate, title.rating])
 
   return (
     <Link
       to={`${pathname}?${detailParams.toString()}`}
-      className="group flex flex-col overflow-hidden rounded-lg bg-[var(--surface-2)] outline-none ring-[var(--accent)] transition hover:ring-2 focus-visible:ring-2"
+      aria-hidden={exiting || undefined}
+      tabIndex={exiting ? -1 : undefined}
+      className={`group flex flex-col overflow-hidden rounded-lg bg-[var(--surface-2)] outline-none ring-[var(--accent)] transition-[opacity,transform] hover:ring-2 focus-visible:ring-2 ${
+        exiting
+          ? 'pointer-events-none scale-95 opacity-0'
+          : 'scale-100 opacity-100'
+      }`}
+      style={{ transitionDuration: `${RECO_DISMISS_FADE_MS}ms` }}
     >
       <div className="relative aspect-[2/3] bg-black/40">
         {title.posterUrl ? (

@@ -9,12 +9,14 @@ export function TitleGrid({
   isFetchingNextPage,
   onLoadMore,
   showPlaces = false,
+  dismissOnRate = false,
 }: {
   items: TitleListItem[]
   hasMore: boolean
   isFetchingNextPage: boolean
   onLoadMore: () => void
   showPlaces?: boolean
+  dismissOnRate?: boolean
 }) {
   const { t } = useTranslation()
   const sentinel = useRef<HTMLDivElement | null>(null)
@@ -36,7 +38,12 @@ export function TitleGrid({
     <div>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
         {items.map((title) => (
-          <TitleCard key={title.id} title={title} showPlaces={showPlaces} />
+          <TitleCard
+            key={title.id}
+            title={title}
+            showPlaces={showPlaces}
+            dismissOnRate={dismissOnRate}
+          />
         ))}
       </div>
       <div ref={sentinel} className="h-8" />

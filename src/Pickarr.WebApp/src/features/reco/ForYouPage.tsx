@@ -196,6 +196,7 @@ export function ForYouPage() {
           isFetchingNextPage={recoQuery.isFetchingNextPage}
           onLoadMore={onLoadMore}
           showPlaces
+          dismissOnRate
         />
       )}
 

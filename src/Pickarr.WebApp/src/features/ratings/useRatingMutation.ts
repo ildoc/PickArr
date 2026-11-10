@@ -1,6 +1,12 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { clearRating, setRating } from '../../api/ratings'
-import { applyOptimisticRating, invalidateRatingQueries, type UserRating } from './ratingCache'
+import {
+  applyOptimisticRating,
+  invalidateRatingQueries,
+  removeRatedRecommendation,
+  RECO_DISMISS_TOTAL_MS,
+  type UserRating,
+} from './ratingCache'
 
 export function useRatingMutation(titleId: number) {
   const queryClient = useQueryClient()
@@ -24,18 +30,43 @@ export function useRatingMutation(titleId: number) {
       const previousRatings = queryClient.getQueriesData({ queryKey: ['ratings'] })
 
       applyOptimisticRating(queryClient, titleId, next)
-      return { previousTitles, previousMyList, previousTitle, previousReco, previousRatings }
+
+      const dismissTimer =
+        next == null
+          ? null
+          : window.setTimeout(() => {
+              removeRatedRecommendation(queryClient, titleId)
+            }, RECO_DISMISS_TOTAL_MS)
+
+      return {
+        previousTitles,
+        previousMyList,
+        previousTitle,
+        previousReco,
+        previousRatings,
+        dismissTimer,
+      }
     },
     onError: (_err, _next, context) => {
       if (!context) return
+      if (context.dismissTimer != null) window.clearTimeout(context.dismissTimer)
       for (const [key, data] of context.previousTitles) queryClient.setQueryData(key, data)
       for (const [key, data] of context.previousMyList) queryClient.setQueryData(key, data)
       for (const [key, data] of context.previousTitle) queryClient.setQueryData(key, data)
       for (const [key, data] of context.previousReco) queryClient.setQueryData(key, data)
       for (const [key, data] of context.previousRatings) queryClient.setQueryData(key, data)
     },
-    onSettled: async () => {
-      await invalidateRatingQueries(queryClient, titleId)
+    onSettled: async (_data, error, next) => {
+      // Keep recommendation queries warm until the card finishes fading out.
+      const delayReco = error == null && next != null
+      await invalidateRatingQueries(queryClient, titleId, {
+        includeRecommendations: !delayReco,
+      })
+      if (delayReco) {
+        window.setTimeout(() => {
+          void queryClient.invalidateQueries({ queryKey: ['recommendations'] })
+        }, RECO_DISMISS_TOTAL_MS + 50)
+      }
     },
   })
 }

@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PagedTitles, TitleListItem } from '../../api/types'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { PagedTitles, RecommendationsPage, TitleListItem } from '../../api/types'
 import { clearRating, setRating } from '../../api/ratings'
+import { RECO_DISMISS_TOTAL_MS } from './ratingCache'
 import { useRatingMutation } from './useRatingMutation'
 
 vi.mock('../../api/ratings', () => ({
@@ -35,6 +36,10 @@ describe('useRatingMutation', () => {
     vi.clearAllMocks()
   })
 
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
   it('persists like even when my-list types/genres queries are cached', async () => {
     const client = new QueryClient({
       defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -61,5 +66,51 @@ describe('useRatingMutation', () => {
 
     const titles = client.getQueryData<{ pages: PagedTitles[] }>(['titles', 1])
     expect(titles?.pages[0]?.items[0]?.rating).toBe('like')
+  })
+
+  it('keeps a For you card until the dismiss window elapses', async () => {
+    vi.useFakeTimers()
+    const client = new QueryClient({
+      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+    })
+    client.setQueryData(
+      ['recommendations', 'global'],
+      {
+        version: 1,
+        stage: 'cold',
+        page: 1,
+        pageSize: 48,
+        total: 1,
+        items: [listItem(9)],
+      } satisfies RecommendationsPage,
+    )
+
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    const { result } = renderHook(() => useRatingMutation(9), { wrapper })
+    act(() => {
+      result.current.mutate('like')
+    })
+
+    await act(async () => {
+      await Promise.resolve()
+    })
+
+    expect(client.getQueryData<RecommendationsPage>(['recommendations', 'global'])?.items).toHaveLength(
+      1,
+    )
+    expect(
+      client.getQueryData<RecommendationsPage>(['recommendations', 'global'])?.items[0]?.rating,
+    ).toBe('like')
+
+    act(() => {
+      vi.advanceTimersByTime(RECO_DISMISS_TOTAL_MS)
+    })
+
+    expect(
+      client.getQueryData<RecommendationsPage>(['recommendations', 'global'])?.items.map((i) => i.id),
+    ).toEqual([])
   })
 })

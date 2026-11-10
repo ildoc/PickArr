@@ -1,18 +1,12 @@
 import type { AdminJob } from '../../api/admin'
 
-export type JobCountryGroup = {
-  countryCode: string
+export type JobKindGroup = {
+  kind: string
   jobs: AdminJob[]
 }
 
-export type JobProviderGroup = {
-  providerName: string
-  countries: JobCountryGroup[]
-}
-
 export type GroupedJobs = {
-  providers: JobProviderGroup[]
-  leaving: AdminJob[]
+  kinds: JobKindGroup[]
   system: AdminJob[]
 }
 
@@ -28,68 +22,59 @@ const STATE_RANK: Record<string, number> = {
   Idle: 8,
 }
 
+const KIND_ORDER = ['CatalogIncremental', 'CatalogFull', 'Leaving'] as const
+
 export function sortJobsByState(jobs: AdminJob[]): AdminJob[] {
   return [...jobs].sort(
     (a, b) => (STATE_RANK[a.executionState] ?? 9) - (STATE_RANK[b.executionState] ?? 9),
   )
 }
 
-/** Short label when the job already sits under provider + country headings. */
+function sortByProviderCountry(jobs: AdminJob[]): AdminJob[] {
+  return [...jobs].sort((a, b) => {
+    const provider = (a.providerName ?? '').localeCompare(b.providerName ?? '', undefined, {
+      sensitivity: 'base',
+    })
+    if (provider !== 0) return provider
+    return (a.countryCode ?? '').localeCompare(b.countryCode ?? '', undefined, {
+      sensitivity: 'base',
+    })
+  })
+}
+
+/** Label when the job already sits under a kind heading (provider + country, or country alone). */
 export function shortCatalogJobName(job: AdminJob): string {
-  switch (job.kind) {
-    case 'CatalogIncremental':
-      return 'Import recent titles'
-    case 'CatalogFull':
-      return 'Full catalog import'
-    default:
-      return job.displayName
+  if (job.providerName && job.countryCode) {
+    return `${job.providerName} ${job.countryCode.toUpperCase()}`
   }
+  if (job.countryCode) {
+    return job.countryCode.toUpperCase()
+  }
+  return job.displayName
 }
 
 export function groupAdminJobs(jobs: AdminJob[]): GroupedJobs {
-  const catalog: AdminJob[] = []
-  const leaving: AdminJob[] = []
+  const byKind = new Map<string, AdminJob[]>()
   const system: AdminJob[] = []
 
   for (const job of jobs) {
-    if (job.providerName && job.countryCode) {
-      catalog.push(job)
-    } else if (job.kind === 'Leaving' || (job.countryCode && !job.providerName)) {
-      leaving.push(job)
-    } else {
-      system.push(job)
+    if (job.kind === 'CatalogIncremental' || job.kind === 'CatalogFull' || job.kind === 'Leaving') {
+      const list = byKind.get(job.kind) ?? []
+      list.push(job)
+      byKind.set(job.kind, list)
+      continue
     }
+    system.push(job)
   }
 
-  const byProvider = new Map<string, Map<string, AdminJob[]>>()
-  for (const job of catalog) {
-    const provider = job.providerName!
-    const country = job.countryCode!.toUpperCase()
-    let countries = byProvider.get(provider)
-    if (!countries) {
-      countries = new Map()
-      byProvider.set(provider, countries)
-    }
-    const list = countries.get(country) ?? []
-    list.push(job)
-    countries.set(country, list)
-  }
-
-  const providers: JobProviderGroup[] = [...byProvider.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([providerName, countries]) => ({
-      providerName,
-      countries: [...countries.entries()]
-        .sort(([a], [b]) => a.localeCompare(b))
-        .map(([countryCode, countryJobs]) => ({
-          countryCode,
-          jobs: sortJobsByState(countryJobs),
-        })),
-    }))
+  const kinds: JobKindGroup[] = KIND_ORDER.flatMap((kind) => {
+    const kindJobs = byKind.get(kind)
+    if (!kindJobs?.length) return []
+    return [{ kind, jobs: sortByProviderCountry(kindJobs) }]
+  })
 
   return {
-    providers,
-    leaving: sortJobsByState(leaving),
+    kinds,
     system: sortJobsByState(system),
   }
 }

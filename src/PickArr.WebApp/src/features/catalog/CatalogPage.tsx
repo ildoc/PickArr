@@ -6,6 +6,7 @@ import { fetchCatalogTypes, fetchGenres, fetchSources, fetchTitles } from '../..
 import { loadPreferredSourceId, savePreferredSourceId } from '../../lib/sourcePreference'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { useProfiles } from '../who/profileContext'
+import { BackToTop } from '../../components/BackToTop'
 import { CatalogForYouRow } from '../reco/CatalogForYouRow'
 import { TitleDialog } from '../title/TitleDialog'
 import { FilterBar } from './FilterBar'
@@ -208,6 +209,8 @@ export function CatalogPage() {
       {titleId != null && Number.isFinite(titleId) && (
         <TitleDialog titleId={titleId} sourceId={sourceId} />
       )}
+
+      <BackToTop />
     </div>
   )
 }

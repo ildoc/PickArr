@@ -127,10 +127,10 @@ describe('JobsPage', () => {
     wrap(<JobsPage />)
 
     expect(await screen.findByText('1 running · 1 queued · 1 failed')).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 3, name: 'Netflix' })).toBeTruthy()
-    expect(screen.getByRole('heading', { level: 4, name: 'IT' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 3, name: 'Import recent titles' })).toBeTruthy()
+    expect(screen.getByText('Downloads the newest pages of the catalogs.')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Netflix IT' })).toBeTruthy()
     expect(screen.getByRole('heading', { level: 3, name: 'System' })).toBeTruthy()
-    expect(screen.getByText('Import recent titles')).toBeTruthy()
     expect(screen.getAllByText('Initial catalog import').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Resume paused imports').length).toBeGreaterThan(0)
     expect(screen.getByText(/does not download titles by itself/)).toBeTruthy()

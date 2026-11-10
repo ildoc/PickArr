@@ -55,7 +55,7 @@ function JobRow({
         >
           {title}
         </button>
-        {job.description && (
+        {!compactName && job.description && (
           <p className="mt-1 max-w-md text-xs text-[var(--muted)]">{job.description}</p>
         )}
         <div className="mt-1 text-xs text-[var(--muted)]">
@@ -216,43 +216,26 @@ export function JobsPage() {
             </p>
 
             <div className="space-y-8">
-              {grouped.providers.map((provider) => (
-                <div key={provider.providerName} className="space-y-4">
-                  <h3 className="text-base font-semibold tracking-tight text-[var(--text)]">
-                    {provider.providerName}
-                  </h3>
-                  {provider.countries.map((country) => (
-                    <div key={`${provider.providerName}-${country.countryCode}`} className="space-y-2">
-                      <h4 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
-                        {t('admin.groupCountry', { country: country.countryCode })}
-                      </h4>
-                      <JobsTable
-                        jobs={country.jobs}
-                        selectedJobKey={selectedJobKey}
-                        onSelect={setJobKey}
-                        onRun={(job) => trigger.mutate(job)}
-                        runPending={trigger.isPending}
-                        compactName
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))}
-
-              {grouped.leaving.length > 0 && (
-                <div className="space-y-2">
-                  <h3 className="text-base font-semibold tracking-tight text-[var(--text)]">
-                    {t('admin.groupLeaving')}
-                  </h3>
+              {grouped.kinds.map((group) => (
+                <div key={group.kind} className="space-y-2">
+                  <div>
+                    <h3 className="text-base font-semibold tracking-tight text-[var(--text)]">
+                      {t(`admin.kindGroup.${group.kind}.title`)}
+                    </h3>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      {t(`admin.kindGroup.${group.kind}.description`)}
+                    </p>
+                  </div>
                   <JobsTable
-                    jobs={grouped.leaving}
+                    jobs={group.jobs}
                     selectedJobKey={selectedJobKey}
                     onSelect={setJobKey}
                     onRun={(job) => trigger.mutate(job)}
                     runPending={trigger.isPending}
+                    compactName
                   />
                 </div>
-              )}
+              ))}
 
               {grouped.system.length > 0 && (
                 <div className="space-y-2">

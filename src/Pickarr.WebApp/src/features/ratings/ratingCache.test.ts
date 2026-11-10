@@ -1,7 +1,7 @@
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it } from 'vitest'
 import type { PagedTitles, RecommendationsPage, TitleDetail, TitleListItem } from '../../api/types'
-import { applyOptimisticRating } from './ratingCache'
+import { applyOptimisticRating, removeRatedRecommendation } from './ratingCache'
 
 function listItem(id: number, rating: TitleListItem['rating'] = null): TitleListItem {
   return {
@@ -108,10 +108,37 @@ describe('applyOptimisticRating', () => {
       7,
       'catalog-row',
     ])
-    expect(row?.items.map((item) => item.id)).toEqual([99])
-    expect(row?.total).toBe(1)
+    expect(row?.items.map((item) => item.id)).toEqual([42, 99])
+    expect(row?.items[0]?.rating).toBe('like')
+    expect(row?.total).toBe(2)
 
     const titles = client.getQueryData<{ pages: PagedTitles[] }>(['titles', 7])
     expect(titles?.pages[0]?.items[0]?.rating).toBe('like')
+  })
+
+  it('removes a rated recommendation after the dismiss window', () => {
+    const client = new QueryClient()
+    client.setQueryData(
+      ['recommendations', 'source', 7, 'catalog-row'],
+      {
+        version: 1,
+        stage: 'cold',
+        page: 1,
+        pageSize: 25,
+        total: 2,
+        items: [listItem(42, 'like'), listItem(99)],
+      } satisfies RecommendationsPage,
+    )
+
+    removeRatedRecommendation(client, 42)
+
+    const row = client.getQueryData<RecommendationsPage>([
+      'recommendations',
+      'source',
+      7,
+      'catalog-row',
+    ])
+    expect(row?.items.map((item) => item.id)).toEqual([99])
+    expect(row?.total).toBe(1)
   })
 })

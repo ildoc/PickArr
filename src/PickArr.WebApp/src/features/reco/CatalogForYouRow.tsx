@@ -59,7 +59,7 @@ export function CatalogForYouRow({ sourceId }: { sourceId: number }) {
       <ul className="flex gap-3 overflow-x-auto pb-1">
         {reco.data.items.map((title) => (
           <li key={title.id} className="w-[9.5rem] shrink-0 sm:w-44">
-            <TitleCard title={title} />
+            <TitleCard title={title} dismissOnRate />
           </li>
         ))}
       </ul>

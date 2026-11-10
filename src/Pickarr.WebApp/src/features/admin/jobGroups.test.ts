@@ -21,8 +21,16 @@ function job(partial: Partial<AdminJob> & Pick<AdminJob, 'jobKey' | 'displayName
 }
 
 describe('groupAdminJobs', () => {
-  it('groups catalog jobs by provider then country and keeps system separate', () => {
+  it('groups catalog jobs by kind then provider/country and keeps system separate', () => {
     const grouped = groupAdminJobs([
+      job({
+        jobKey: 'catalog-full-2',
+        displayName: 'Full catalog import (Netflix US)',
+        kind: 'CatalogFull',
+        providerName: 'Netflix',
+        countryCode: 'US',
+        sourceId: 2,
+      }),
       job({
         jobKey: 'catalog-incr-2',
         displayName: 'Import recent titles (Netflix US)',
@@ -42,10 +50,24 @@ describe('groupAdminJobs', () => {
         executionState: 'Running',
       }),
       job({
+        jobKey: 'catalog-incr-3',
+        displayName: 'Import recent titles (Apple TV+ US)',
+        kind: 'CatalogIncremental',
+        providerName: 'Apple TV+',
+        countryCode: 'US',
+        sourceId: 3,
+      }),
+      job({
         jobKey: 'catalog-leaving-IT',
         displayName: 'Titles leaving soon (IT)',
         kind: 'Leaving',
         countryCode: 'IT',
+      }),
+      job({
+        jobKey: 'catalog-leaving-US',
+        displayName: 'Titles leaving soon (US)',
+        kind: 'Leaving',
+        countryCode: 'US',
       }),
       job({
         jobKey: 'metadata-enrichment',
@@ -54,32 +76,45 @@ describe('groupAdminJobs', () => {
       }),
     ])
 
-    expect(grouped.providers).toHaveLength(1)
-    expect(grouped.providers[0]?.providerName).toBe('Netflix')
-    expect(grouped.providers[0]?.countries.map((c) => c.countryCode)).toEqual(['IT', 'US'])
-    expect(grouped.providers[0]?.countries[0]?.jobs[0]?.jobKey).toBe('catalog-incr-1')
-    expect(grouped.leaving.map((j) => j.jobKey)).toEqual(['catalog-leaving-IT'])
+    expect(grouped.kinds.map((g) => g.kind)).toEqual([
+      'CatalogIncremental',
+      'CatalogFull',
+      'Leaving',
+    ])
+    expect(grouped.kinds[0]?.jobs.map((j) => j.jobKey)).toEqual([
+      'catalog-incr-3',
+      'catalog-incr-1',
+      'catalog-incr-2',
+    ])
+    expect(grouped.kinds[1]?.jobs.map((j) => j.jobKey)).toEqual(['catalog-full-2'])
+    expect(grouped.kinds[2]?.jobs.map((j) => j.jobKey)).toEqual([
+      'catalog-leaving-IT',
+      'catalog-leaving-US',
+    ])
     expect(grouped.system.map((j) => j.jobKey)).toEqual(['metadata-enrichment'])
   })
 
-  it('shortens catalog job names under provider groups', () => {
+  it('labels catalog rows as provider + country under kind groups', () => {
     expect(
       shortCatalogJobName(
         job({
           jobKey: 'catalog-incr-1',
           displayName: 'Import recent titles (Netflix IT)',
           kind: 'CatalogIncremental',
+          providerName: 'Netflix',
+          countryCode: 'IT',
         }),
       ),
-    ).toBe('Import recent titles')
+    ).toBe('Netflix IT')
     expect(
       shortCatalogJobName(
         job({
-          jobKey: 'catalog-full-1',
-          displayName: 'Full catalog import (Netflix IT)',
-          kind: 'CatalogFull',
+          jobKey: 'catalog-leaving-US',
+          displayName: 'Titles leaving soon (US)',
+          kind: 'Leaving',
+          countryCode: 'US',
         }),
       ),
-    ).toBe('Full catalog import')
+    ).toBe('US')
   })
 })

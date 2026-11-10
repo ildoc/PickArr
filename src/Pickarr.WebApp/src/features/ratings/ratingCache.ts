@@ -57,16 +57,28 @@ function patchPagedRating(
   }
 }
 
+/** Hold the selected vote on the card, then fade out before leaving For you (FR-REC-RT-04). */
+export const RECO_DISMISS_HOLD_MS = 450
+export const RECO_DISMISS_FADE_MS = 350
+export const RECO_DISMISS_TOTAL_MS = RECO_DISMISS_HOLD_MS + RECO_DISMISS_FADE_MS
+
 function patchRecommendationsPage(
   page: RecommendationsPage,
   titleId: number,
   rating: UserRating,
 ): RecommendationsPage {
-  // Rated titles leave For you immediately (FR-REC-RT-04).
-  const items =
-    rating == null
-      ? page.items.map((item) => (item.id === titleId ? { ...item, rating: null } : item))
-      : page.items.filter((item) => item.id !== titleId)
+  // Keep the card briefly so the UI can fade it out; removal is scheduled separately.
+  return {
+    ...page,
+    items: page.items.map((item) => (item.id === titleId ? { ...item, rating } : item)),
+  }
+}
+
+function stripRecommendationTitle(
+  page: RecommendationsPage,
+  titleId: number,
+): RecommendationsPage {
+  const items = page.items.filter((item) => item.id !== titleId)
   const removed = page.items.length - items.length
   return {
     ...page,
@@ -137,13 +149,40 @@ export function applyOptimisticRating(
   )
 }
 
-export async function invalidateRatingQueries(queryClient: QueryClient, titleId: number) {
-  await Promise.all([
+/** Drop a rated title from For you / catalog reco rows after the dismiss animation. */
+export function removeRatedRecommendation(queryClient: QueryClient, titleId: number) {
+  queryClient.setQueriesData<InfiniteData<RecommendationsPage> | RecommendationsPage>(
+    { queryKey: ['recommendations'] },
+    (data) => {
+      if (isRecommendationsInfinite(data)) {
+        return {
+          ...data,
+          pages: data.pages.map((page) => stripRecommendationTitle(page, titleId)),
+        }
+      }
+      if (isRecommendationsPage(data)) {
+        return stripRecommendationTitle(data, titleId)
+      }
+      return data
+    },
+  )
+}
+
+export async function invalidateRatingQueries(
+  queryClient: QueryClient,
+  titleId: number,
+  options?: { includeRecommendations?: boolean },
+) {
+  const includeRecommendations = options?.includeRecommendations !== false
+  const tasks = [
     queryClient.invalidateQueries({ queryKey: ['titles'] }),
     queryClient.invalidateQueries({ queryKey: ['my-list'] }),
     queryClient.invalidateQueries({ queryKey: ['title', titleId] }),
-    queryClient.invalidateQueries({ queryKey: ['recommendations'] }),
     queryClient.invalidateQueries({ queryKey: ['ratings'] }),
     queryClient.invalidateQueries({ queryKey: ['reco-status'] }),
-  ])
+  ]
+  if (includeRecommendations) {
+    tasks.push(queryClient.invalidateQueries({ queryKey: ['recommendations'] }))
+  }
+  await Promise.all(tasks)
 }

@@ -43,9 +43,21 @@
     "jobsHeading": "Jobs",
     "jobsError": "Could not load jobs.",
     "jobSummary": "{{running}} running · {{queued}} queued · {{failed}} failed",
-    "groupLeaving": "Leaving dates",
     "groupSystem": "System",
-    "groupCountry": "{{country}}",
+    "kindGroup": {
+      "CatalogIncremental": {
+        "title": "Import recent titles",
+        "description": "Downloads the newest pages of the catalogs."
+      },
+      "CatalogFull": {
+        "title": "Full catalog import",
+        "description": "Walks the whole catalogs and records titles that are no longer available."
+      },
+      "Leaving": {
+        "title": "Titles leaving soon",
+        "description": "Refreshes the short preview of titles about to leave streaming catalogs (one Watchmode call per country)."
+      }
+    },
     "colJob": "Job",
     "colStatus": "Status",
     "colLast": "Last run",
@@ -123,6 +135,7 @@
     "leavingFreeNote": "Free Watchmode plan: leaving dates are a limited preview (about 10 titles per country), not a full calendar.",
     "loading": "Loading catalog…",
     "loadMore": "Load more",
+    "backToTop": "Top",
     "total": "{{count}} titles",
     "stale": "Catalog data may be stale"
   },
