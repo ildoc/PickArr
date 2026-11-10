@@ -188,6 +188,31 @@ internal static class HangfireJobKeyMapper
             };
         }
 
+        if (name == nameof(RecoFeatureJob))
+        {
+            return RecoFeatureJob.RecurringJobId;
+        }
+
+        if (name == nameof(RecoEmbeddingJob))
+        {
+            return RecoEmbeddingJob.RecurringJobId;
+        }
+
+        if (name == nameof(RecoBuildJob))
+        {
+            return RecoBuildJob.RecurringJobId;
+        }
+
+        if (name == nameof(RecoEvalJob))
+        {
+            return RecoEvalJob.JobKey;
+        }
+
+        if (name == nameof(RecoModelDownloadJob))
+        {
+            return RecoModelDownloadJob.JobKey;
+        }
+
         return null;
     }
 

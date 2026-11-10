@@ -43,6 +43,7 @@
     "jobsHeading": "Jobs",
     "jobsError": "Could not load jobs.",
     "jobSummary": "{{running}} running · {{queued}} queued · {{failed}} failed",
+    "groupRecommendations": "Recommendations",
     "groupSystem": "System",
     "kindGroup": {
       "CatalogIncremental": {

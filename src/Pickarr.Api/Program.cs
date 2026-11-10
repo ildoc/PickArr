@@ -25,6 +25,9 @@ try
     builder.Host.UseSerilog((context, services, configuration) =>
     {
         var level = LogLevelResolver.Resolve(context.Configuration);
+        // Daily files, capped per file; keep at most 7 files (~224 MB) and drop anything older than 7 days.
+        const long logFileSizeLimitBytes = 32L * 1024 * 1024;
+        const int logRetainedFileCount = 7;
         configuration
             .MinimumLevel.Is(level)
             .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
@@ -35,8 +38,12 @@ try
             .WriteTo.File(
                 Path.Combine(dataPath, "logs", "pickarr-.log"),
                 rollingInterval: RollingInterval.Day,
-                retainedFileCountLimit: 7);
+                fileSizeLimitBytes: logFileSizeLimitBytes,
+                rollOnFileSizeLimit: true,
+                retainedFileCountLimit: logRetainedFileCount,
+                retainedFileTimeLimit: TimeSpan.FromDays(7));
     });
+
 
     builder.Services.AddPickarrCore();
     builder.Services.AddPickarrInfrastructure(builder.Configuration);

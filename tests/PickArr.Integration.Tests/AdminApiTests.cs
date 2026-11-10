@@ -51,6 +51,11 @@ public sealed class AdminApiTests
         keys.ShouldContain("metadata-enrichment");
         keys.ShouldContain("catalog-bootstrap");
         keys.ShouldContain("catalog-resume");
+        keys.ShouldContain("reco-feature");
+        keys.ShouldContain("reco-embedding");
+        keys.ShouldContain("reco-build");
+        keys.ShouldContain("reco-eval");
+        keys.ShouldContain("reco-model-download");
 
         var resume = body.EnumerateArray().First(j => j.GetProperty("jobKey").GetString() == "catalog-resume");
         resume.GetProperty("displayName").GetString().ShouldBe("Resume paused imports");

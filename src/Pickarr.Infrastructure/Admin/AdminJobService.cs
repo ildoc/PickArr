@@ -176,6 +176,81 @@ public sealed class AdminJobService(
             activity,
             cancellationToken));
 
+        jobs.Add(await BuildJobAsync(
+            RecoFeatureJob.RecurringJobId,
+            JobText.RecoFeatureName,
+            JobText.RecoFeatureDescription,
+            SyncRunKinds.RecoFeature,
+            sourceId: null,
+            countryCode: null,
+            providerName: null,
+            cron: null,
+            includeRuns: true,
+            canTrigger: true,
+            recurring,
+            activity,
+            cancellationToken));
+
+        jobs.Add(await BuildJobAsync(
+            RecoEmbeddingJob.RecurringJobId,
+            JobText.RecoEmbeddingName,
+            JobText.RecoEmbeddingDescription,
+            SyncRunKinds.RecoEmbedding,
+            sourceId: null,
+            countryCode: null,
+            providerName: null,
+            cron: null,
+            includeRuns: true,
+            canTrigger: true,
+            recurring,
+            activity,
+            cancellationToken));
+
+        jobs.Add(await BuildJobAsync(
+            RecoBuildJob.RecurringJobId,
+            JobText.RecoBuildName,
+            JobText.RecoBuildDescription,
+            SyncRunKinds.RecoBuild,
+            sourceId: null,
+            countryCode: null,
+            providerName: null,
+            cron: null,
+            includeRuns: true,
+            canTrigger: true,
+            recurring,
+            activity,
+            cancellationToken));
+
+        jobs.Add(await BuildJobAsync(
+            RecoEvalJob.JobKey,
+            JobText.RecoEvalName,
+            JobText.RecoEvalDescription,
+            SyncRunKinds.RecoEval,
+            sourceId: null,
+            countryCode: null,
+            providerName: null,
+            cron: null,
+            includeRuns: true,
+            canTrigger: true,
+            recurring,
+            activity,
+            cancellationToken));
+
+        jobs.Add(await BuildJobAsync(
+            RecoModelDownloadJob.JobKey,
+            JobText.RecoModelDownloadName,
+            JobText.RecoModelDownloadDescription,
+            SyncRunKinds.RecoModelDownload,
+            sourceId: null,
+            countryCode: null,
+            providerName: null,
+            cron: null,
+            includeRuns: true,
+            canTrigger: true,
+            recurring,
+            activity,
+            cancellationToken));
+
         return jobs;
     }
 
@@ -268,6 +343,48 @@ public sealed class AdminJobService(
             var hf = await bootstrap.StartAsync(force: true, cancellationToken)
                 ?? throw new ArgumentException("Initial catalog import was not queued.");
             return new TriggerJobResult(null, hf);
+        }
+
+        if (string.Equals(jobKey, RecoFeatureJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureNotRunningAsync(SyncRunKinds.RecoFeature, sourceId: null, cancellationToken);
+            var hf = backgroundJobs.Enqueue<RecoFeatureJob>(j => j.ExecuteAsync(true, CancellationToken.None));
+            var runId = await WaitForRunAsync(SyncRunKinds.RecoFeature, sourceId: null, cancellationToken);
+            return new TriggerJobResult(runId, hf);
+        }
+
+        if (string.Equals(jobKey, RecoEmbeddingJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureNotRunningAsync(SyncRunKinds.RecoEmbedding, sourceId: null, cancellationToken);
+            var hf = backgroundJobs.Enqueue<RecoEmbeddingJob>(
+                j => j.ExecuteAsync(false, true, CancellationToken.None));
+            var runId = await WaitForRunAsync(SyncRunKinds.RecoEmbedding, sourceId: null, cancellationToken);
+            return new TriggerJobResult(runId, hf);
+        }
+
+        if (string.Equals(jobKey, RecoBuildJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureNotRunningAsync(SyncRunKinds.RecoBuild, sourceId: null, cancellationToken);
+            var hf = backgroundJobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(null, true, CancellationToken.None));
+            var runId = await WaitForRunAsync(SyncRunKinds.RecoBuild, sourceId: null, cancellationToken);
+            return new TriggerJobResult(runId, hf);
+        }
+
+        if (string.Equals(jobKey, RecoEvalJob.JobKey, StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureNotRunningAsync(SyncRunKinds.RecoEval, sourceId: null, cancellationToken);
+            var hf = backgroundJobs.Enqueue<RecoEvalJob>(j => j.ExecuteAsync(CancellationToken.None));
+            var runId = await WaitForRunAsync(SyncRunKinds.RecoEval, sourceId: null, cancellationToken);
+            return new TriggerJobResult(runId, hf);
+        }
+
+        if (string.Equals(jobKey, RecoModelDownloadJob.JobKey, StringComparison.OrdinalIgnoreCase))
+        {
+            await EnsureNotRunningAsync(SyncRunKinds.RecoModelDownload, sourceId: null, cancellationToken);
+            var hf = backgroundJobs.Enqueue<RecoModelDownloadJob>(
+                j => j.ExecuteAsync(false, CancellationToken.None));
+            var runId = await WaitForRunAsync(SyncRunKinds.RecoModelDownload, sourceId: null, cancellationToken);
+            return new TriggerJobResult(runId, hf);
         }
 
         throw new ArgumentException($"Unknown jobKey '{jobKey}'.");
@@ -543,6 +660,36 @@ public sealed class AdminJobService(
             || string.Equals(jobKey, ArrSyncJob.RadarrJobId, StringComparison.OrdinalIgnoreCase))
         {
             kind = SyncRunKinds.ArrSync;
+            return true;
+        }
+
+        if (string.Equals(jobKey, RecoFeatureJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            kind = SyncRunKinds.RecoFeature;
+            return true;
+        }
+
+        if (string.Equals(jobKey, RecoEmbeddingJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            kind = SyncRunKinds.RecoEmbedding;
+            return true;
+        }
+
+        if (string.Equals(jobKey, RecoBuildJob.RecurringJobId, StringComparison.OrdinalIgnoreCase))
+        {
+            kind = SyncRunKinds.RecoBuild;
+            return true;
+        }
+
+        if (string.Equals(jobKey, RecoEvalJob.JobKey, StringComparison.OrdinalIgnoreCase))
+        {
+            kind = SyncRunKinds.RecoEval;
+            return true;
+        }
+
+        if (string.Equals(jobKey, RecoModelDownloadJob.JobKey, StringComparison.OrdinalIgnoreCase))
+        {
+            kind = SyncRunKinds.RecoModelDownload;
             return true;
         }
 

@@ -7,6 +7,7 @@ export type JobKindGroup = {
 
 export type GroupedJobs = {
   kinds: JobKindGroup[]
+  recommendations: AdminJob[]
   system: AdminJob[]
 }
 
@@ -23,6 +24,16 @@ const STATE_RANK: Record<string, number> = {
 }
 
 const KIND_ORDER = ['CatalogIncremental', 'CatalogFull', 'Leaving'] as const
+
+const RECO_KIND_ORDER = [
+  'RecoFeature',
+  'RecoEmbedding',
+  'RecoBuild',
+  'RecoEval',
+  'RecoModelDownload',
+] as const
+
+const RECO_KINDS = new Set<string>(RECO_KIND_ORDER)
 
 export function sortJobsByState(jobs: AdminJob[]): AdminJob[] {
   return [...jobs].sort(
@@ -42,6 +53,17 @@ function sortByProviderCountry(jobs: AdminJob[]): AdminJob[] {
   })
 }
 
+function sortRecoJobs(jobs: AdminJob[]): AdminJob[] {
+  return [...jobs].sort((a, b) => {
+    const ai = RECO_KIND_ORDER.indexOf(a.kind as (typeof RECO_KIND_ORDER)[number])
+    const bi = RECO_KIND_ORDER.indexOf(b.kind as (typeof RECO_KIND_ORDER)[number])
+    const aRank = ai === -1 ? RECO_KIND_ORDER.length : ai
+    const bRank = bi === -1 ? RECO_KIND_ORDER.length : bi
+    if (aRank !== bRank) return aRank - bRank
+    return (STATE_RANK[a.executionState] ?? 9) - (STATE_RANK[b.executionState] ?? 9)
+  })
+}
+
 /** Label when the job already sits under a kind heading (provider + country, or country alone). */
 export function shortCatalogJobName(job: AdminJob): string {
   if (job.providerName && job.countryCode) {
@@ -55,6 +77,7 @@ export function shortCatalogJobName(job: AdminJob): string {
 
 export function groupAdminJobs(jobs: AdminJob[]): GroupedJobs {
   const byKind = new Map<string, AdminJob[]>()
+  const recommendations: AdminJob[] = []
   const system: AdminJob[] = []
 
   for (const job of jobs) {
@@ -62,6 +85,10 @@ export function groupAdminJobs(jobs: AdminJob[]): GroupedJobs {
       const list = byKind.get(job.kind) ?? []
       list.push(job)
       byKind.set(job.kind, list)
+      continue
+    }
+    if (RECO_KINDS.has(job.kind)) {
+      recommendations.push(job)
       continue
     }
     system.push(job)
@@ -75,6 +102,7 @@ export function groupAdminJobs(jobs: AdminJob[]): GroupedJobs {
 
   return {
     kinds,
+    recommendations: sortRecoJobs(recommendations),
     system: sortJobsByState(system),
   }
 }

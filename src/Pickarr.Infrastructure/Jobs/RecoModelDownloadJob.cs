@@ -10,6 +10,8 @@ public sealed class RecoModelDownloadJob(
     ISyncRunStore syncRuns,
     ILogger<RecoModelDownloadJob> logger)
 {
+    public const string JobKey = "reco-model-download";
+
     [Queue("ml")]
     [DisableConcurrentExecution(timeoutInSeconds: 60 * 60)]
     public async Task ExecuteAsync(bool detectOnly = false, CancellationToken cancellationToken = default)

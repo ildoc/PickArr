@@ -70,6 +70,16 @@ describe('groupAdminJobs', () => {
         countryCode: 'US',
       }),
       job({
+        jobKey: 'reco-build',
+        displayName: 'Recommendations rebuild',
+        kind: 'RecoBuild',
+      }),
+      job({
+        jobKey: 'reco-embedding',
+        displayName: 'Title embeddings',
+        kind: 'RecoEmbedding',
+      }),
+      job({
         jobKey: 'metadata-enrichment',
         displayName: 'Metadata enrichment',
         kind: 'Enrichment',
@@ -90,6 +100,10 @@ describe('groupAdminJobs', () => {
     expect(grouped.kinds[2]?.jobs.map((j) => j.jobKey)).toEqual([
       'catalog-leaving-IT',
       'catalog-leaving-US',
+    ])
+    expect(grouped.recommendations.map((j) => j.jobKey)).toEqual([
+      'reco-embedding',
+      'reco-build',
     ])
     expect(grouped.system.map((j) => j.jobKey)).toEqual(['metadata-enrichment'])
   })

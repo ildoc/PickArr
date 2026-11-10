@@ -237,6 +237,21 @@ export function JobsPage() {
                 </div>
               ))}
 
+              {grouped.recommendations.length > 0 && (
+                <div className="space-y-2">
+                  <h3 className="text-base font-semibold tracking-tight text-[var(--text)]">
+                    {t('admin.groupRecommendations')}
+                  </h3>
+                  <JobsTable
+                    jobs={grouped.recommendations}
+                    selectedJobKey={selectedJobKey}
+                    onSelect={setJobKey}
+                    onRun={(job) => trigger.mutate(job)}
+                    runPending={trigger.isPending}
+                  />
+                </div>
+              )}
+
               {grouped.system.length > 0 && (
                 <div className="space-y-2">
                   <h3 className="text-base font-semibold tracking-tight text-[var(--text)]">

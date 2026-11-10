@@ -55,4 +55,29 @@ internal static class JobText
 
     public const string RadarrDescription =
         "Reads the Radarr library and matches it to catalog titles.";
+
+    public const string RecoFeatureName = "Recommendation features";
+
+    public const string RecoFeatureDescription =
+        "Backfills keywords, credits, and English metadata that recommendations need for Ready titles.";
+
+    public const string RecoEmbeddingName = "Title embeddings";
+
+    public const string RecoEmbeddingDescription =
+        "Computes or refreshes ONNX embeddings for titles that are missing them or whose text changed.";
+
+    public const string RecoBuildName = "Recommendations rebuild";
+
+    public const string RecoBuildDescription =
+        "Rebuilds taste profiles and recommendation scores for every profile and publishes a new version.";
+
+    public const string RecoEvalName = "Recommendation evaluation";
+
+    public const string RecoEvalDescription =
+        "Runs the offline evaluation report for the current recommendation pipeline.";
+
+    public const string RecoModelDownloadName = "Recommendation model";
+
+    public const string RecoModelDownloadDescription =
+        "Downloads the ONNX embedding model, verifies its hash, and runs the self-test.";
 }

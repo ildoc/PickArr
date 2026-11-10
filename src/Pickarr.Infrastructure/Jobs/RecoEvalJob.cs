@@ -10,6 +10,8 @@ public sealed class RecoEvalJob(
     ISyncRunStore syncRuns,
     ILogger<RecoEvalJob> logger)
 {
+    public const string JobKey = "reco-eval";
+
     [Queue("ml")]
     [DisableConcurrentExecution(timeoutInSeconds: 60 * 30)]
     public async Task ExecuteAsync(CancellationToken cancellationToken = default)

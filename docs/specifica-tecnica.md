@@ -1113,7 +1113,7 @@ Profilo attivo in `localStorage` `pickarr.profileId`; il client lo manda come `X
 
 ## 11. Osservabilità
 
-- **Logging:** Serilog, formato JSON su console (`docker logs`) e file rotante in `/config/logs` (7 giorni). Livello configurabile (`LOG_LEVEL`, default `Debug`). Proprietà di contesto: `RunId`, `SourceId`, `Job`, `Kind`.
+- **Logging:** Serilog, formato JSON su console (`docker logs`) e file rotante in `/config/logs` (rotation giornaliera, max 32 MB per file, al massimo 7 file e non oltre 7 giorni). Livello configurabile (`LOG_LEVEL`, default `Debug`). Proprietà di contesto: `RunId`, `SourceId`, `Job`, `Kind`.
 - **Health:** `/health` (liveness, sempre 200 se il processo risponde) e `/health/ready` (verifica apertura DB e storage Hangfire).
 - **Business metrics:** `SyncRuns` e `ApiUsage` sono la fonte per la pagina Admin; non serve uno stack di metriche esterno.
 - **OpenTelemetry (C):** export OTLP opzionale con variabile d'ambiente, spento di default.

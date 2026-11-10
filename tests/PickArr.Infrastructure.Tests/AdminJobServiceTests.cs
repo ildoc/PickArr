@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Admin;
+using Pickarr.Core.Domain;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Admin;
 using Pickarr.Infrastructure.Jobs;
@@ -59,6 +60,26 @@ public sealed class AdminJobServiceTests
             fx.Sut.TriggerAsync("not-a-real-job", new TriggerJobRequest(null, null)));
 
         error.Message.ShouldContain("Unknown jobKey");
+    }
+
+    [Fact]
+    public async Task ListJobsAsync_includes_recommendation_jobs()
+    {
+        await using var fx = await Fixture.CreateAsync();
+
+        var jobs = await fx.Sut.ListJobsAsync();
+        var keys = jobs.Select(job => job.JobKey).ToList();
+
+        keys.ShouldContain(RecoFeatureJob.RecurringJobId);
+        keys.ShouldContain(RecoEmbeddingJob.RecurringJobId);
+        keys.ShouldContain(RecoBuildJob.RecurringJobId);
+        keys.ShouldContain(RecoEvalJob.JobKey);
+        keys.ShouldContain(RecoModelDownloadJob.JobKey);
+
+        var build = jobs.Single(job => job.JobKey == RecoBuildJob.RecurringJobId);
+        build.DisplayName.ShouldBe("Recommendations rebuild");
+        build.CanTrigger.ShouldBeTrue();
+        build.Kind.ShouldBe(SyncRunKinds.RecoBuild);
     }
 
     [Fact]

@@ -75,6 +75,16 @@ public sealed class JobStateTests
             .ShouldBe("arr-sync-sonarr");
         HangfireJobKeyMapper.Resolve(JobFor(typeof(ArrSyncJob), nameof(ArrSyncJob.ExecuteRadarrAsync)))
             .ShouldBe("arr-sync-radarr");
+        HangfireJobKeyMapper.Resolve(JobFor(typeof(RecoFeatureJob), nameof(RecoFeatureJob.ExecuteAsync)))
+            .ShouldBe(RecoFeatureJob.RecurringJobId);
+        HangfireJobKeyMapper.Resolve(JobFor(typeof(RecoEmbeddingJob), nameof(RecoEmbeddingJob.ExecuteAsync)))
+            .ShouldBe(RecoEmbeddingJob.RecurringJobId);
+        HangfireJobKeyMapper.Resolve(JobFor(typeof(RecoBuildJob), nameof(RecoBuildJob.ExecuteAsync)))
+            .ShouldBe(RecoBuildJob.RecurringJobId);
+        HangfireJobKeyMapper.Resolve(JobFor(typeof(RecoEvalJob), nameof(RecoEvalJob.ExecuteAsync)))
+            .ShouldBe(RecoEvalJob.JobKey);
+        HangfireJobKeyMapper.Resolve(JobFor(typeof(RecoModelDownloadJob), nameof(RecoModelDownloadJob.ExecuteAsync)))
+            .ShouldBe(RecoModelDownloadJob.JobKey);
     }
 
     private static Job JobForLeaving(string countryCode)
