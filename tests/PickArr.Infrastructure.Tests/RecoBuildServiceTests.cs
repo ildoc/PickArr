@@ -106,6 +106,45 @@ public sealed class RecoBuildServiceTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Build_tmdb_edge_from_like_lifts_related_title()
+    {
+        var (db, build, _, adminId) = await SeedL1Async(new EmptySettingsStore(new Dictionary<string, string>
+        {
+            [SettingsKeys.RecoTmdbAmplifierMaxShare] = "0.5",
+        }));
+
+        // Equal sparse features for 102 and 103 so only the TMDB hop decides between them.
+        var dramaLink = await db.TitleGenres.SingleAsync(tg => tg.TitleId == 103 && tg.GenreId == 18);
+        db.TitleGenres.Remove(dramaLink);
+        db.TitleGenres.Add(new TitleGenre { TitleId = 103, GenreId = 878 });
+        db.Ratings.Add(new Rating
+        {
+            ProfileId = adminId,
+            TitleId = 101,
+            Value = RatingValues.Like,
+            RatedAt = DateTime.UtcNow,
+        });
+        db.TitleTmdbRecommendations.Add(new TitleTmdbRecommendation
+        {
+            SourceTitleId = 101,
+            RelatedTitleId = 103,
+            Rank = 1,
+        });
+        await db.SaveChangesAsync();
+
+        await build.BuildAsync();
+
+        var rows = await db.Recommendations.Where(r => r.Version == 1).ToListAsync();
+        var related = rows.Single(r => r.TitleId == 103);
+        var sibling = rows.Single(r => r.TitleId == 102);
+        related.Personal.ShouldNotBeNull();
+        sibling.Personal.ShouldNotBeNull();
+        related.Personal!.Value.ShouldBeGreaterThan(sibling.Personal!.Value);
+        related.Rank.ShouldBeLessThan(sibling.Rank);
+        related.ReasonsJson.ShouldContain(RecoReasons.SimilarTo);
+    }
+
+    [Fact]
     public async Task Build_cold_profile_lifts_another_profiles_love_and_keeps_half_the_prior()
     {
         var (db, build, _, adminId) = await SeedL1Async();

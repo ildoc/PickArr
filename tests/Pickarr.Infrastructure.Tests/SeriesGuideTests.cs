@@ -179,6 +179,12 @@ public sealed class SeriesGuideTests
         public Task<TmdbTitleDetails?> GetMovieAsync(int tmdbId, string language, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<IReadOnlyList<TmdbRecommendationRef>> GetRecommendationsAsync(
+            int tmdbId,
+            bool isMovie,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<TmdbRecommendationRef>>([]);
+
         public Task<TmdbFindResult?> FindByImdbAsync(string imdbId, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

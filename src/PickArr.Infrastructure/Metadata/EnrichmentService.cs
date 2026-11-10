@@ -97,7 +97,8 @@ public sealed class EnrichmentService(
                     !t.TitleKeywords.Any()
                     || !t.TitleCredits.Any()
                     || !t.Localizations.Any(l => l.Language == english)
-                    || t.OriginCountries == null))
+                    || t.OriginCountries == null
+                    || t.TmdbRecommendationsFetchedAt == null))
             .OrderBy(t => t.Id)
             .Take(limit)
             .ToListAsync(cancellationToken);
@@ -217,6 +218,7 @@ public sealed class EnrichmentService(
         await UpsertGenresAsync(title, primary, languages[0], cancellationToken);
         await UpsertKeywordsAsync(title, primary, cancellationToken);
         await UpsertCreditsAsync(title, primary, cancellationToken);
+        await UpsertTmdbRecommendationsAsync(title, primary.IsMovie, cancellationToken);
         title.MetadataStatus = MetadataStatuses.Ready;
         title.MetadataFetchedAt = clock.UtcNow;
         title.MetadataAttempts = 0;
@@ -499,6 +501,73 @@ public sealed class EnrichmentService(
             }
         }
 
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// Persist TMDB recommendation edges that already exist as local Titles. Never inserts
+    /// catalog rows for TMDB-only ids (docs §1.3). Always stamps FetchedAt so empty
+    /// intersections are not re-fetched forever.
+    /// </summary>
+    private async Task UpsertTmdbRecommendationsAsync(
+        Title title,
+        bool isMovie,
+        CancellationToken cancellationToken)
+    {
+        if (title.TmdbId is not > 0 || string.IsNullOrWhiteSpace(title.TmdbType))
+        {
+            return;
+        }
+
+        // Refresh only when missing or when the feature job force-refreshes metadata.
+        // EnrichCore always runs this; skip network if already fetched unless force path
+        // cleared the stamp (feature backfill selects null FetchedAt).
+        if (title.TmdbRecommendationsFetchedAt is not null)
+        {
+            return;
+        }
+
+        var refs = await metadata.GetRecommendationsAsync(title.TmdbId.Value, isMovie, cancellationToken);
+        var expectedType = isMovie ? "movie" : "tv";
+
+        await db.TitleTmdbRecommendations
+            .Where(r => r.SourceTitleId == title.Id)
+            .ExecuteDeleteAsync(cancellationToken);
+
+        if (refs.Count > 0)
+        {
+            var tmdbIds = refs.Select(r => r.TmdbId).Distinct().ToList();
+            var local = await db.Titles.AsNoTracking()
+                .Where(t =>
+                    t.Id != title.Id
+                    && t.TmdbId != null
+                    && tmdbIds.Contains(t.TmdbId.Value)
+                    && t.TmdbType != null
+                    && t.TmdbType.ToLower() == expectedType)
+                .Select(t => new { t.Id, TmdbId = t.TmdbId!.Value })
+                .ToListAsync(cancellationToken);
+            var byTmdbId = local
+                .GroupBy(t => t.TmdbId)
+                .ToDictionary(g => g.Key, g => g.First().Id);
+
+            var seenRelated = new HashSet<int>();
+            foreach (var item in refs.OrderBy(r => r.Rank))
+            {
+                if (!byTmdbId.TryGetValue(item.TmdbId, out var relatedId) || !seenRelated.Add(relatedId))
+                {
+                    continue;
+                }
+
+                db.TitleTmdbRecommendations.Add(new TitleTmdbRecommendation
+                {
+                    SourceTitleId = title.Id,
+                    RelatedTitleId = relatedId,
+                    Rank = item.Rank,
+                });
+            }
+        }
+
+        title.TmdbRecommendationsFetchedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
     }
 }

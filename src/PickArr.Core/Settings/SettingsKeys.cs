@@ -38,6 +38,7 @@ public static class SettingsKeys
     public const string RecoWeightDownloaded = "reco.weights.downloaded";
     public const string RecoWeightWatched = "reco.weights.watched";
     public const string RecoN0 = "reco.n0";
+    public const string RecoTmdbAmplifierMaxShare = "reco.tmdbAmplifier.maxShare";
     public const string RecoExcludeInLibrary = "reco.excludeInLibrary";
     public const string RecoEmbeddingsEnabled = "reco.embeddings.enabled";
     public const string RecoEmbeddingsModelId = "reco.embeddings.modelId";

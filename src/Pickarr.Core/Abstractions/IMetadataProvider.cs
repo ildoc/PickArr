@@ -13,6 +13,11 @@ public interface IMetadataProvider
         int seasonNumber,
         string language,
         CancellationToken cancellationToken = default);
+    /// <summary>TMDB item–item recommendations (page 1). Empty when the resource is missing.</summary>
+    Task<IReadOnlyList<TmdbRecommendationRef>> GetRecommendationsAsync(
+        int tmdbId,
+        bool isMovie,
+        CancellationToken cancellationToken = default);
     Task<TmdbFindResult?> FindByImdbAsync(string imdbId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TmdbGenre>> GetMovieGenresAsync(string language, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<TmdbGenre>> GetTvGenresAsync(string language, CancellationToken cancellationToken = default);

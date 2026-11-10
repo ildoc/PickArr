@@ -70,7 +70,7 @@ Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 
 ### 1.3 Fuori ambito
 
-- Consigli di titoli che non hanno nessuna riga `Availability` su una sorgente abilitata. Non si importano candidati da TMDB `recommendations`, `similar` o `discover` solo per consigliarli.
+- Consigli di titoli che non hanno nessuna riga `Availability` su una sorgente abilitata. Non si importano candidati da TMDB `recommendations`, `similar` o `discover` solo per consigliarli. Gli archi TMDB `/recommendations` si usano solo come **amplificatore** dei segnali locali sui titoli già in catalogo.
 - Scope «tutto TMDB», etichetta *Fuori catalogo*, watch providers TMDB/JustWatch.
 - ~~Stato *Nascondi* generico~~ — superseduto: **Hide** (`Watched`) esclude senza peso di gusto (default 0); **Not interested** è un voto esplicito negativo ed esclude.
 - Ordinamento *Per te* mescolato nella griglia del catalogo. I consigli per **una** sorgente stanno in una **riga dedicata** su `/catalog` (al più 25 titoli). La pagina `/for-you` copre l’unione delle sorgenti abilitate.
@@ -536,7 +536,8 @@ Modifiche:
 - Persistere `TmdbTitleDetails.Keywords` in `Keywords` / `TitleKeywords` dentro `EnrichCoreAsync` (oggi la lista è usata solo da `TmdbStandUp`).
 - Estendere `TmdbCreditsDto` con id persona e crew (`Director`) e, per le serie, `created_by`. Mapparli in `TmdbTitleDetails` e salvarli in `People` / `TitleCredits`. `CastJson` continua a essere la lista di nomi per la scheda.
 - Se nessuna `TitleLocalization` è `en-US`, una chiamata aggiuntiva `GetMovie` / `GetTv` con `language=en-US`, scritta nella stessa tabella (la chiave è già `(TitleId, Language)`). Vale per gli embedding (BR-REC-09). Il limitatore TMDB già presente si applica anche a questa chiamata.
-- `RecoFeatureJob` seleziona i `Title` `Ready` del pool a cui manca uno di questi pezzi e riusa il servizio. Non inserisce titoli.
+- Dopo i dettagli: `GET /movie|tv/{id}/recommendations` (pagina 1). Si persistono solo gli id TMDB già presenti come `Title` locale in `TitleTmdbRecommendations` (arco sorgente→correlato + rank). `Title.TmdbRecommendationsFetchedAt` si scrive anche se l’intersezione è vuota, così non si ripete la chiamata. Nessun titolo nuovo.
+- `RecoFeatureJob` seleziona i `Title` `Ready` del pool a cui manca uno di questi pezzi (keyword, crediti, en-US, origin countries, o stamp raccomandazioni) e riusa il servizio. Non inserisce titoli.
 
 `OriginCountries`, se si aggiunge la colonna, si legge dallo stesso dettaglio TMDB quando il campo c’è nel DTO.
 
@@ -578,17 +579,20 @@ aggiorna RecoState.EmbeddingCoverage sul pool
 raw      = min(1, N_eff / N0)                 N0 = 30
 w        = min(raw, 1 − ε)                    ε = 0,1
 h        = 0 se nessun Love/Like altrui, altrimenti 0,5 · (1 − raw)
+c        = c_max · (1 − raw)                  c_max = 0,25 (reco.tmdbAmplifier.maxShare)
 Prior'(t)= (1 − h) · Prior(t) + h · Household(t)
 Score(t) = (1 − w) · Prior'(t) + w · Personal(t)
-Personal = a · Sparse(t) + b · Knn(t)         b = 0 se il modello non c’è; a + b = 1
+Base     = a · Sparse(t) + b · Knn(t)         b = 0 se il modello non c’è; a + b = 1
+Personal = (1 − c) · Base + c · TmdbAmp(t)    solo se t è raggiunto dal grafo; altrimenti Base
 ```
 
-`N_eff` e `FuseScore` restano quelli di `RecoLearning`. Il termine di casa modifica solo lo slot prior prima della fusione. Pesi iniziali `a = 0,4`, `b = 0,6`. Senza modello, `a = 1`. I punteggi componenti sono normalizzati in [0, 1] sul pool prima della fusione. `Household` è il livello 1 sparso sulla media Love/Like degli altri profili (BR-REC-15).
+`N_eff` e `FuseScore` restano quelli di `RecoLearning`. Il termine di casa modifica solo lo slot prior prima della fusione. Pesi iniziali `a = 0,4`, `b = 0,6`. Senza modello, `a = 1`. I punteggi componenti sono normalizzati in [0, 1] sul pool prima della fusione. `Household` è il livello 1 sparso sulla media Love/Like degli altri profili (BR-REC-15). `TmdbAmp` propaga i segnali positivi locali lungo gli archi TMDB `/recommendations` già intersecati col pool (niente titoli fuori catalogo); a `N_eff ≥ N0`, `c = 0`.
 
 | Livello | Cosa | Richiede | Attivo da |
 |---|---|---|---|
 | 0 | Prior | `VoteTmdb`, `VoteTmdbCount`, `Popularity` | sempre |
 | 1 | Profilo sparso | segnali + generi (keyword e crediti quando persistiti) | `N_eff > 0` |
+| 1b | Amplificatore TMDB | archi in-catalogo da `/recommendations` | `N_eff > 0` e `c > 0` |
 | 2 | kNN embedding | modello + copertura | `N_eff > 0` e copertura ≥ 80% |
 | 3 | Classificatore | ≥ 100 voti espliciti e validazione | opzionale (§12.6) |
 
@@ -952,6 +956,7 @@ Chiavi in `AppSetting` / `SettingsKeys`, lette come le altre impostazioni.
 | `reco.weights.watched` | `0` | Hide: esclusione senza massa di gusto |
 | `reco.halfLifeDays` | `0` | 0 = nessun decadimento |
 | `reco.n0` | `30` | |
+| `reco.tmdbAmplifier.maxShare` | `0.25` | tetto del grafo TMDB nello slot personale a freddo; 0 a `N0` |
 | `reco.priorResidual` | `0.1` | ε |
 | `reco.sparse.weight` | `0.4` | |
 | `reco.knn.weight` | `0.6` | |

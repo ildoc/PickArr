@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Pickarr.Api.Endpoints;
+using Pickarr.Api.Logging;
 using Pickarr.Core;
 using Pickarr.Infrastructure;
 using Pickarr.Infrastructure.Jobs;
 using Pickarr.Infrastructure.Persistence;
 using Serilog;
+using Serilog.Events;
 
 Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Is(LogLevelResolver.Parse(Environment.GetEnvironmentVariable(LogLevelResolver.EnvironmentVariableName)))
     .WriteTo.Console()
     .CreateLogger();
 
@@ -19,15 +22,21 @@ try
     Directory.CreateDirectory(dataPath);
     Directory.CreateDirectory(Path.Combine(dataPath, "logs"));
 
-    builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext()
-        .WriteTo.Console()
-        .WriteTo.File(
-            Path.Combine(dataPath, "logs", "pickarr-.log"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 7));
+    builder.Host.UseSerilog((context, services, configuration) =>
+    {
+        var level = LogLevelResolver.Resolve(context.Configuration);
+        configuration
+            .MinimumLevel.Is(level)
+            .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+            .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .WriteTo.Console()
+            .WriteTo.File(
+                Path.Combine(dataPath, "logs", "pickarr-.log"),
+                rollingInterval: RollingInterval.Day,
+                retainedFileCountLimit: 7);
+    });
 
     builder.Services.AddPickarrCore();
     builder.Services.AddPickarrInfrastructure(builder.Configuration);

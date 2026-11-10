@@ -136,7 +136,7 @@ A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
 | `Pickarr__Watchmode__RequestsPerSecond` | `1` | |
 | `Pickarr__Tmdb__BaseUrl` | `https://api.themoviedb.org/3/` | |
 | `Pickarr__Tmdb__RequestsPerSecond` | `20` | |
-| `Serilog__MinimumLevel__Default` | `Information` | |
+| `LOG_LEVEL` | `Debug` | Serilog minimum level (`Verbose`/`Debug`/`Information`/`Warning`/`Error`/`Fatal`). |
 
 `Hangfire__Storage` defaults to `Sqlite` (`jobs.db` under the data path). `Memory` drops the queue on restart.
 

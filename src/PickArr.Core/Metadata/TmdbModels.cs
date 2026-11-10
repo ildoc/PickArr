@@ -50,4 +50,7 @@ public sealed record TmdbEpisode(
 
 public sealed record TmdbFindResult(int TmdbId, string TmdbType);
 
+/// <summary>One entry from TMDB <c>/movie|tv/{id}/recommendations</c> (same media type as the source).</summary>
+public sealed record TmdbRecommendationRef(int TmdbId, int Rank);
+
 public sealed record TmdbImageConfig(string SecureBaseUrl, DateTime FetchedAt);

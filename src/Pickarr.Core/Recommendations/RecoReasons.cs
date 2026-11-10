@@ -62,7 +62,8 @@ public static class RecoReasons
         IReadOnlyDictionary<int, string> titleNames,
         Func<string, string?>? resolveTermLabel = null,
         double similarMin = DefaultSimilarToMinSimilarity,
-        IReadOnlyDictionary<int, SparseVector>? positiveCandidates = null)
+        IReadOnlyDictionary<int, SparseVector>? positiveCandidates = null,
+        (int SourceTitleId, double Contribution)? tmdbContributor = null)
     {
         var reasons = new List<RecoReasonDto>(MaxReasons);
 
@@ -101,6 +102,26 @@ public static class RecoReasons
                 }
             }
 
+            // TMDB graph: fill a similarTo slot when sparse neighbours are thin.
+            if (tmdbContributor is { } tmdb
+                && SimilarToCount(reasons) < MaxSimilarTo
+                && reasons.Count < MaxReasons
+                && !reasons.Any(r => r.Kind == SimilarTo && r.TitleId == tmdb.SourceTitleId))
+            {
+                titleNames.TryGetValue(tmdb.SourceTitleId, out var tmdbName);
+                reasons.Insert(
+                    0,
+                    new RecoReasonDto(
+                        SimilarTo,
+                        TitleId: tmdb.SourceTitleId,
+                        Name: tmdbName,
+                        Similarity: Math.Round(Math.Min(1.0, tmdb.Contribution), 4)));
+                while (reasons.Count > MaxReasons)
+                {
+                    reasons.RemoveAt(reasons.Count - 1);
+                }
+            }
+
             if (reasons.Count < MaxReasons
                 && titleVector is not null
                 && !titleVector.IsEmpty)
@@ -133,6 +154,20 @@ public static class RecoReasons
         }
 
         return reasons;
+    }
+
+    private static int SimilarToCount(IReadOnlyList<RecoReasonDto> reasons)
+    {
+        var count = 0;
+        foreach (var reason in reasons)
+        {
+            if (reason.Kind == SimilarTo)
+            {
+                count++;
+            }
+        }
+
+        return count;
     }
 }
 

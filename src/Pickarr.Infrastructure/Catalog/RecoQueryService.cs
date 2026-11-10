@@ -999,6 +999,19 @@ public sealed class RecoQueryService(
                 cancellationToken);
         }
 
+        var tmdbOutgoing = await db.TitleTmdbRecommendations.AsNoTracking()
+            .Where(e => e.SourceTitleId == query.TitleId && enabledPoolSet.Contains(e.RelatedTitleId))
+            .Select(e => new { e.RelatedTitleId, e.Rank })
+            .ToListAsync(cancellationToken);
+        if (tmdbOutgoing.Count > 0)
+        {
+            similar = RecoTmdbBoost.MergeSimilar(
+                similar,
+                tmdbOutgoing.Select(e => (e.RelatedTitleId, e.Rank)).ToList(),
+                limit,
+                exclude);
+        }
+
         if (similar.Count == 0)
         {
             return new SimilarTitlesDto([]);

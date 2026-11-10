@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
 import { fetchAdminJobs, triggerAdminJob, type AdminJob } from '../../api/admin'
-import { formatDate } from '../../lib/format'
+import { formatDateTime } from '../../lib/format'
 import { groupAdminJobs, shortCatalogJobName } from './jobGroups'
 import { QuotaPanel } from './QuotaPanel'
 import { RunsTable } from './RunsTable'
@@ -74,8 +74,8 @@ function JobRow({
           {t(`admin.state.${job.executionState}`, { defaultValue: job.executionState })}
         </span>
       </td>
-      <td className="px-3 py-2 text-[var(--muted)]">{formatDate(job.lastExecution, i18n.language)}</td>
-      <td className="px-3 py-2 text-[var(--muted)]">{formatDate(job.nextExecution, i18n.language)}</td>
+      <td className="px-3 py-2 text-[var(--muted)]">{formatDateTime(job.lastExecution, i18n.language)}</td>
+      <td className="px-3 py-2 text-[var(--muted)]">{formatDateTime(job.nextExecution, i18n.language)}</td>
       <td className="px-3 py-2 text-right">
         <button
           type="button"

@@ -59,6 +59,33 @@ public sealed class TmdbMetadataProvider(
             .ToList() ?? [];
     }
 
+    public async Task<IReadOnlyList<TmdbRecommendationRef>> GetRecommendationsAsync(
+        int tmdbId,
+        bool isMovie,
+        CancellationToken cancellationToken = default)
+    {
+        var kind = isMovie ? "movie" : "tv";
+        var dto = await GetAsync<TmdbRecommendationsDto>($"{kind}/{tmdbId}/recommendations", cancellationToken);
+        if (dto is null || dto.Results.Count == 0)
+        {
+            return [];
+        }
+
+        var list = new List<TmdbRecommendationRef>(dto.Results.Count);
+        var rank = 1;
+        foreach (var item in dto.Results)
+        {
+            if (item.Id <= 0)
+            {
+                continue;
+            }
+
+            list.Add(new TmdbRecommendationRef(item.Id, rank++));
+        }
+
+        return list;
+    }
+
     public async Task<TmdbFindResult?> FindByImdbAsync(string imdbId, CancellationToken cancellationToken = default)
     {
         var path = $"find/{Uri.EscapeDataString(imdbId)}?external_source=imdb_id";

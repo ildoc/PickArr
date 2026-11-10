@@ -196,6 +196,33 @@ public sealed class EnrichmentServiceTests : IAsyncLifetime
         var verifyDb = verify.ServiceProvider.GetRequiredService<PickarrDbContext>();
         (await verifyDb.TitleKeywords.CountAsync(tk => tk.TitleId == titleId)).ShouldBeGreaterThan(0);
         (await verifyDb.TitleCredits.CountAsync(tc => tc.TitleId == titleId)).ShouldBeGreaterThan(0);
+        var stamped = await verifyDb.Titles.SingleAsync(t => t.Id == titleId);
+        stamped.TmdbRecommendationsFetchedAt.ShouldNotBeNull();
+    }
+
+    [Fact]
+    public async Task Enrich_persists_in_catalog_tmdb_recommendation_edges_only()
+    {
+        var movie = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "movie-550-en.json"));
+        var config = await File.ReadAllTextAsync(Path.Combine(_fixtureRoot, "configuration.json"));
+        _server.Given(Request.Create().WithPath("/3/movie/550").UsingGet()).RespondWith(Json(movie));
+        _server.Given(Request.Create().WithPath("/3/configuration").UsingGet()).RespondWith(Json(config));
+        _server.Given(Request.Create().WithPath("/3/movie/550/recommendations").UsingGet())
+            .RespondWith(Json("""{"page":1,"results":[{"id":680},{"id":999999}],"total_pages":1,"total_results":2}"""));
+
+        var sourceId = await SeedTitleAsync(550, "movie", "en-US");
+        var relatedId = await SeedTitleAsync(680, "movie", "en-US", reuseDb: true);
+
+        await _services!.GetRequiredService<IEnrichmentService>().EnrichTitleAsync(sourceId);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
+        var edges = await db.TitleTmdbRecommendations.Where(e => e.SourceTitleId == sourceId).ToListAsync();
+        edges.ShouldHaveSingleItem();
+        edges[0].RelatedTitleId.ShouldBe(relatedId);
+        edges[0].Rank.ShouldBe(1);
+        var source = await db.Titles.SingleAsync(t => t.Id == sourceId);
+        source.TmdbRecommendationsFetchedAt.ShouldNotBeNull();
     }
 
     [Fact]

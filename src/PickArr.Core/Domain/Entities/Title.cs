@@ -26,6 +26,8 @@ public sealed class Title
     public string? SeasonsJson { get; set; }
     /// <summary>JSON array of TMDB origin_country codes (optional reco feature).</summary>
     public string? OriginCountries { get; set; }
+    /// <summary>When set, TMDB <c>/recommendations</c> were fetched (even if zero in-catalog edges).</summary>
+    public DateTime? TmdbRecommendationsFetchedAt { get; set; }
     public required string MetadataStatus { get; set; }
     public DateTime? MetadataFetchedAt { get; set; }
     public int MetadataAttempts { get; set; }
@@ -37,6 +39,8 @@ public sealed class Title
     public ICollection<TitleGenre> TitleGenres { get; set; } = new List<TitleGenre>();
     public ICollection<TitleKeyword> TitleKeywords { get; set; } = new List<TitleKeyword>();
     public ICollection<TitleCredit> TitleCredits { get; set; } = new List<TitleCredit>();
+    public ICollection<TitleTmdbRecommendation> TmdbRecommendationsOut { get; set; } = new List<TitleTmdbRecommendation>();
+    public ICollection<TitleTmdbRecommendation> TmdbRecommendationsIn { get; set; } = new List<TitleTmdbRecommendation>();
     public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
     public ICollection<Watched> WatchedItems { get; set; } = new List<Watched>();
     public ICollection<Rating> Ratings { get; set; } = new List<Rating>();

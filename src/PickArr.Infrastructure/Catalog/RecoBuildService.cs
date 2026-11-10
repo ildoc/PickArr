@@ -193,6 +193,47 @@ public sealed class RecoBuildService(
         var weightSparse = useL2 ? 0.4 : 1.0;
         var weightKnn = useL2 ? 0.6 : 0.0;
 
+        var tmdbMaxShare = await GetDoubleSettingAsync(
+            SettingsKeys.RecoTmdbAmplifierMaxShare,
+            RecoTmdbBoost.DefaultMaxShare,
+            cancellationToken);
+        var tmdbAmpWeight = RecoTmdbBoost.AmplifierWeight(nEff, n0, tmdbMaxShare);
+        IReadOnlyDictionary<int, double> tmdbNorm = new Dictionary<int, double>();
+        IReadOnlyList<RecoTmdbEdge> tmdbEdges = [];
+        if (tmdbAmpWeight > 0 && nEff > 0)
+        {
+            var edgeRows = await db.TitleTmdbRecommendations.AsNoTracking()
+                .Where(e => poolIdSet.Contains(e.SourceTitleId) && poolIdSet.Contains(e.RelatedTitleId))
+                .Select(e => new { e.SourceTitleId, e.RelatedTitleId, e.Rank })
+                .ToListAsync(cancellationToken);
+            tmdbEdges = edgeRows
+                .Select(e => new RecoTmdbEdge(e.SourceTitleId, e.RelatedTitleId, e.Rank))
+                .ToList();
+            if (tmdbEdges.Count > 0)
+            {
+                var tmdbRaw = RecoTmdbBoost.ScoreAll(signalResult.Signals, tmdbEdges, poolIdSet);
+                if (tmdbRaw.Count == 0)
+                {
+                    tmdbAmpWeight = 0;
+                }
+                else
+                {
+                    // Seed the whole pool with 0 so min-max maps unreached → 0 and top edges → 1.
+                    var expanded = new Dictionary<int, double>(poolIdSet.Count);
+                    foreach (var id in poolIdSet)
+                    {
+                        expanded[id] = tmdbRaw.GetValueOrDefault(id, 0);
+                    }
+
+                    tmdbNorm = RecoNormalize.MinMaxByTitle(expanded);
+                }
+            }
+            else
+            {
+                tmdbAmpWeight = 0;
+            }
+        }
+
         var priorStats = titles
             .Select(t => new RecoTitleStats(t.Id, t.VoteTmdb, t.VoteTmdbCount, t.Popularity))
             .ToList();
@@ -262,7 +303,13 @@ public sealed class RecoBuildService(
             {
                 var sparse = sparseNorm.GetValueOrDefault(title.Id, 0.5);
                 var knn = knnUnit.GetValueOrDefault(title.Id, 0.5);
-                personal = weightSparse * sparse + weightKnn * knn;
+                var basePersonal = weightSparse * sparse + weightKnn * knn;
+                // Only amplify titles with a positive TMDB-graph score; others keep the local personal score.
+                personal = tmdbAmpWeight > 0
+                           && tmdbNorm.TryGetValue(title.Id, out var tmdb)
+                           && tmdb > 0
+                    ? RecoTmdbBoost.BlendPersonal(basePersonal, tmdb, tmdbAmpWeight)
+                    : basePersonal;
                 if (level3Scorer is not null)
                 {
                     personal = level3Scorer.Score(RecoLevel3.BuildFeatures(
@@ -278,6 +325,9 @@ public sealed class RecoBuildService(
                 score = RecoLearning.FuseScore(priorSlot, personal.Value, personalWeight);
             }
 
+            var tmdbContributor = tmdbAmpWeight > 0 && tmdbEdges.Count > 0
+                ? RecoTmdbBoost.TopContributor(title.Id, signalResult.Signals, tmdbEdges)
+                : null;
             var reasons = RecoReasons.Build(
                 title.Id,
                 priorNorm: prior,
@@ -289,7 +339,8 @@ public sealed class RecoBuildService(
                 signals: signalResult.Signals,
                 titleNames: titleNames,
                 resolveTermLabel: ResolveTerm,
-                positiveCandidates: positiveCandidates);
+                positiveCandidates: positiveCandidates,
+                tmdbContributor: tmdbContributor);
 
             // Cold start / no personal: keep popular-only.
             var reasonsJson = nEff <= 0 || personalWeight <= 0

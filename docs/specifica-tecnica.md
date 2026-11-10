@@ -1113,7 +1113,7 @@ Profilo attivo in `localStorage` `pickarr.profileId`; il client lo manda come `X
 
 ## 11. Osservabilità
 
-- **Logging:** Serilog, formato JSON su console (`docker logs`) e file rotante in `/config/logs` (7 giorni). Livello configurabile (`Logging__Level`). Proprietà di contesto: `RunId`, `SourceId`, `Job`, `Kind`.
+- **Logging:** Serilog, formato JSON su console (`docker logs`) e file rotante in `/config/logs` (7 giorni). Livello configurabile (`LOG_LEVEL`, default `Debug`). Proprietà di contesto: `RunId`, `SourceId`, `Job`, `Kind`.
 - **Health:** `/health` (liveness, sempre 200 se il processo risponde) e `/health/ready` (verifica apertura DB e storage Hangfire).
 - **Business metrics:** `SyncRuns` e `ApiUsage` sono la fonte per la pagina Admin; non serve uno stack di metriche esterno.
 - **OpenTelemetry (C):** export OTLP opzionale con variabile d'ambiente, spento di default.
@@ -1132,7 +1132,7 @@ Profilo attivo in `localStorage` `pickarr.profileId`; il client lo manda come `X
 | `TZ` | `UTC` | Fuso per cron e log. |
 | `Pickarr__BaseUrl` | (vuoto) | URL pubblico per generare gli URL dei webhook. |
 | `Pickarr__PathBase` | (vuoto) | Prefisso se dietro reverse proxy con sottopercorso. |
-| `Logging__Level` | `Information` | Livello di log. |
+| `LOG_LEVEL` | `Debug` | Livello di log Serilog (`Verbose`/`Debug`/`Information`/`Warning`/`Error`/`Fatal`). |
 | `Pickarr__Auth__Password` | (vuoto) | Abilita l'autenticazione opzionale. |
 | `Hangfire__Dashboard__Enabled` | `false` | Dashboard Hangfire. |
 | `Pickarr__Models__Path` | `/config/models` | Directory modelli ONNX. |

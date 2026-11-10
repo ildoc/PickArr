@@ -882,6 +882,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.Property<int?>("TmdbId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime?>("TmdbRecommendationsFetchedAt")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("TmdbType")
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
@@ -1036,6 +1039,24 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.HasIndex("NameNormalized");
 
                     b.ToTable("TitleLocalizations", (string)null);
+                });
+
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleTmdbRecommendation", b =>
+                {
+                    b.Property<int>("SourceTitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RelatedTitleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Rank")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("SourceTitleId", "RelatedTitleId");
+
+                    b.HasIndex("RelatedTitleId");
+
+                    b.ToTable("TitleTmdbRecommendations", (string)null);
                 });
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
@@ -1326,6 +1347,25 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.TitleTmdbRecommendation", b =>
+                {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "RelatedTitle")
+                        .WithMany("TmdbRecommendationsIn")
+                        .HasForeignKey("RelatedTitleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "SourceTitle")
+                        .WithMany("TmdbRecommendationsOut")
+                        .HasForeignKey("SourceTitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RelatedTitle");
+
+                    b.Navigation("SourceTitle");
+                });
+
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
                 {
                     b.HasOne("Pickarr.Core.Domain.Entities.Profile", "Profile")
@@ -1392,6 +1432,10 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.Navigation("TitleGenres");
 
                     b.Navigation("TitleKeywords");
+
+                    b.Navigation("TmdbRecommendationsIn");
+
+                    b.Navigation("TmdbRecommendationsOut");
 
                     b.Navigation("WatchedItems");
                 });

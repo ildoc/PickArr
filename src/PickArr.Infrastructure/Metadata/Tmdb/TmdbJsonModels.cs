@@ -146,6 +146,16 @@ internal sealed class TmdbGenreListDto
     [JsonPropertyName("genres")] public List<TmdbGenreDto> Genres { get; set; } = [];
 }
 
+internal sealed class TmdbRecommendationsDto
+{
+    [JsonPropertyName("results")] public List<TmdbRecommendationItemDto> Results { get; set; } = [];
+}
+
+internal sealed class TmdbRecommendationItemDto
+{
+    [JsonPropertyName("id")] public int Id { get; set; }
+}
+
 internal sealed class TmdbConfigurationDto
 {
     [JsonPropertyName("images")] public TmdbImagesDto? Images { get; set; }
