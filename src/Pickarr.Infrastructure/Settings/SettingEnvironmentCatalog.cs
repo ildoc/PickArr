@@ -59,6 +59,7 @@ internal static class SettingEnvironmentCatalog
         [SettingsKeys.RecoWeightDownloaded] = SettingValueKind.Double,
         [SettingsKeys.RecoWeightWatched] = SettingValueKind.Double,
         [SettingsKeys.RecoN0] = SettingValueKind.Int32,
+        [SettingsKeys.RecoTmdbAmplifierMaxShare] = SettingValueKind.Double,
         [SettingsKeys.RecoExcludeInLibrary] = SettingValueKind.Boolean,
         [SettingsKeys.RecoEmbeddingsEnabled] = SettingValueKind.Boolean,
         [SettingsKeys.RecoEmbeddingsModelId] = SettingValueKind.String,
