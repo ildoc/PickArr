@@ -2,7 +2,9 @@
 
 Pickarr is a single-user, self-hosted catalog browser. It syncs streaming catalogs through Watchmode, enriches them with TMDB, and sends titles to Sonarr and Radarr. There is no authentication.
 
-Product behavior that is not obvious from the code is specified in `docs/documento-funzionale.md` and `docs/specifica-tecnica.md`. Do not invent scope beyond those documents and the code.
+Product behavior that is not obvious from the code is specified in `docs/functional-spec.md`, `docs/technical-spec.md`, and `docs/recommendations.md`. Do not invent scope beyond those documents and the code.
+
+Operator and contributor guides live under `docs/user/` and `docs/developer/` (index: `docs/README.md`). When a change is user- or contributor-facing, update those docs (and the specs when FR/BR/D- IDs change) in the same change — rules in `docs/AGENTS.md`.
 
 ## Layout
 
@@ -61,7 +63,7 @@ SQLite uses WAL. Do not put the data directory on a network share.
 - Profile choice is `/who`. The last id is `localStorage` `pickarr.profileId`. One profile skips the selector and enters the catalog; a remembered id that no longer exists opens `/who`. The header control always opens `/who`. After choice the SPA sends `X-Pickarr-Profile`.
 - Non-admin profiles do not see Settings; `/settings` redirects to the catalog. Settings, jobs, and system APIs stay open. Only the admin creates or deletes other profiles; anyone edits their own name, color, and reco toggles (`useImplicit`, `excludeInLibrary`).
 - Favorites, ratings, watched, recommendations, and taste state are per profile. Catalog metadata, embeddings, app settings, and Arr library rows stay global. A new Arr add with the header stores `ProfileId` on the audit row for that profile’s implicit signal; without the header the action is valid and the taste signal is not attributed.
-- Under `N_eff < N0`, recommendations blend a household prior from other profiles’ Love/Like (cap 0.5 on the non-personal slot). At `N_eff ≥ N0` that term is zero. Details in `docs/raccomandazioni.md`.
+- Under `N_eff < N0`, recommendations blend a household prior from other profiles’ Love/Like (cap 0.5 on the non-personal slot). At `N_eff ≥ N0` that term is zero. Details in `docs/recommendations.md`.
 - The catalog page is `/catalog`. It is one provider, then one country. Quick filters are All, New, Leaving, and Recently removed. Remembered catalog source is `pickarr.sourceId.{profileId}`; the admin may once copy legacy `pickarr.sourceId`.
 - My list is `/list` and `GET /api/v1/favorites` (plus `/types` and `/genres`). It is cross-provider and cross-country for the active profile. Do not put it back on the catalog as `view=favorites` or `favorite=true`. The catalog endpoints ignore that flag. `/catalog?view=favorites` redirects to `/list`.
 - Title cards and the title dialog stay on the route that opened them.
@@ -83,6 +85,7 @@ Frontend tests use Vitest and Testing Library (`jsdom`). Stub `localStorage` whe
 
 - Keep Core free of Infrastructure types.
 - Add or update a test for a bug fix in the same change.
+- Update docs under `docs/` (guides and English specs when FR/BR/D- IDs change) for substantial product or contributor-facing changes; see `docs/AGENTS.md`.
 - Do not commit, push, or edit git config unless the user asks.
 - Do not hand-edit generated EF snapshots without the matching migration.
 - Never delete, reset, or replace the developer or production SQLite database to unblock schema work; ship additional migrations instead. Data loss is not an acceptable tradeoff.

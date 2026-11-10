@@ -1,74 +1,74 @@
-# Pickarr — Documento funzionale
+# Pickarr — Functional specification
 
 | | |
 |---|---|
-| **Versione** | 0.3 |
-| **Data** | 2026-11-10 |
-| **Lingua** | Italiano |
-| **Nome progetto** | *Pickarr* è un nome provvisorio (vedi D-08) |
-| **Documenti collegati** | `specifica-tecnica.md`, `raccomandazioni.md` (feature voto e *Per te*) |
+| **Version** | 0.3 |
+| **Date** | 2026-11-10 |
+| **Language** | English |
+| ** Project name ** | *Pickarr* is a provisional name (see D-08) |
+| **Linked documents** | `technical-spec.md`, `recommendations.md` (ratings and *For you*) |
 
 ---
 
-## Indice
+## Table of contents
 
-1. Introduzione
-2. Contesto e vincoli delle fonti dati
-3. Panoramica funzionale
-4. Requisiti funzionali
-5. Requisiti non funzionali
-6. Regole di business
+1. Introduction
+2. Context and constraints of data sources
+3. Functional overview
+4. Functional requirements
+5. Non-functional requirements
+6. Business rules
 7. User stories
-8. Casi d'uso
-9. Schermate
-10. Fuori ambito ed evoluzioni
-11. Assunzioni, rischi e decisioni aperte
-12. Fasi di rilascio
+8. Use cases
+9. Screens
+10. Out of scope and evolutions
+11. Assumptions, risks, and open decisions
+12. Release phases
 
 ---
 
-## 1. Introduzione
+## 1. Introduction
 
 ### 1.1 Scopo
 
-Pickarr è un'applicazione **self-hosted** senza autenticazione. Una installazione ospita fino a **10 profili** (gusti e liste separate); catalogo, integrazioni e libreria Sonarr/Radarr restano condivisi. Mantiene un catalogo aggiornato dei contenuti disponibili su un servizio di streaming (inizialmente **Netflix**) in un dato **paese** e permette di sfogliarlo, cercarlo e salvarlo tra i preferiti del profilo attivo. Da qui si può inviare un titolo a **Sonarr** (serie) o **Radarr** (film), vedere lo stato della libreria condivisa e rimuoverlo.
+Pickarr is a **self-hosted * * application without authentication. An installation hosts up to **10 profiles** (separate tastes and lists); catalogue, integrations and Sonarr/Radarr library remain shared. Maintains an up-to-date catalog of content available on a streaming service (initially * * Netflix * *) in a given * * country * * and allows you to browse, search and save it among the favorites of the active profile. From here you can send a title to **Sonarr** (series) or **Radarr** (movies), see the status of the shared library and remove it.
 
 ### 1.2 Obiettivi
 
-- Avere in un'unica interfaccia, simile alla homepage di Netflix, i titoli disponibili in un paese, con descrizione e voti.
-- Passare da "titolo che mi interessa" a "titolo monitorato e in ricerca su Sonarr/Radarr" in pochi click.
-- Vedere a colpo d'occhio cosa è già in libreria e in che stato, e poterlo eliminare.
-- Segnare *Mi piace* / *Non mi piace* sui titoli e ricevere consigli locali (*Per te*) filtrati sui cataloghi importati.
-- Funzionare entro i limiti del piano **gratuito** di Watchmode (2.500 crediti/mese, max 3 paesi).
-- Poter aggiungere altri servizi (Amazon Prime, Disney+, Hulu, ...) e altri paesi senza modificare l'architettura.
+- Have in a single interface, similar to the Netflix homepage, the titles available in a country, with description and votes.
+- Go from "title that interests me" to "title monitored and searched on Sonarr/Radarr" in a few clicks.
+- See at a glance what is already in the library and in what state, and be able to eliminate it.
+- Mark *Likes* / *Dislikes* on titles and receive local recommendations (*For you*) filtered on imported catalogs.
+- Operate within the limits of Watchmode's **free * * plan (2,500 credits/mese, max 3 countries).
+- To be able to add other services (Amazon Prime, Disney+, Hulu, ...) and other countries without changing the architecture.
 
 ### 1.3 Ambito
 
 **Incluso (v1)**
 
 - Servizio Netflix, paesi Italia (IT) e Stati Uniti (US).
-- Tipi di contenuto: film, serie TV, stand-up.
-- Sincronizzazione schedulata del catalogo con storico di disponibilità.
+- Types of content: movies, TV series, stand-up.
+- Scheduled synchronization of the catalogue with availability history.
 - Arricchimento metadati da TMDB (e id incrociati IMDb/TVDB).
 - UI web desktop, tema scuro, interfaccia internazionalizzata (inglese di default).
-- Ricerca server-side con filtri, preferiti, scheda di dettaglio.
-- Integrazione con una istanza Sonarr e una istanza Radarr: aggiunta, stato, eliminazione.
-- Profili (fino a 10) con selettore `/who`, memoria del profilo nel browser, dati personali per profilo e prior di casa a freddo (dettaglio in `raccomandazioni.md`).
-- Amministrazione: impostazioni, controllo dei job, consumo dei crediti Watchmode (solo profilo admin in UI).
-- Raccomandazioni locali (R1–R4): voto sul titolo per profilo, pagina *Per te*, simili, embedding ONNX opzionale, valutazione offline, livello supervisionato gated (dettaglio in `raccomandazioni.md`).
-- Distribuzione come singola immagine Docker.
+- Server-side search with filters, favorites, detail tab.
+- Integration with a Sonarr instance and a Radarr instance: addition, status, deletion.
+- Profiles (up to 10) with ⟦0 selector⟧, profile memory in the browser, personal data for profile and cold house prior (detail in `recommendations.md`).
+- Administration: settings, job control, Watchmode credit consumption (admin profile in UI only).
+- Local recommendations (R1–R4): title rating per profile, *For you* page, similar, optional ONNX embedding, offline rating, gated supervised level (detail in `recommendations.md`).
+- Distribution as a single Docker image.
 
-**Escluso (v1)**: vedi §10. I consigli personalizzati non sono più fuori ambito: sono specificati in `raccomandazioni.md` e rilasciati dopo l'MVP catalogo (fasi R1–R4 in §12).
+**Excluded (v1)**: see §10. Custom recommendations are no longer out of scope: they are specified in `recommendations.md` and released after the catalog MVP (steps R1–R4 in §12).
 
 ### 1.4 Attori
 
-| Attore | Descrizione |
+| Plaintiff | Description |
 |---|---|
-| **Profilo** | Persona che usa l'installazione. Sceglie il profilo su `/who` (senza login). Esplora, cerca, gestisce i propri preferiti/voti, aggiunge ed elimina titoli. |
-| **Profilo admin** | Unico profilo con `IsAdmin`. Creato alla migrazione/seed col nome «Admin» (rinominabile). Destinatario dei dati personali preesistenti. Gestisce impostazioni, job e gli altri profili. Il ruolo non si cede e il profilo non si elimina. |
-| **Scheduler** | Componente interno che esegue i job (sync catalogo, arricchimento, sync Sonarr/Radarr). |
-| **Watchmode** | Fonte del catalogo e della disponibilità per servizio/paese. |
-| **TMDB** | Fonte dei metadati e degli id esterni. |
+| **Profile** | Person using the installation. Choose profile to `/who` (no login). Explore, search, manage your favorites/voti, add and delete titles. |
+| ** Admin Profile ** | Only profile with `IsAdmin`. Created on migration/seed with the name "Admin" (renamable). Recipient of pre-existing personal data. Manages settings, jobs, and other profiles. The role is not relinquished and the profile is not deleted. |
+| **Scheduler** | Internal component that executes jobs (catalog sync, enrichment, Sonarr/Radarr sync). |
+| **Watchmode** | Catalog and availability source for service/paese. |
+| **TMDB** | Source of external metadata and IDs. |
 | **Sonarr / Radarr** | Sistemi esterni di gestione libreria serie / film. |
 
 ### 1.5 Glossario
@@ -76,46 +76,46 @@ Pickarr è un'applicazione **self-hosted** senza autenticazione. Una installazio
 | Termine | Significato |
 |---|---|
 | **Servizio (Provider)** | Servizio di streaming, es. Netflix. |
-| **Sorgente di catalogo** | Coppia *servizio + paese*, es. "Netflix IT". È l'unità su cui si sincronizza e si naviga. |
-| **Titolo** | Film, serie o stand-up. Ha un'identità unica indipendente dal paese. |
-| **Disponibilità** | Relazione tra un titolo e una sorgente di catalogo, con le sue date (aggiunta, rimozione, scadenza). |
-| **Baseline** | Primo import completo di una sorgente. I titoli presenti in quel momento non sono considerati "novità". |
-| **Crediti** | Unità di consumo delle API Watchmode (2.500/mese nel piano free). |
+| ** Catalogue source ** | Pair *service + country*, e.g. "Netflix IT". It's the drive you sync and browse on. |
+| **Title** | Movie, series or stand-up. It has a unique identity independent of the country. |
+| **Availability** | Relationship between a title and a catalog source, with its dates (addition, removal, expiration). |
+| **Baseline** | First complete import of a source. The titles present at that time are not considered "news". |
+| **Credits** | Watchmode API consumption units (2,500/mese in free plan). |
 | **Stato libreria** | Stato di un titolo in Sonarr/Radarr: non in libreria, mancante, in download, scaricato, parziale. |
-| **Profilo (account di casa)** | Partizione dei gusti: nome, colore icona, preferiti, voti, visti, raccomandazioni e due preferenze reco (`useImplicit`, `excludeInLibrary`). Non è un account autenticato. |
-| **Voto (rating)** | Preferenza esplicita sul titolo per profilo: *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa*. Indipendente dalla sorgente; due profili possono divergere sullo stesso titolo. |
-| **Per te** | Lista di raccomandazioni del profilo attivo, calcolata in locale sul pool dei cataloghi abilitati, filtrabile per sorgente o unione. |
-| **Pool** | Unione dei titoli con almeno una disponibilità su sorgenti (servizio+paese) abilitate. `RemovedAt` non esclude. |
-| **Prior di casa** | Contributo a freddo ai consigli di un profilo con pochi segnali, costruito dai *Mi piace* / *Mi piace molto* degli altri profili (tetto 0,5; zero a `N_eff ≥ N0`). |
+| **Profile (home account)** | Taste partition: name, icon color, favorites, votes, views, recommendations and two preferences reco (`useImplicit`, `excludeInLibrary`). It is not an authenticated account. |
+| **Rating * * | Explicit preference on the title by profile: *I like it very much */* I like it */ * I don't like it* / * I don't care*. Independent of source; two profiles may diverge on the same title. |
+| **For you** | Active profile recommendation list, calculated locally on the enabled catalog pool, filterable by source or merge. |
+| **Pool** | Merging titles with at least one source availability (service+country) enabled. ⟦0 does⟧ not exclude. |
+| **Prior of the house** | Cold contribution to the recommendations of a profile with few signals, built by the *Likes* / *I really like * of the other profiles (ceiling 0.5; zero to `N_eff ≥ N0`). |
 
 ---
 
-## 2. Contesto e vincoli delle fonti dati
+## 2. Data-source context and constraints
 
-Le verifiche sono state fatte sulla documentazione pubblica di Watchmode in data 2026-11-03. Questi vincoli hanno impatto diretto sul design.
+The checks were made on Watchmode's public documentation on 2026-11-03. These constraints have a direct impact on design.
 
-| Vincolo | Impatto sul prodotto |
+| Constraint | Product impact |
 |---|---|
-| Netflix non offre un'API pubblica per il catalogo. | La fonte è Watchmode. |
-| Piano **Developer (free)**: 2.500 crediti/mese condivisi tra tutte le chiamate, fino a 3 paesi. | Serve un budget crediti con sync riprendibile su più giorni (FR-CAT-07). Con IT+US si usano 2 dei 3 paesi disponibili. |
-| Uso **non commerciale** con **attribuzione** a Watchmode.com. | Link/credit a Watchmode visibile in UI (FR-MET-07). Adatto al self-hosting personale. |
-| Sul piano free i dati in cache vanno **rinfrescati o cancellati entro 30 giorni**. | La sync completa deve girare almeno ogni 30 giorni (default: ogni 7). Se fallisce a lungo, la UI avvisa (BR-12). |
-| I **feed delle modifiche** (nuovi titoli, fonti cambiate) e le **date di uscita** sono solo sui piani a pagamento. | Sul piano free la sync "incrementale" si basa su pagine recenti dell'elenco titoli, e la rimozione si scopre confrontando elenchi completi (BR-05). |
-| Le **date di scadenza** (titoli in uscita dal servizio) sul piano free sono solo un'anteprima dei prossimi 10 per paese. | La sezione "In scadenza" è limitata sul piano free (D-07). |
-| TMDB: API gratuita per uso non commerciale con attribuzione. | Fonte primaria per trama, generi, poster, voti, id IMDb/TVDB. |
-| Sonarr usa id **TVDB**, Radarr usa id **TMDB**. | Per le serie serve il TVDB id, ottenuto da TMDB (external ids). Titoli senza id utilizzabile non sono aggiungibili (BR-08). |
+| Netflix does not offer a public API for the catalog. | The source is Watchmode. |
+| **Developer (free)** plan: 2,500⟦ 0 credits⟧ shared across all calls, up to 3 countries. | We need a credit budget with sync that can be resumed over several days (FR-CAT-07). With IT+US you use 2 of the 3 available countries. |
+| **Non-commercial * * use with **attribution** to Watchmode.com. | Link/credit to Watchmode visible in UI (FR-MET-07). Suitable for personal self-hosting. |
+| On the free plan, cached data must be **refreshed or deleted within 30 days**. | The full sync must run at least every 30 days (default: every 7). If it fails for a long time, the UI warns (BR-12). |
+| ** Change feeds ** (new titles, changed sources) and ** release dates ** are only on paid plans. | On the free plan, the "incremental" sync is based on recent pages of the title list, and the removal is discovered by comparing complete lists (BR-05). |
+| The ** expiration dates ** (out-of-service titles) on the free plan are just a preview of the next 10 per country. | The "Due" section is limited on the free (D-07) plan. |
+| TMDB: Free API for non-commercial use with attribution. | Primary source by plot, genres, posters, ratings, IMDB/TVDB id. |
+| Sonarr uses id **TVDB**, Radarr uses id **TMDB**. | For series you need the TVDB id, obtained from TMDB (external ids). Titles without usable id are not addable (BR-08). |
 
-> **Nota sui crediti.** Alcune chiamate costano più di un credito. Il costo reale per chiamata va misurato nello spike iniziale (SP-1 nella specifica tecnica), perché da esso dipende il dimensionamento dei job.
+> **Note on receivables.** Some calls cost more than one credit. The actual cost per call must be measured in the initial spike (SP-1 in the technical specification), because job sizing depends on it.
 
 ---
 
-## 3. Panoramica funzionale
+## 3. Functional overview
 
 ```
 Watchmode ──(job schedulato)──► Catalogo locale ◄──(arricchimento)── TMDB
                                        │
                                        ▼
-              UI: catalogo, lista, Per te, valutazioni, dettaglio
+              UI: catalogo, lista, For you, valutazioni, dettaglio
                                        │  (voto locale + conferma Arr)
                                        ▼
                     Backend ──► Sonarr / Radarr   (+ coda ml ONNX)
@@ -125,108 +125,108 @@ Watchmode ──(job schedulato)──► Catalogo locale ◄──(arricchiment
 Macro-funzioni:
 
 1. **Catalogo**: sincronizzazione, storico, budget crediti.
-2. **Metadati**: arricchimento da TMDB con lingua configurabile e fallback in inglese.
+2. **Metadata**: TMDB enrichment with configurable language and English fallback.
 3. **Esplorazione**: griglia, ricerca, filtri, dettaglio.
-4. **Preferiti** (`/list`) e **voti** (*Mi piace* / *Non mi piace*).
-5. **Raccomandazioni locali** (*Per te*, simili, embedding opzionale).
+4. **Preferiti** (`/list`) e **voti** (*Like* / *Dislike*).
+5. ** Local recommendations ** (*For you*, similar, optional embedding).
 6. **Integrazione Sonarr/Radarr**: aggiunta, stato, eliminazione.
 7. **Amministrazione**: impostazioni, job, crediti, azioni reco.
 8. **Internazionalizzazione** dell'interfaccia (inglese).
-9. **Multi-servizio e multi-paese** come requisito di architettura.
+9. **Multi-service and multi-country** as architecture requirement.
 
 ---
 
-## 4. Requisiti funzionali
+## 4. Functional requirements
 
-Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Won't (per ora).
+Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Won't (for now).
 
 ### 4.1 Catalogo e sincronizzazione (FR-CAT)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-CAT-01 | Il sistema mantiene un catalogo per ogni **sorgente di catalogo** (servizio + paese) abilitata. Alla prima installazione sono preconfigurate Netflix IT e Netflix US. | M |
-| FR-CAT-02 | L'utente può abilitare/disabilitare una sorgente, scegliere la lingua dei metadati e le frequenze di sincronizzazione. | M |
-| FR-CAT-03 | Sono importati i tipi **film**, **serie** e **stand-up**. Gli altri tipi (anime, kids) non sono importati in v1, ma il modello deve poterli accogliere senza migrazioni distruttive. | M |
-| FR-CAT-04 | **Sync incrementale** schedulata (cron configurabile per sorgente): intercetta i titoli aggiunti di recente. È idempotente e può essere rieseguita in qualsiasi momento. | M |
-| FR-CAT-05 | **Sync completa** periodica (default settimanale, configurabile): riallinea l'intero catalogo e rileva le **rimozioni** (BR-05). | M |
-| FR-CAT-06 | Il sistema conserva lo **storico di disponibilità**: primo avvistamento, ultima conferma, data di aggiunta, data di rimozione, eventuale data di scadenza, più un registro eventi (aggiunto / rimosso / riaggiunto / scadenza annunciata). | M |
-| FR-CAT-07 | **Budget crediti Watchmode**: il sistema non supera mai il budget mensile configurato (default: quota del piano meno una riserva), limita i crediti per singola esecuzione e **riprende** le esecuzioni interrotte nei giorni successivi. Il consumo è sempre visibile. | M |
-| FR-CAT-08 | **Baseline**: al completamento della prima sync completa di una sorgente, tutti i titoli presenti sono marcati come baseline e non appaiono come "novità". | M |
-| FR-CAT-09 | Ogni esecuzione di sync è tracciata (tipo, avvio, fine, esito, pagine lette, crediti usati, titoli aggiunti/aggiornati/rimossi, errori) e consultabile dall'amministrazione. | M |
-| FR-CAT-10 | **Protezione dalle rimozioni anomale**: se una sync completa indicherebbe la rimozione di una percentuale eccessiva del catalogo, le rimozioni non vengono applicate e la run è segnata "da verificare". | M |
-| FR-CAT-11 | Sync delle **date di scadenza** quando la fonte le rende disponibili (preview sul piano free, calendario completo sui piani a pagamento). | S |
-| FR-CAT-12 | I titoli di cui non si riesce a ricavare un id TMDB sono registrati come **non mappati** e consultabili dall'amministrazione. | S |
-| FR-CAT-13 | Sync incrementale via **feed delle modifiche** di Watchmode se l'utente dichiara di avere un piano a pagamento (impostazione "piano Watchmode"). | C |
+| FR-CAT-01 | The system maintains a catalog for each ** catalog source ** (service + country) enabled. At the first installation, Netflix IT and Netflix US are preconfigured. | M |
+| FR-CAT-02 | User can enable/disabilitare source, choose metadata language and sync frequencies. | M |
+| FR-CAT-03 | * * Movie **, ** series ** and ** stand-up ** types are imported. The other types (anime, kids) are not imported into v1, but the model must be able to accommodate them without destructive migrations. | M |
+| FR-CAT-04 | ** Incremental sync ** scheduled (cron configurable by source): intercepts recently added titles. It is idempotent and can be re-executed at any time. | M |
+| FR-CAT-05 | ** full sync ** periodic (weekly default, configurable): realigns the entire catalog and detects **removals** (BR-05). | M |
+| FR-CAT-06 | The system keeps the ** availability history **: first sighting, last confirmation, date of addition, date of removal, possible expiration date, plus an event log (added / removed / re-added /announced expiration). | M |
+| FR-CAT-07 | **Watchmode credit budget**: the system never exceeds the configured monthly budget (default: plan quota minus a reserve), limits credits per single execution and **resumes** executions interrupted in the following days. Consumption is always visible. | M |
+| FR-CAT-08 | **Baseline**: Upon completion of the first complete sync of a source, all titles present are marked as baseline and do not appear as "novelty". | M |
+| FR-CAT-09 | Each sync run is tracked (type, start, end, outcome, pages read, credits used, titles added/aggiornati/rimossi, errors) and can be consulted by the administration. | M |
+| FR-CAT-10 | ** Abnormal Removal Protection **: If a full sync would indicate removal of an excessive percentage of the catalog, the removals are not applied and the run is marked "to be verified". | M |
+| FR-CAT-11 | Sync ** due dates ** when source makes them available (preview on free plan, full calendar on paid plans). | S |
+| FR-CAT-12 | Securities from which a TMDB id cannot be obtained are recorded as * * unmapped * * and can be consulted by the administration. | S |
+| FR-CAT-13 | Incremental sync via Watchmode's * * change feed * * if the user claims to have a paid plan (“Watchmode plan” setting). | C |
 
 ### 4.2 Metadati (FR-MET)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-MET-01 | Per ogni titolo il sistema ottiene da TMDB: titolo localizzato e originale, trama, anno, durata (film) o numero di stagioni/episodi (serie), generi, poster, backdrop, voto TMDB, id IMDb e id TVDB (serie). | M |
-| FR-MET-02 | La lingua dei metadati è configurabile per sorgente (es. `it-IT` per Netflix IT, `en-US` per Netflix US). Se titolo o trama mancano nella lingua scelta, si usa l'**inglese** come fallback. | M |
-| FR-MET-03 | La scheda mostra link esterni a **TMDB** e **IMDb** (se l'id è noto). Il link a TVDB per le serie è facoltativo. | M |
-| FR-MET-04 | Voto IMDb mostrato accanto al voto TMDB. Richiede un'integrazione aggiuntiva opzionale (OMDb, con API key propria, vedi D-03). Senza di essa si mostra solo il voto TMDB. | S |
-| FR-MET-05 | I metadati sono aggiornati periodicamente (default: ogni 30 giorni per i titoli attivi) e su richiesta. | M |
-| FR-MET-06 | Le immagini sono servite direttamente dagli URL di TMDB (hotlink). Nessuna copia locale. | M |
-| FR-MET-07 | L'interfaccia riporta le **attribuzioni** richieste: Watchmode.com (con link) e TMDB (logo e dicitura "This product uses the TMDB API but is not endorsed or certified by TMDB"). | M |
-| FR-MET-08 | Un titolo il cui arricchimento fallisce è comunque mostrato con i dati minimi (titolo e anno da Watchmode) e riprovato in seguito. | S |
+| FR-MET-01 | For each title the system obtains from TMDB: localized and original title, plot, year, duration (film) or number of seasons/episodi (series), genres, posters, backdrop, TMDB rating, IMDB id and TVDB id (series). | M |
+| FR-MET-02 | The metadata language is configurable by source (e.g. `it-IT` for Netflix IT, `en-US` for Netflix US). If the title or plot is missing in the chosen language, * * English ** is used as the fallback. | M |
+| FR-MET-03 | The tab shows external links to **TMDB** and **IMDB** (if the id is known). Link to TVDB for series is optional. | M |
+| FR-MET-04 | IMDB rating shown next to TMDB rating. Requires an optional additional integration (OMDb, with its own API key, see D-03). Without it, only the TMDB rating is shown. | S |
+| FR-MET-05 | Metadata is updated periodically (default: every 30 days for active titles) and upon request. | M |
+| FR-MET-06 | Images are served directly from TMDB URLs (hotlinks). No local copy. | M |
+| FR-MET-07 | The interface shows the **attributions** required: Watchmode.com (with link) and TMDB (logo and wording "This product uses the TMDB API but is not endorsed or certified by TMDB"). | M |
+| FR-MET-08 | A title whose enrichment fails is still shown with the minimum data (title and year from Watchmode) and tried again later. | S |
 
 ### 4.3 Home e navigazione (FR-UI)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-UI-01 | Interfaccia **solo desktop** (larghezza minima supportata 1280 px) con **tema scuro**. | M |
-| FR-UI-02 | Un selettore nell'intestazione permette di scegliere la sorgente di catalogo (servizio + paese). La scelta è ricordata tra una sessione e l'altra. | M |
-| FR-UI-03 | La home è una **vista a griglia** del catalogo della sorgente selezionata, con barra di ricerca e filtri rapidi: *Tutti*, *Novità*, *In scadenza*, *Rimossi di recente*. Con le raccomandazioni attive, su *Tutti* (senza ricerca) compare una **riga dedicata** di consigli per quella sorgente (max 25). *La mia lista* e *Per te* (unione delle sorgenti) sono route dedicate (`/list`, `/for-you`). | M |
-| FR-UI-04 | Ogni card mostra poster, titolo, anno, badge del tipo (film/serie/stand-up), badge dello **stato libreria**, icona preferito e controlli di **voto** (*Mi piace* / *Non mi piace*) quando le raccomandazioni sono abilitate. | M |
-| FR-UI-05 | La griglia usa scorrimento infinito con caricamento a pagine. Deve restare fluida con cataloghi di alcune migliaia di titoli. | M |
-| FR-UI-06 | Il clic su una card apre la **scheda di dettaglio** in una finestra modale, raggiungibile anche tramite URL diretto. | M |
-| FR-UI-07 | Un **hero banner** in cima alla home con un titolo in evidenza (es. ultima novità con backdrop). | C |
+| FR-UI-01 | ** Desktop only ** interface (minimum supported width 1280px) with ** dark theme **. | M |
+| FR-UI-02 | A selector in the header allows you to choose the catalog source (service + country). The choice is remembered between one session and another. | M |
+| FR-UI-03 | Home is a ** grid view ** of the catalog of the selected source, with search bar and quick filters: *All*, * New *, *Expiring*, * Recently removed *. With the recommendations active, a * * dedicated line * * of recommendations for that source (max 25) appears under * All * (without search). *My list* and *For you* (union of sources) are dedicated routes (`/list`, `/for-you`). | M |
+| FR-UI-04 | Each card shows poster, title, year, type badge (movie/serie/stand-up), ** library status ** badge, favorite icon, and **vote** checks (* Like */ *Dislike*) when recommendations are enabled. | M |
+| FR-UI-05 | The grid uses infinite scrolling with page loading. It must remain fluid with catalogs of a few thousand titles. | M |
+| FR-UI-06 | Clicking on a card opens the * * detail card * * in a modal window, which can also be reached via a direct URL. | M |
+| FR-UI-07 | A **hero banner** at the top of the home with a featured title (e.g. latest news with backdrop). | C |
 | FR-UI-08 | Ordinamento selezionabile (vedi FR-SRC-03). | M |
 
 ### 4.4 Ricerca e filtri (FR-SRC)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-SRC-01 | Ricerca testuale **server-side** sul titolo localizzato e su quello originale, insensibile a maiuscole e accenti, con debounce lato UI. | M |
-| FR-SRC-02 | Filtri combinabili: **tipo** (film/serie/stand-up), **genere** (multi-selezione), **anno** (intervallo), **stato libreria** (non in libreria, mancante, in download, scaricato, parziale), **solo preferiti**, **includi rimossi**. | M |
-| FR-SRC-03 | Ordinamenti: rilevanza (con ricerca), data di aggiunta al servizio, anno, voto, titolo A→Z. | M |
-| FR-SRC-04 | Filtro per voto minimo. | C |
-| FR-SRC-05 | I filtri sono riflessi nell'URL (condivisibili, compatibili col pulsante Indietro). | S |
-| FR-SRC-06 | Il conteggio dei risultati è mostrato in UI. | S |
+| FR-SRC-01 | Text search **server-side * * on the localized title and on the original one, insensitive to capitalization and accents, with debunking on the UI side. | M |
+| FR-SRC-02 | Combinable filters: **type** (movie/serie/stand-up), **genre** (multi-selection), **year** (range), ** library status ** (not in library, missing, downloaded, downloaded, partial), ** favorites only **, **include removed**. | M |
+| FR-SRC-03 | Sorts: relevance (with search), date added to the service, year, grade, title A→Z. | M |
+| FR-SRC-04 | Minimum grade filter. | C |
+| FR-SRC-05 | Filters are reflected in the URL (shareable, back button compatible). | S |
+| FR-SRC-06 | The result count is shown in UI. | S |
 
 ### 4.5 Scheda di dettaglio (FR-DET)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-DET-01 | La scheda mostra: backdrop/poster, titolo, titolo originale, anno, durata (film) o numero di stagioni (serie), generi, trama, voto TMDB (e IMDb se disponibile), link esterni. | M |
-| FR-DET-02 | Mostra le informazioni di **disponibilità** nella sorgente selezionata: disponibile dal, in scadenza il, rimosso il. | M |
-| FR-DET-03 | Mostra lo **stato libreria**; per le serie il dettaglio **stagione per stagione**. | M |
-| FR-DET-04 | Azioni: preferito, **voto** (*Mi piace* / *Non mi piace*), aggiungi a Sonarr/Radarr, elimina da Sonarr/Radarr, aggiorna stato. | M |
-| FR-DET-05 | Azione "Cerca ora" su un titolo già in libreria (lancia la ricerca in Sonarr/Radarr). | S |
-| FR-DET-06 | Link per aprire il titolo nell'interfaccia web di Sonarr/Radarr. | C |
-| FR-DET-07 | Se il titolo è disponibile in altre sorgenti configurate (es. anche su Netflix US), la scheda lo indica. | C |
+| FR-DET-01 | Show card: backdrop/poster, title, original title, year, duration (movie) or number of seasons (series), genres, storyline, TMDB rating (and IMDB if available), external links. | M |
+| FR-DET-02 | Shows * * availability ** information in the selected source: available from, expiring on, removed on. | M |
+| FR-DET-03 | Shows the ** library status **; for series the detail **season by season**. | M |
+| FR-DET-04 | Stocks: favorite, **vote** (*Like* / *Dislike*), add to Sonarr/Radarr, delete from Sonarr/Radarr, update status. | M |
+| FR-DET-05 | "Search now" action on a title already in the library (launches the search in Sonarr/Radarr). | S |
+| FR-DET-06 | Link to open the title in the Sonarr/Radarr web interface. | C |
+| FR-DET-07 | If the title is available in other configured sources (e.g. also on Netflix US), the tab indicates this. | C |
 
 ### 4.6 Preferiti (FR-FAV)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-FAV-01 | Il profilo attivo può aggiungere/rimuovere un titolo dai preferiti da card e da scheda. | M |
-| FR-FAV-02 | Preferiti e **voto** sono del **profilo** (chiave profilo+titolo), non della sorgente. Due profili possono divergere sullo stesso titolo. I valori di voto sono *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa*. | M |
-| FR-FAV-03 | La pagina *La mia lista* (`/list`) mostra i preferiti del profilo attivo, cross-provider e cross-country, ciascuno con un badge rispetto alla sorgente selezionata (presente / rimosso / assente). Non è una vista `view=favorites` del catalogo. | M |
-| FR-FAV-04 | Aggiunta in blocco dei preferiti a Sonarr/Radarr. | C |
+| FR-FAV-01 | The active profile can⟧ add⟦1 title from card and card favorites. | M |
+| FR-FAV-02 | Favorites and **rating** are from the **profile** (profile key +title), not the source. Two profiles can diverge on the same title. The ratings are *I like it very much* / *I like it* / * I don't like it* / * I don't care*. | M |
+| FR-FAV-03 | The * My List* (`/list`) page shows active, cross-provider, and cross-country profile favorites, each with a badge against the selected source (present / removed / absent). It is not a view `view=favorites` of the catalogue. | M |
+| FR-FAV-04 | Bulk add favorites to Sonarr/Radarr. | C |
 
 ### 4.7 Aggiunta a Sonarr/Radarr (FR-ADD)
 
-| ID | Requisito | Pri |
+| ID | Requirement | PRI |
 |---|---|---|
-| FR-ADD-01 | Per ogni titolo non in libreria compare l'azione **Aggiungi**. La destinazione è determinata dal tipo: serie → Sonarr, film → Radarr. Gli stand-up seguono il tipo TMDB del titolo (film → Radarr, serie → Sonarr). | M |
-| FR-ADD-02 | L'azione apre un **dialog di conferma con le opzioni**, preimpostate con i valori di default. Nulla viene inviato finché l'utente non conferma. | M |
-| FR-ADD-03 | Opzioni **Sonarr**: profilo qualità, root folder, modalità di monitoraggio (tutti gli episodi, solo futuri, mancanti, esistenti, prima stagione, ultima stagione, stagione più recente, solo pilot, recenti, nessuno), monitoraggio delle nuove stagioni, tipo di serie (standard/daily/anime), cartella per stagione, tag, **cerca subito gli episodi mancanti**. | M |
-| FR-ADD-04 | Opzioni **Radarr**: profilo qualità, root folder, monitorato sì/no, disponibilità minima (annunciato / al cinema / uscito), tag, **cerca subito il film**. | M |
-| FR-ADD-05 | Profilo qualità e root folder sono preselezionati con i valori di default (vedi D-01). Tutte le altre opzioni sono scelte dall'utente. | M |
-| FR-ADD-06 | Se l'istanza non è configurata, non è raggiungibile o rifiuta le credenziali, l'azione è bloccata con un messaggio chiaro e un link alle impostazioni. | M |
-| FR-ADD-07 | Se il titolo è già presente nell'istanza, l'azione Aggiungi non è offerta: si mostra lo stato. | M |
+| FR-ADD-01 | For each title not in the bookstore, the * * Add * * action appears. The destination is determined by the type: Sonarr → series, Radarr → film. The stand-ups follow the TMDB type of the title (Radarr → film, Sonarr → series). | M |
+| FR-ADD-02 | The action opens a ** confirmation dialog with the ** options, preset with the default values. Nothing is sent until the user confirms. | M |
+| FR-ADD-03 | ** Sonarr ** options: quality profile, root folder, monitoring mode (all episodes, only future, missing, existing, first season, last season, most recent season, only pilots, recent, none), monitoring of new seasons, series type (standard/daily/anime), folder per season, tags, **search for missing episodes immediately **. | M |
+| FR-ADD-04 | * *Radarr** options: quality profile, root folder, monitored yes/no, minimum availability (announced / at the cinema / out), tags, **look for the movie right away **. | M |
+| FR-ADD-05 | Quality profile and root folder are preselected with default values (see D-01). All other options are chosen by the user. | M |
+| FR-ADD-06 | If the instance is not configured, unreachable, or rejects credentials, the action is blocked with a clear message and a link to the settings. | M |
+| FR-ADD-07 | If the title is already present in the instance, the Add action is not offered: it shows the status. | M |
 | FR-ADD-08 | Se per il titolo manca l'id necessario (TVDB per le serie, TMDB per i film), l'azione è disabilitata con una spiegazione. | M |
 | FR-ADD-09 | Dopo l'aggiunta l'interfaccia mostra subito il nuovo stato e un messaggio di esito. Eventuali errori restituiti da Sonarr/Radarr sono mostrati in forma leggibile. | M |
 | FR-ADD-10 | Il dialog ricorda le ultime opzioni scelte (tranne il profilo/root di default). | C |
@@ -317,13 +317,13 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 
 ### 4.14 Voto e raccomandazioni (FR-REC)
 
-Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi prodotto:
+Requisiti dettagliati e priorità in `recommendations.md` (FR-REC-*). Sintesi prodotto:
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RT | Il profilo attivo può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa* (o togliere il voto) da card e scheda; può *Hide* dalla scheda. Voto e hide sono del profilo sul `Title` e indipendenti dalla sorgente. Mutazione ottimistica in UI. I votati e gli hide del profilo non compaiono in *Per te*. | M |
-| FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
-| FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
+| FR-REC-RT | Il profilo attivo può mettere *Love* / *Like* / *Dislike* / *Not interested* (o togliere il voto) da card e scheda; può *Hide* dalla scheda. Voto e hide sono del profilo sul `Title` e indipendenti dalla sorgente. Mutazione ottimistica in UI. I votati e gli hide del profilo non compaiono in *For you*. | M |
+| FR-REC-LIST | Pagina *My ratings* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
+| FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *For you* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *My list* è un segnale implicito temporaneo (dettaglio in `recommendations.md`). | M |
 | FR-REC-SIM | Griglia *Simili* in fondo alla scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
 | FR-REC-ML | Embedding ONNX locali opzionali (modello scaricato o copiato); senza modello restano prior e livello sparse. | M |
 | FR-REC-AD | Impostazioni *Raccomandazioni*: stato, rebuild, embedding, download modello, valutazione offline, reset; eventi locali disattivabili (default off). | M |
@@ -332,7 +332,7 @@ Decisioni D-REC-01…D-REC-13: vedi §11.3. Override rispetto a D-REC-12: il liv
 
 ---
 
-## 5. Requisiti non funzionali
+## 5. Non-functional requirements
 
 | ID | Area | Requisito |
 |---|---|---|
@@ -351,7 +351,7 @@ Decisioni D-REC-01…D-REC-13: vedi §11.3. Override rispetto a D-REC-12: il liv
 
 ---
 
-## 6. Regole di business
+## 6. Business rules
 
 | ID | Regola |
 |---|---|
@@ -414,7 +414,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 **US-08 — Preferiti.** Voglio segnare titoli come preferiti, per ritrovarli in seguito.
 - CA1: toggle da card e scheda.
-- CA2: il filtro *La mia lista* mostra anche i preferiti non disponibili nella sorgente corrente, con badge.
+- CA2: il filtro *My list* mostra anche i preferiti non disponibili nella sorgente corrente, con badge.
 
 ### Sonarr/Radarr
 
@@ -459,7 +459,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 ---
 
-## 8. Casi d'uso
+## 8. Use cases
 
 ### UC-01 — Sincronizzare il catalogo
 
@@ -505,13 +505,13 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 - **Precondizioni:** istanza configurata e raggiungibile; titolo non in libreria; id necessario presente.
 - **Flusso principale:**
   1. Clic su **Aggiungi** (card o scheda).
-  2. Il sistema recupera profili qualità, root folder e tag dell'istanza e propone il dialog con i default.
+2. Il sistema recupera profili qualità, root folder e tag dell'istanza e propone il dialog con i default.
   3. L'utente modifica le opzioni e conferma.
   4. Il backend verifica che il titolo non sia già presente, esegue il lookup sull'istanza e crea l'elemento con monitoraggio e ricerca immediata come scelto.
   5. Il backend aggiorna la cache dello stato e risponde.
   6. La UI mostra il messaggio di esito e il nuovo stato.
 - **Alternativi:**
-  - *Istanza non configurata o irraggiungibile:* messaggio con link alle impostazioni; il dialog non si apre o la conferma è bloccata.
+- *Istanza non configurata o irraggiungibile:* messaggio con link alle impostazioni; il dialog non si apre o la conferma è bloccata.
   - *Già presente (race):* si mostra lo stato esistente.
   - *Rifiuto da parte di Sonarr/Radarr (es. root folder non valida):* messaggio con il motivo restituito dall'istanza.
   - *Id mancante:* azione disabilitata (BR-08).
@@ -525,7 +525,7 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
   2. Per ogni elemento calcola lo stato (BR-09/BR-10) e lo associa al titolo tramite id.
   3. La UI mostra badge (solo se diverso da *Non in libreria*), percentuale e dettaglio per stagione.
 - **Alternativi:**
-  - *Webhook ricevuto:* il backend aggiorna subito l'elemento interessato.
+- *Webhook ricevuto:* il backend aggiorna subito l'elemento interessato.
   - *Istanza irraggiungibile:* ultimo stato noto con avviso di dato obsoleto.
 
 ### UC-08 — Eliminare un titolo da Sonarr/Radarr
@@ -560,11 +560,11 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 ---
 
-## 9. Schermate
+## 9. Screens
 
 Descrizione testuale (i mockup saranno prodotti in seguito).
 
-**Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni* solo per l’admin), controllo profilo (apre `/who`), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
+**Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *For you*, *My list*, *Valutazioni*, *Impostazioni* solo per l’admin), controllo profilo (apre `/who`), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
 
 **Chi sei** (`/who`). Griglia dei profili (icona colore + iniziale). Scelta, creazione/eliminazione (admin), modifica nome/colore. Un solo profilo salta questa schermata all’avvio.
 
@@ -572,13 +572,13 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 - Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
 - Barra filtri: tipo, genere, anno, stato libreria, ordinamento, "includi rimossi".
 - Griglia di card poster 2:3 con scorrimento infinito.
-- Card: poster, tipo, titolo, anno, badge stato libreria (se presente in libreria), cuore, controlli *Mi piace* / *Non mi piace*.
+- Card: poster, tipo, titolo, anno, badge stato libreria (se presente in libreria), cuore, controlli *Like* / *Dislike*.
 
-**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento (nascosto quando `N_eff ≥ N0`), chip dei motivi e filtri tipo/genere.
+**For you** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento (nascosto quando `N_eff ≥ N0`), chip dei motivi e filtri tipo/genere.
 
-**La mia lista** (`/list`). Preferiti del profilo attivo; badge rispetto alla sorgente selezionata.
+**My list** (`/list`). Preferiti del profilo attivo; badge rispetto alla sorgente selezionata.
 
-**Le mie valutazioni** (`/ratings`). Elenco Like/Dislike con export/import.
+**My ratings** (`/ratings`). Elenco Like/Dislike con export/import.
 
 **Scheda di dettaglio (modale).** Backdrop in testata; colonna sinistra poster; a destra titolo, anno, durata/stagioni, generi, voti, trama, link esterni, disponibilità (dal / scade / rimosso). Sezione *Libreria*: stato, monitorato, percentuale download, tabella stagioni per le serie. Barra azioni: preferito, voto, Aggiungi / Elimina, Cerca ora, Aggiorna stato. In fondo, griglia *Simili* su più righe quando le raccomandazioni sono attive.
 
@@ -592,26 +592,26 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 ---
 
-## 10. Fuori ambito ed evoluzioni
+## 10. Out of scope and future work
 
 **Non previsto in v1**
 
 - Autenticazione (login, password, account protetti). I profili sono una partizione logica senza autenticazione.
-- Collaborative filtering o raccomandazioni utente-utente oltre al prior di casa a freddo.
+- Collaborative filtering o raccomandazioni utente-utente oltre al household prior a freddo.
 - Più istanze Sonarr/Radarr (es. HD e 4K) e instradamento automatico.
 - Anime e contenuti kids come categorie dedicate.
 - App mobile / layout responsive.
 - Download/riproduzione di contenuti: l'app orchestra soltanto Sonarr/Radarr.
 - Servizi non coperti da Watchmode.
 - Notifiche (email, push) per novità o scadenze.
-- Ordinamento *Per te* dentro la griglia del catalogo (la lista consigliata è solo `/for-you`).
+- Ordinamento *For you* dentro la griglia del catalogo (la lista consigliata è solo `/for-you`).
 - Chiamate esterne con i dati di gusto (tutto il ML resta locale).
 
 **Evoluzioni possibili:** feed delle modifiche Watchmode (piano a pagamento), SSE per aggiornamenti in tempo reale, aggiunta in blocco dai preferiti, hero banner, più istanze arr, notifiche, autenticazione opzionale, taratura fine dei pesi su corpus di voti reali (SP-R4).
 
 ---
 
-## 11. Assunzioni, rischi e decisioni aperte
+## 11. Assumptions, risks, and open decisions
 
 ### 11.1 Assunzioni
 
@@ -648,15 +648,15 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-08 | **Nome del progetto.** | "Pickarr" provvisorio. |
 | D-09 | **Versioni minime** di Sonarr (v4) e Radarr (v5). | Da confermare con le istanze in uso. |
 | D-10 | **Storage di Hangfire su SQLite** (pacchetto di comunità). | Spike SP-4; in alternativa storage in memoria, dato che le schedulazioni si ricreano dal DB all'avvio. |
-| D-REC-01 | Scope predefinito di *Per te*. | Sorgente selezionata (`source`). |
+| D-REC-01 | Scope predefinito di *For you*. | Sorgente selezionata (`source`). |
 | D-REC-02 | Altro scope. | Unione delle sorgenti abilitate; nessuno scope oltre i cataloghi importati. |
-| D-REC-03 | Profilo di gusto. | Uno per profilo di casa. Il filtro di catalogo si applica alla lista, non all'apprendimento. Sotto `N0` entra il prior di casa (Love/Like altrui, tetto 0,5). |
+| D-REC-03 | Profilo di gusto. | Uno per profilo di casa. Il filtro di catalogo si applica alla lista, non all'apprendimento. Sotto `N0` entra il household prior (Love/Like altrui, tetto 0,5). |
 | D-REC-04 | Simili. | Sempre sull'unione delle sorgenti abilitate; mostrano `places`. |
 | D-REC-05 | `RemovedAt`. | Non esclude dal pool raccomandazioni. |
-| D-REC-06 | Valori di voto. | *Mi piace molto*, *Mi piace*, *Non mi piace*, *Non mi interessa*; *Hide* separato. |
+| D-REC-06 | Valori di voto. | *Love*, *Like*, *Dislike*, *Not interested*; *Hide* separato. |
 | D-REC-07 | Superficie UI. | Pagina dedicata `/for-you` (non ordinamento in griglia catalogo). |
 | D-REC-08 | Valutazioni e onboarding. | `/ratings` globale; onboarding `/taste` sul pool abilitato. |
-| D-REC-09 | Libreria Arr. | Esclusa di default in *Per te*, con interruttore. |
+| D-REC-09 | Libreria Arr. | Esclusa di default in *For you*, con interruttore. |
 | D-REC-10 | Default feature. | Attiva (`reco.enabled`); modello ONNX su richiesta. |
 | D-REC-11 | Modello. | `all-MiniLM-L6-v2` quantizzato (`@q8`), rivisto dopo SP-R2/SP-R4. |
 | D-REC-12 | Livello 3. | Originariamente fuori MVP; **override prodotto**: implementato in R4, attivo solo se batte L2 nella valutazione offline. |
@@ -664,12 +664,12 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 
 ---
 
-## 12. Fasi di rilascio
+## 12. Release phases
 
 | Fase | Contenuto |
 |---|---|
 | **MVP** | Sync catalogo Netflix IT/US con budget crediti e baseline; arricchimento TMDB; griglia, ricerca e filtri, dettaglio; preferiti (`/list`); impostazioni; aggiunta a Sonarr/Radarr con dialog; stato con sync periodica; eliminazione; admin job; i18n con inglese; immagine Docker; CI. |
-| **R1** | Voto (poi per profilo), prior, *Per te* L0, API/status, UI card/scheda, `/ratings`. |
+| **R1** | Voto (poi per profilo), prior, *For you* L0, API/status, UI card/scheda, `/ratings`. |
 | **R2** | Keyword/crediti/en-US, segnali impliciti, sparse L1, simili, reasons. |
 | **R3** | Modello ONNX, embedding, kNN L2, MMR/explore, `/taste`, settings/admin reco. |
 | **R4** | Valutazione offline, livello 3 gated, registro eventi (default off), taratura SP-R4. |

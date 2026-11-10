@@ -12,6 +12,17 @@ It syncs what a service offers in a country (via [Watchmode](https://watchmode.c
 
 **Ops.** Jobs, Watchmode credit usage, and settings live in the UI. One Docker image serves the API and the built SPA on port **8080**.
 
+## Documentation
+
+| Audience | Start here |
+| --- | --- |
+| Operators | [docs/user/](docs/user/README.md) — features, [deployment](docs/user/deployment.md), [configuration](docs/user/configuration.md) |
+| Contributors | [docs/developer/](docs/developer/README.md) — layout, tests, [architecture](docs/developer/architecture.md) |
+| Comparison | [Pickarr vs Seerr](docs/pickarr-vs-seerr.md) |
+| Index | [docs/README.md](docs/README.md) |
+
+Product specifications (source of truth): [functional-spec](docs/functional-spec.md), [technical-spec](docs/technical-spec.md), [recommendations](docs/recommendations.md). Keeping docs in sync: [docs/AGENTS.md](docs/AGENTS.md).
+
 ---
 
 ## What you need
@@ -38,109 +49,7 @@ Optional: OMDb API key; ONNX model files under the data path for richer recommen
 
 Secrets saved in the UI are encrypted with ASP.NET Data Protection under `/config`. The API only reports whether a secret is set.
 
-You can also set application settings from the environment. A **non-empty** env value overrides the database for the process lifetime and is not written back when you save in the UI. Empty variables are ignored.
-
-### Environment naming
-
-Flat `SCREAMING_SNAKE` names map from setting keys (`.` and camelCase → `_`):
-
-```text
-watchmode.apiKey           →  WATCHMODE_API_KEY
-tmdb.apiKey                →  TMDB_API_KEY
-sonarr.url                 →  SONARR_URL
-sonarr.apiKey              →  SONARR_API_KEY
-radarr.url                 →  RADARR_URL
-reco.weights.love          →  RECO_WEIGHTS_LOVE
-sonarr.syncIntervalMinutes →  SONARR_SYNC_INTERVAL_MINUTES
-```
-
-The form `Pickarr__Settings__…` (`.` → `__`) still works; when both are set, the flat name wins.
-
-Booleans are `true` / `false`. Numbers use a decimal point (`0.8`). An unknown nested key, or a value that does not parse, stops startup.
-
-Sonarr/Radarr defaults as nested fields or one JSON object:
-
-```text
-SONARR_DEFAULTS_QUALITY_PROFILE_ID=1
-SONARR_DEFAULTS_ROOT_FOLDER_PATH=/tv
-```
-
-```text
-SONARR_DEFAULTS={"qualityProfileId":1,"rootFolderPath":"/tv"}
-```
-
-A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
-
-### Application settings
-
-| Key | Default | |
-| --- | --- | --- |
-| `watchmode.apiKey` | | Watchmode API key. Secret. |
-| `watchmode.plan` | `free` | `free` or `paid`. |
-| `watchmode.quota` | `2500` | Monthly credit quota. |
-| `watchmode.reservePercent` | `10` | Quota held back from jobs. |
-| `watchmode.maxCreditsPerRun` | `80` | Cap for one catalog run. |
-| `watchmode.billingDayOfMonth` | `1` | Day the monthly quota resets. |
-| `tmdb.apiKey` | | TMDB v3 key or v4 read token. Secret. |
-| `omdb.apiKey` | | Optional. Secret. |
-| `sonarr.url` | | e.g. `http://sonarr:8989` |
-| `sonarr.apiKey` | | Secret. |
-| `sonarr.syncIntervalMinutes` | `15` | |
-| `sonarr.defaults.qualityProfileId` | | Used when adding a series. |
-| `sonarr.defaults.rootFolderPath` | | |
-| `radarr.url` | | |
-| `radarr.apiKey` | | Secret. |
-| `radarr.syncIntervalMinutes` | `15` | |
-| `radarr.defaults.qualityProfileId` | | |
-| `radarr.defaults.rootFolderPath` | | |
-| `ui.language` | `en` | UI preference (shipped UI is English). |
-| `catalog.newWindowDays` | `14` | New filter window. |
-| `catalog.leavingWindowDays` | `30` | Leaving filter window. |
-| `catalog.removedWindowDays` | `30` | Recently removed window. |
-| `catalog.removalConfirmations` | `2` | Full syncs required before marking removed. |
-| `catalog.maxRemovalRatio` | `0.1` | Abort full sync if too much of the catalog would vanish. |
-| `catalog.staleWarningDays` | `21` | Age after which a source is shown as stale. |
-| `reco.enabled` | `true` | Local recommendations. |
-| `reco.useImplicit` | `true` | Favorites / library / hide as signals. |
-| `reco.excludeInLibrary` | `true` | Exclude titles already in Arr from For you by default. |
-| `reco.n0` | `30` | Effective ratings before full personalization. |
-| `reco.weights.love` | `1.5` | |
-| `reco.weights.like` | `1` | |
-| `reco.weights.dislike` | `-1` | |
-| `reco.weights.notInterested` | `-0.75` | |
-| `reco.weights.favorite` | `0.5` | |
-| `reco.weights.arrAdd` | `0.6` | |
-| `reco.weights.downloaded` | `0.4` | |
-| `reco.weights.watched` | `0` | Hide: exclude from For you; default weight is zero. |
-| `reco.mmr.lambda` | `0.7` | Diversity (`0` disables). |
-| `reco.explore.rate` | `0.1` | Exploration share (`0` disables). |
-| `reco.ml.minRatings` | `100` | Minimum votes before supervised model. |
-| `reco.events.enabled` | `false` | Local reco event log. |
-| `reco.embeddings.enabled` | `true` | Use ONNX when the model is present. |
-| `reco.embeddings.modelId` | `all-MiniLM-L6-v2@q8` | |
-| `reco.embeddings.threads` | `2` | |
-| `reco.embeddings.batchSize` | `16` | |
-| `reco.embeddings.minCoverage` | `0.8` | |
-| `reco.embeddings.throttle` | `true` | |
-
-### Process settings
-
-| Variable | Default | |
-| --- | --- | --- |
-| `ASPNETCORE_URLS` | `http://+:8080` | Listen address. |
-| `Pickarr__DataPath` | `/config` | SQLite, Data Protection keys, logs. |
-| `TZ` | `UTC` in the image | Schedules and timestamps (tzdata is included). |
-| `Pickarr__Models__Path` | `<DataPath>/models` | ONNX model files. |
-| `Pickarr__Catalog__AutoInitialImport` | `true` | Queue first import when a Watchmode key is available. |
-| `Pickarr__Watchmode__BaseUrl` | `https://api.watchmode.com/v1/` | |
-| `Pickarr__Watchmode__RequestsPerSecond` | `1` | |
-| `Pickarr__Tmdb__BaseUrl` | `https://api.themoviedb.org/3/` | |
-| `Pickarr__Tmdb__RequestsPerSecond` | `20` | |
-| `LOG_LEVEL` | `Debug` | Serilog minimum level (`Verbose`/`Debug`/`Information`/`Warning`/`Error`/`Fatal`). |
-
-`Hangfire__Storage` defaults to `Sqlite` (`jobs.db` under the data path). `Memory` drops the queue on restart.
-
-The header shows the running version from `GET /api/v1/system/status` (same string as the Docker image `VERSION` / assembly informational version).
+Application settings can also be pinned from the environment (`WATCHMODE_API_KEY`, `TMDB_API_KEY`, `SONARR_URL`, …). A non-empty env value overrides the database for the process lifetime and is not written back from the UI. Full key lists, process variables, and naming rules: [docs/user/configuration.md](docs/user/configuration.md).
 
 ---
 
@@ -170,23 +79,17 @@ dotnet test
 cd src/Pickarr.WebApp && npm test -- --run && npm run typecheck && npm run lint && npm run build
 ```
 
-Product detail lives in `docs/documento-funzionale.md`, `docs/specifica-tecnica.md`, and `docs/raccomandazioni.md`.
+Contributor workflow and constraints: [docs/developer/](docs/developer/README.md). Product specifications: [functional-spec](docs/functional-spec.md), [technical-spec](docs/technical-spec.md), [recommendations](docs/recommendations.md).
 
 ---
 
 ## Deploy
 
+Full deploy notes (tags, volumes, reverse proxy, data directory): [docs/user/deployment.md](docs/user/deployment.md). Settings reference: [docs/user/configuration.md](docs/user/configuration.md).
+
 One container serves the API and the built web app on port **8080**. SQLite (WAL) and Data Protection keys live in `/config` — use a **local** disk or named volume, not a network share.
 
-The process runs as non-root user `app` (uid **1654**). A new named volume inherits ownership from the image. A host directory you create must be writable by uid 1654.
-
-Published images are **linux/amd64** on `ghcr.io/<owner>/<repo>` (for this repository: `ghcr.io/ildoc/Pickarr`).
-
-| Tag | When |
-| --- | --- |
-| `edge` | Default branch |
-| `X.Y.Z.N` | Default branch build (`N` commits after the latest release tag) |
-| `X.Y.Z`, `latest` | Git tag `vX.Y.Z` / `X.Y.Z` |
+Published images are **linux/amd64** on `ghcr.io/ildoc/Pickarr` (`edge`, `X.Y.Z.N`, SemVer / `latest`). Process user: `app` (uid **1654**).
 
 ### Compose
 
@@ -197,11 +100,7 @@ docker compose up -d
 curl -fsS http://localhost:8080/health
 ```
 
-Open `http://localhost:8080`. To pull a published image instead of building, comment out `build:` and set:
-
-```yaml
-image: ghcr.io/ildoc/Pickarr:edge
-```
+To pull a published image instead of building, comment out `build:` and set `image: ghcr.io/ildoc/Pickarr:edge`.
 
 ### Prebuilt image
 
@@ -219,12 +118,6 @@ docker run -d --name pickarr \
   ghcr.io/ildoc/Pickarr:edge
 ```
 
-Health: from the host, `curl -fsS http://localhost:8080/health`. Inside the container the healthcheck uses `/usr/local/bin/wget`.
-
-### Build locally
-
 ```bash
 docker build -f src/Pickarr.Api/Dockerfile -t pickarr:local .
 ```
-
-Optional build-arg `VERSION` sets the assembly / UI version string (defaults to `0.0.0`).
