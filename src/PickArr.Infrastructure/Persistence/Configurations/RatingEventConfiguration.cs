@@ -17,5 +17,9 @@ public sealed class RatingEventConfiguration : IEntityTypeConfiguration<RatingEv
             .WithMany()
             .HasForeignKey(x => x.TitleId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Profile)
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

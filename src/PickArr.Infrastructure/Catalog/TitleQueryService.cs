@@ -50,7 +50,8 @@ public sealed class TitleQueryService(
     public async Task<PagedTitlesResult> QueryTitlesAsync(
         int sourceId,
         TitleQueryRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? personalProfileId = null)
     {
         var page = Math.Max(1, request.Page);
         var pageSize = Math.Clamp(request.PageSize <= 0 ? 48 : request.PageSize, 1, 100);
@@ -97,11 +98,15 @@ public sealed class TitleQueryService(
 
         if (favoriteOnly)
         {
-            query = query.Where(t => t.Favorite != null);
+            query = personalProfileId is int favoriteProfileId
+                ? query.Where(t => t.Favorites.Any(f => f.ProfileId == favoriteProfileId))
+                : query.Where(t => t.Favorites.Any());
         }
         else if (ratingsOnly)
         {
-            query = query.Where(t => t.Rating != null && t.Rating.Value == ratingFilter);
+            query = personalProfileId is int ratingProfileId
+                ? query.Where(t => t.Ratings.Any(r => r.ProfileId == ratingProfileId && r.Value == ratingFilter))
+                : query.Where(t => t.Ratings.Any(r => r.Value == ratingFilter));
         }
         else
         {
@@ -220,7 +225,7 @@ public sealed class TitleQueryService(
             sort = "added";
         }
 
-        query = ApplySort(query, sort, desc, source?.Id ?? 0, searchTerm, favoriteOnly, ratingsOnly);
+        query = ApplySort(query, sort, desc, source?.Id ?? 0, searchTerm, favoriteOnly, ratingsOnly, personalProfileId);
 
         var total = await query.CountAsync(cancellationToken);
         var pageIds = await query
@@ -231,9 +236,9 @@ public sealed class TitleQueryService(
 
         var titles = await db.Titles.AsNoTracking()
             .Where(t => pageIds.Contains(t.Id))
-            .Include(t => t.Favorite)
-            .Include(t => t.Watched)
-            .Include(t => t.Rating)
+            .Include(t => t.Favorites)
+            .Include(t => t.WatchedItems)
+            .Include(t => t.Ratings)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource!).ThenInclude(s => s.Provider)
@@ -249,7 +254,8 @@ public sealed class TitleQueryService(
                 source,
                 newCutoff,
                 arrByTitle.GetValueOrDefault(id),
-                ratingsOnly))
+                ratingsOnly,
+                personalProfileId))
             .ToList();
 
         string? emptyReason = null;
@@ -286,7 +292,8 @@ public sealed class TitleQueryService(
     public async Task<IReadOnlyList<GenreCountDto>> ListGenresAsync(
         int sourceId,
         bool favoritesOnly,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? personalProfileId = null)
     {
         var arrFilter = await ResolveArrFilterAsync(cancellationToken);
         if (arrFilter.AllowedMediaTypes.Count == 0)
@@ -302,12 +309,23 @@ public sealed class TitleQueryService(
         }
 
         var lang = source?.MetadataLanguage ?? LanguageFallback.English;
-        var rows = await db.TitleGenres.AsNoTracking()
-            .Where(tg =>
-                arrFilter.AllowedMediaTypes.Contains(tg.Title!.MediaType)
-                && (favoritesOnly
-                    ? tg.Title.Favorite != null
-                    : tg.Title.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null)))
+        var genreQuery = db.TitleGenres.AsNoTracking()
+            .Where(tg => arrFilter.AllowedMediaTypes.Contains(tg.Title!.MediaType));
+        if (favoritesOnly && personalProfileId is int genreProfileId)
+        {
+            genreQuery = genreQuery.Where(tg => tg.Title!.Favorites.Any(f => f.ProfileId == genreProfileId));
+        }
+        else if (favoritesOnly)
+        {
+            genreQuery = genreQuery.Where(tg => tg.Title!.Favorites.Any());
+        }
+        else
+        {
+            genreQuery = genreQuery.Where(tg =>
+                tg.Title!.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null));
+        }
+
+        var rows = await genreQuery
             .GroupBy(tg => tg.GenreId)
             .Select(g => new { GenreId = g.Key, Count = g.Count() })
             .ToListAsync(cancellationToken);
@@ -341,7 +359,8 @@ public sealed class TitleQueryService(
     public async Task<IReadOnlyList<CatalogTypeCountDto>> ListTypesAsync(
         int sourceId,
         bool favoritesOnly,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? personalProfileId = null)
     {
         var arrFilter = await ResolveArrFilterAsync(cancellationToken);
         if (arrFilter.AllowedMediaTypes.Count == 0)
@@ -351,9 +370,18 @@ public sealed class TitleQueryService(
 
         var query = db.Titles.AsNoTracking()
             .Where(t => arrFilter.AllowedMediaTypes.Contains(t.MediaType));
-        query = favoritesOnly
-            ? query.Where(t => t.Favorite != null)
-            : query.Where(t => t.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null));
+        if (favoritesOnly && personalProfileId is int typeProfileId)
+        {
+            query = query.Where(t => t.Favorites.Any(f => f.ProfileId == typeProfileId));
+        }
+        else if (favoritesOnly)
+        {
+            query = query.Where(t => t.Favorites.Any());
+        }
+        else
+        {
+            query = query.Where(t => t.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null));
+        }
 
         var rows = await query
             .GroupBy(t => t.Category)
@@ -378,12 +406,13 @@ public sealed class TitleQueryService(
     public async Task<TitleDetailDto?> GetTitleAsync(
         int titleId,
         int? sourceId,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? personalProfileId = null)
     {
         var title = await db.Titles.AsNoTracking()
-            .Include(t => t.Favorite)
-            .Include(t => t.Watched)
-            .Include(t => t.Rating)
+            .Include(t => t.Favorites)
+            .Include(t => t.WatchedItems)
+            .Include(t => t.Ratings)
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre!).ThenInclude(g => g.Localizations)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)
@@ -414,6 +443,7 @@ public sealed class TitleQueryService(
             .Include(a => a.Seasons)
             .FirstOrDefaultAsync(a => a.TitleId == title.Id, cancellationToken);
         var arr = BuildArrDetail(title, arrItem, sonarr, radarr);
+        var personal = PersonalFlags(title, personalProfileId);
 
         return new TitleDetailDto(
             title.Id,
@@ -435,9 +465,9 @@ public sealed class TitleQueryService(
                     : null,
                 string.IsNullOrWhiteSpace(title.ImdbId) ? null : $"https://www.imdb.com/title/{title.ImdbId}/",
                 title.TvdbId is { } tvdb ? $"https://thetvdb.com/?tab=series&id={tvdb}" : null),
-            title.Favorite is not null,
-            title.Watched is not null,
-            RatingValues.ToApiOrNull(title.Rating?.Value),
+            personal.IsFavorite,
+            personal.IsWatched,
+            personal.Rating,
             ToApiMetadataStatus(title.MetadataStatus),
             title.Availabilities
                 .OrderBy(a => a.CatalogSource?.CountryCode)
@@ -470,6 +500,7 @@ public sealed class TitleQueryService(
     }
 
     public Task<PagedTitlesResult> QueryFavoritesAsync(
+        int profileId,
         TitleQueryRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -479,10 +510,11 @@ public sealed class TitleQueryService(
             IncludeRemoved = true,
             View = "all",
         };
-        return QueryTitlesAsync(0, favorites, cancellationToken);
+        return QueryTitlesAsync(0, favorites, cancellationToken, profileId);
     }
 
     public Task<PagedTitlesResult> QueryRatingsAsync(
+        int profileId,
         string ratingValue,
         TitleQueryRequest request,
         CancellationToken cancellationToken = default)
@@ -493,23 +525,39 @@ public sealed class TitleQueryService(
             IncludeRemoved = true,
             View = "all",
         };
-        return QueryTitlesAsync(0, ratings, cancellationToken);
+        return QueryTitlesAsync(0, ratings, cancellationToken, profileId);
     }
 
     public Task<IReadOnlyList<GenreCountDto>> ListFavoriteGenresAsync(
+        int profileId,
         CancellationToken cancellationToken = default) =>
-        ListGenresAsync(0, favoritesOnly: true, cancellationToken);
+        ListGenresAsync(0, favoritesOnly: true, cancellationToken, profileId);
 
     public Task<IReadOnlyList<CatalogTypeCountDto>> ListFavoriteTypesAsync(
+        int profileId,
         CancellationToken cancellationToken = default) =>
-        ListTypesAsync(0, favoritesOnly: true, cancellationToken);
+        ListTypesAsync(0, favoritesOnly: true, cancellationToken, profileId);
+
+    private static (bool IsFavorite, bool IsWatched, string? Rating) PersonalFlags(Title title, int? personalProfileId)
+    {
+        if (personalProfileId is not int profileId)
+        {
+            return (false, false, null);
+        }
+
+        return (
+            title.Favorites.Any(f => f.ProfileId == profileId),
+            title.WatchedItems.Any(w => w.ProfileId == profileId),
+            RatingValues.ToApiOrNull(title.Ratings.FirstOrDefault(r => r.ProfileId == profileId)?.Value));
+    }
 
     private TitleListItemDto MapListItem(
         Title title,
         CatalogSource? source,
         DateTime newCutoff,
         ArrLibraryItem? arrItem,
-        bool ratingsOnly = false)
+        bool ratingsOnly = false,
+        int? personalProfileId = null)
     {
         var language = source?.MetadataLanguage ?? LanguageFallback.English;
         var (name, _) = ResolveLocalization(title, language);
@@ -530,6 +578,7 @@ public sealed class TitleQueryService(
                 isNew);
         }
 
+        var personal = PersonalFlags(title, personalProfileId);
         return new TitleListItemDto(
             title.Id,
             name,
@@ -540,9 +589,9 @@ public sealed class TitleQueryService(
             MapGenres(title, language),
             title.VoteTmdb,
             RatingImdb: null,
-            title.Favorite is not null,
-            title.Watched is not null,
-            RatingValues.ToApiOrNull(title.Rating?.Value),
+            personal.IsFavorite,
+            personal.IsWatched,
+            personal.Rating,
             availabilityDto,
             BuildArrSummary(title.MediaType, arrItem),
             ratingsOnly ? MapRatingPlaces(title) : MapPlaces(title));
@@ -719,20 +768,35 @@ public sealed class TitleQueryService(
         int sourceId,
         string? searchTerm,
         bool favoriteOnly,
-        bool ratingsOnly = false)
+        bool ratingsOnly = false,
+        int? personalProfileId = null)
     {
         if (ratingsOnly && sort is not ("year" or "rating" or "title" or "relevance"))
         {
+            if (personalProfileId is int ratingProfileId)
+            {
+                return desc
+                    ? query.OrderByDescending(t => t.Ratings.Where(r => r.ProfileId == ratingProfileId).Max(r => (DateTime?)r.RatedAt)).ThenBy(t => t.Id)
+                    : query.OrderBy(t => t.Ratings.Where(r => r.ProfileId == ratingProfileId).Max(r => (DateTime?)r.RatedAt)).ThenBy(t => t.Id);
+            }
+
             return desc
-                ? query.OrderByDescending(t => t.Rating!.RatedAt).ThenBy(t => t.Id)
-                : query.OrderBy(t => t.Rating!.RatedAt).ThenBy(t => t.Id);
+                ? query.OrderByDescending(t => t.Ratings.Max(r => (DateTime?)r.RatedAt)).ThenBy(t => t.Id)
+                : query.OrderBy(t => t.Ratings.Max(r => (DateTime?)r.RatedAt)).ThenBy(t => t.Id);
         }
 
         if (favoriteOnly && sort is not ("year" or "rating" or "title" or "relevance"))
         {
+            if (personalProfileId is int favoriteProfileId)
+            {
+                return desc
+                    ? query.OrderByDescending(t => t.Favorites.Where(f => f.ProfileId == favoriteProfileId).Max(f => (DateTime?)f.CreatedAt)).ThenBy(t => t.Id)
+                    : query.OrderBy(t => t.Favorites.Where(f => f.ProfileId == favoriteProfileId).Max(f => (DateTime?)f.CreatedAt)).ThenBy(t => t.Id);
+            }
+
             return desc
-                ? query.OrderByDescending(t => t.Favorite!.CreatedAt).ThenBy(t => t.Id)
-                : query.OrderBy(t => t.Favorite!.CreatedAt).ThenBy(t => t.Id);
+                ? query.OrderByDescending(t => t.Favorites.Max(f => (DateTime?)f.CreatedAt)).ThenBy(t => t.Id)
+                : query.OrderBy(t => t.Favorites.Max(f => (DateTime?)f.CreatedAt)).ThenBy(t => t.Id);
         }
 
         return sort switch

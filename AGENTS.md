@@ -53,8 +53,13 @@ SQLite uses WAL. Do not put the data directory on a network share.
 
 ## Product boundaries
 
-- The catalog page is `/catalog`. It is one provider, then one country. Quick filters are All, New, Leaving, and Recently removed.
-- My list is `/list` and `GET /api/v1/favorites` (plus `/types` and `/genres`). It is cross-provider and cross-country. Do not put it back on the catalog as `view=favorites` or `favorite=true`. The catalog endpoints ignore that flag. `/catalog?view=favorites` redirects to `/list`.
+- There is no authentication. Up to 10 profiles share one install. The first is admin (`IsAdmin`); personal data from before multi-profile migrates onto that admin. The admin role is not transferred and the admin profile is not deleted.
+- Profile choice is `/who`. The last id is `localStorage` `pickarr.profileId`. One profile skips the selector and enters the catalog; a remembered id that no longer exists opens `/who`. The header control always opens `/who`. After choice the SPA sends `X-Pickarr-Profile`.
+- Non-admin profiles do not see Settings; `/settings` redirects to the catalog. Settings, jobs, and system APIs stay open. Only the admin creates or deletes other profiles; anyone edits their own name, color, and reco toggles (`useImplicit`, `excludeInLibrary`).
+- Favorites, ratings, watched, recommendations, and taste state are per profile. Catalog metadata, embeddings, app settings, and Arr library rows stay global. A new Arr add with the header stores `ProfileId` on the audit row for that profile’s implicit signal; without the header the action is valid and the taste signal is not attributed.
+- Under `N_eff < N0`, recommendations blend a household prior from other profiles’ Love/Like (cap 0.5 on the non-personal slot). At `N_eff ≥ N0` that term is zero. Details in `docs/raccomandazioni.md`.
+- The catalog page is `/catalog`. It is one provider, then one country. Quick filters are All, New, Leaving, and Recently removed. Remembered catalog source is `pickarr.sourceId.{profileId}`; the admin may once copy legacy `pickarr.sourceId`.
+- My list is `/list` and `GET /api/v1/favorites` (plus `/types` and `/genres`). It is cross-provider and cross-country for the active profile. Do not put it back on the catalog as `view=favorites` or `favorite=true`. The catalog endpoints ignore that flag. `/catalog?view=favorites` redirects to `/list`.
 - Title cards and the title dialog stay on the route that opened them.
 - Type and genre options come from the titles in the current scope (catalog source, or the whole list).
 - Series seasons are newest first. Episodes inside a season are oldest first. Adding a series to Sonarr sends only the selected seasons.
@@ -68,7 +73,7 @@ Backend tests use xUnit and Shouldly. Infrastructure tests that call HTTP use Wi
 
 `Pickarr.Integration.Tests` collection `"api"` shares one `ApiFactory` and one database. A test that assumes Sonarr/Radarr are unset, or that a table is empty, will fail if another test in that collection already wrote that state. Give that test its own collection and factory. The factory sets `Hangfire:Storage=Memory` and `Pickarr:Catalog:AutoInitialImport=false`; do not point tests at the developer database.
 
-Frontend tests use Vitest and Testing Library (`jsdom`). Stub `localStorage` when a component reads the preferred catalog source. Assert behavior: a route change, a request argument, or an empty state, not only that a component rendered.
+Frontend tests use Vitest and Testing Library (`jsdom`). Stub `localStorage` when a component reads the preferred catalog source or `pickarr.profileId`. Assert behavior: a route change, a request argument, or an empty state, not only that a component rendered.
 
 ## Changes
 

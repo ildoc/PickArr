@@ -19,8 +19,11 @@ public sealed class AdminJobService(
     public async Task<IReadOnlyList<AdminJobDto>> ListJobsAsync(CancellationToken cancellationToken = default)
     {
         var sources = await db.CatalogSources.AsNoTracking()
+            .Include(s => s.Provider)
             .Where(s => s.IsEnabled)
-            .OrderBy(s => s.CountryCode)
+            .OrderBy(s => s.Provider!.DisplayName)
+            .ThenBy(s => s.CountryCode)
+            .ThenBy(s => s.Id)
             .ToListAsync(cancellationToken);
 
         var recurring = LoadRecurring();
@@ -30,13 +33,15 @@ public sealed class AdminJobService(
 
         foreach (var source in sources)
         {
+            var provider = source.Provider?.DisplayName ?? source.Provider?.Key ?? "Catalog";
             jobs.Add(await BuildJobAsync(
                 ScheduleReconciler.IncrementalJobId(source.Id),
-                JobText.IncrementalName(source.CountryCode),
-                JobText.IncrementalDescription(source.CountryCode),
+                JobText.IncrementalName(provider, source.CountryCode),
+                JobText.IncrementalDescription(provider, source.CountryCode),
                 SyncRunKinds.CatalogIncremental,
                 source.Id,
                 source.CountryCode,
+                provider,
                 source.IncrementalCron,
                 includeRuns: true,
                 canTrigger: true,
@@ -46,11 +51,12 @@ public sealed class AdminJobService(
 
             jobs.Add(await BuildJobAsync(
                 ScheduleReconciler.FullJobId(source.Id),
-                JobText.FullName(source.CountryCode),
-                JobText.FullDescription(source.CountryCode),
+                JobText.FullName(provider, source.CountryCode),
+                JobText.FullDescription(provider, source.CountryCode),
                 SyncRunKinds.CatalogFull,
                 source.Id,
                 source.CountryCode,
+                provider,
                 source.FullSyncCron,
                 includeRuns: true,
                 canTrigger: true,
@@ -71,6 +77,7 @@ public sealed class AdminJobService(
                 SyncRunKinds.Leaving,
                 anchor.Id,
                 countryGroup.Key,
+                providerName: null,
                 LeavingSyncJob.Cron,
                 includeRuns: true,
                 canTrigger: true,
@@ -86,6 +93,7 @@ public sealed class AdminJobService(
             kind: "CatalogBootstrap",
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: false,
             canTrigger: watchmodeReady,
@@ -100,6 +108,7 @@ public sealed class AdminJobService(
             kind: "CatalogResume",
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: false,
             canTrigger: true,
@@ -114,6 +123,7 @@ public sealed class AdminJobService(
             SyncRunKinds.Enrichment,
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: true,
             canTrigger: true,
@@ -128,6 +138,7 @@ public sealed class AdminJobService(
             SyncRunKinds.MetadataRefresh,
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: true,
             canTrigger: true,
@@ -142,6 +153,7 @@ public sealed class AdminJobService(
             SyncRunKinds.ArrSync,
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: true,
             canTrigger: true,
@@ -156,6 +168,7 @@ public sealed class AdminJobService(
             SyncRunKinds.ArrSync,
             sourceId: null,
             countryCode: null,
+            providerName: null,
             cron: null,
             includeRuns: false,
             canTrigger: true,
@@ -412,6 +425,7 @@ public sealed class AdminJobService(
         string kind,
         int? sourceId,
         string? countryCode,
+        string? providerName,
         string? cron,
         bool includeRuns,
         bool canTrigger,
@@ -437,6 +451,7 @@ public sealed class AdminJobService(
             kind,
             sourceId,
             countryCode,
+            providerName,
             schedule,
             last?.StartedAt ?? hf?.LastExecution,
             hf?.NextExecution,

@@ -128,17 +128,20 @@ public sealed class RecoEvalServiceTests : IAsyncLifetime
             db.TitleGenres.Add(new TitleGenre { TitleId = t.Id, GenreId = (t.Id % 5) + 1 });
         }
 
+        var profile = new Profile { Name = "Eval", Color = Profile.DefaultColor, IsAdmin = true, CreatedAt = now };
         for (var i = 0; i < ratingCount; i++)
         {
             db.Ratings.Add(new Rating
             {
+                Profile = profile,
                 TitleId = titles[i].Id,
                 Value = i % 3 == 0 ? RatingValues.Dislike : RatingValues.Like,
                 RatedAt = now.AddMinutes(-i),
             });
         }
 
-        db.RecoStates.Add(new RecoState { Id = RecoState.SingletonId });
+        await db.SaveChangesAsync();
+        db.RecoStates.Add(new RecoState { Id = RecoState.SingletonId, ProfileId = profile.Id });
         await db.SaveChangesAsync();
 
         var settings = new MemorySettingsStore();

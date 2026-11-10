@@ -24,7 +24,7 @@ public sealed class RecommendationsApiTests
     public RecommendationsApiTests(ApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.WithAdmin();
     }
 
     [Fact]
@@ -212,8 +212,10 @@ public sealed class RecommendationsApiTests
                 AddedAt = now,
             });
 
+        var adminId = await db.Profiles.Where(profile => profile.IsAdmin).Select(profile => profile.Id).SingleAsync();
         db.Ratings.Add(new Rating
         {
+            ProfileId = adminId,
             TitleId = rated.Id,
             Value = RatingValues.Like,
             RatedAt = now,
@@ -330,8 +332,10 @@ public sealed class RecommendationsApiTests
                 AddedAt = now,
             });
 
+        var adminId = await db.Profiles.Where(profile => profile.IsAdmin).Select(profile => profile.Id).SingleAsync();
         db.Ratings.Add(new Rating
         {
+            ProfileId = adminId,
             TitleId = ratedNeighbour.Id,
             Value = RatingValues.Like,
             RatedAt = now,

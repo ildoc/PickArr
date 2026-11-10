@@ -13,7 +13,9 @@ using Pickarr.Infrastructure.Metadata;
 using Pickarr.Infrastructure.Metadata.Reco;
 using Pickarr.Infrastructure.Metadata.Tmdb;
 using Pickarr.Infrastructure.Persistence;
+using Pickarr.Infrastructure.Profiles;
 using Pickarr.Infrastructure.Settings;
+using Pickarr.Infrastructure.Diagnostics;
 using Pickarr.Infrastructure.Time;
 using Polly;
 
@@ -32,6 +34,14 @@ public static class DependencyInjection
         var dbPath = Path.Combine(dataPath, "Pickarr.db");
         var keysPath = Path.Combine(dataPath, "keys");
         Directory.CreateDirectory(keysPath);
+
+        var modelsPath = configuration["Pickarr:Models:Path"];
+        var hangfireFile = configuration.GetSection(HangfireOptions.SectionName).Get<HangfireOptions>()?.SqliteFileName
+            ?? new HangfireOptions().SqliteFileName;
+        services.AddSingleton(new PickarrDataPaths(
+            dataPath,
+            jobsDatabaseFile: Path.Combine(dataPath, hangfireFile),
+            modelsDirectory: string.IsNullOrWhiteSpace(modelsPath) ? null : modelsPath));
 
         services.AddSingleton<IClock, SystemClock>();
         services.AddSingleton<IApiUsageSyncRunAccessor, ApiUsageSyncRunAccessor>();
@@ -56,6 +66,7 @@ public static class DependencyInjection
         services.AddScoped<ITitleQueryService, TitleQueryService>();
         services.AddScoped<CatalogConfigurationService>();
         services.AddScoped<IFavoriteService, FavoriteService>();
+        services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IWatchedService, WatchedService>();
         services.AddScoped<IRatingService, RatingService>();
         services.AddScoped<IRecoBuildService, RecoBuildService>();
@@ -76,6 +87,7 @@ public static class DependencyInjection
         services.AddScoped<CatalogBootstrap>();
         services.AddScoped<IAdminJobService, AdminJobService>();
         services.AddScoped<IAdminQuotaService, AdminQuotaService>();
+        services.AddScoped<ISystemStatsService, SystemStatsService>();
         services.AddHttpClient<SonarrClient>();
         services.AddHttpClient<RadarrClient>();
         services.AddScoped<DatabaseInitializer>();

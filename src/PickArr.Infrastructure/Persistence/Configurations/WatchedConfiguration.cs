@@ -9,10 +9,14 @@ public sealed class WatchedConfiguration : IEntityTypeConfiguration<Watched>
     public void Configure(EntityTypeBuilder<Watched> builder)
     {
         builder.ToTable("Watched");
-        builder.HasKey(x => x.TitleId);
+        builder.HasKey(x => new { x.ProfileId, x.TitleId });
         builder.HasOne(x => x.Title)
-            .WithOne(x => x.Watched)
-            .HasForeignKey<Watched>(x => x.TitleId)
+            .WithMany(x => x.WatchedItems)
+            .HasForeignKey(x => x.TitleId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Profile)
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,5 +1,6 @@
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
+using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -14,7 +15,9 @@ public static class CatalogEndpoints
 
         group.MapGet("/sources/{sourceId:int}/titles", async (
             int sourceId,
+            HttpContext http,
             ITitleQueryService titles,
+            PickarrDbContext db,
             string? q,
             string? view,
             string? type,
@@ -30,6 +33,12 @@ public static class CatalogEndpoints
             int? pageSize,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.ReadOptionalPersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             var request = new TitleQueryRequest(
                 Q: q,
                 View: view ?? "all",
@@ -46,7 +55,7 @@ public static class CatalogEndpoints
                 Page: page ?? 1,
                 PageSize: pageSize ?? 48);
 
-            return Results.Ok(await titles.QueryTitlesAsync(sourceId, request, ct));
+            return Results.Ok(await titles.QueryTitlesAsync(sourceId, request, ct, profileId));
         });
 
         group.MapGet("/sources/{sourceId:int}/genres", async (

@@ -16,7 +16,7 @@ public static class RecoAdminEndpoints
 
         group.MapPost("/rebuild", (IBackgroundJobClient jobs) =>
         {
-            var hf = jobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(true, CancellationToken.None));
+            var hf = jobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(null, true, CancellationToken.None));
             return Results.Accepted(null, new { hangfireJobId = hf });
         });
 
@@ -75,20 +75,30 @@ public static class RecoAdminEndpoints
                 await db.Ratings.ExecuteDeleteAsync(ct);
             }
 
-            var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, ct);
-            if (state is not null)
+            var adminId = await db.Profiles.AsNoTracking()
+                .Where(profile => profile.IsAdmin)
+                .Select(profile => (int?)profile.Id)
+                .FirstOrDefaultAsync(ct);
+            var states = await db.RecoStates.ToListAsync(ct);
+            foreach (var state in states)
             {
+                var ratingCount = includeRatings
+                    ? 0
+                    : await db.Ratings.CountAsync(rating => rating.ProfileId == state.ProfileId, ct);
                 state.CurrentVersion = 0;
                 state.EffectiveN = 0;
-                state.RatingCount = includeRatings ? 0 : await db.Ratings.CountAsync(ct);
+                state.RatingCount = ratingCount;
                 state.Stage = RecoLearning.StageCold;
                 state.ProfileJson = null;
-                state.EmbeddingCoverage = 0;
                 state.LastError = null;
-                state.LastEvalJson = null;
-                state.LastEvalAt = null;
-                state.Level3Active = false;
-                // Keep ModelStatus/ModelId — files remain on disk.
+                if (state.ProfileId == adminId)
+                {
+                    state.EmbeddingCoverage = 0;
+                    state.LastEvalJson = null;
+                    state.LastEvalAt = null;
+                    state.Level3Active = false;
+                    // Keep ModelStatus/ModelId — files remain on disk.
+                }
             }
 
             await db.SaveChangesAsync(ct);

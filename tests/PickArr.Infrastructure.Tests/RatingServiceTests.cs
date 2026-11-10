@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Domain;
 using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Recommendations;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
@@ -27,10 +28,10 @@ public sealed class RatingServiceTests : IAsyncLifetime
     [Fact]
     public async Task Set_replaces_value_and_writes_events()
     {
-        var (db, ratings, titleId) = await SeedAsync();
+        var (db, ratings, profileId, titleId) = await SeedAsync();
 
-        await ratings.SetAsync(titleId, RatingValues.Like, RatingEventOrigins.Ui);
-        await ratings.SetAsync(titleId, RatingValues.Dislike, RatingEventOrigins.Ui);
+        await ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui);
+        await ratings.SetAsync(profileId, titleId, RatingValues.Dislike, RatingEventOrigins.Ui);
 
         var rating = await db.Ratings.SingleAsync(r => r.TitleId == titleId);
         rating.Value.ShouldBe(RatingValues.Dislike);
@@ -40,10 +41,10 @@ public sealed class RatingServiceTests : IAsyncLifetime
     [Fact]
     public async Task Clear_removes_row_and_logs_null_event()
     {
-        var (db, ratings, titleId) = await SeedAsync();
-        await ratings.SetAsync(titleId, RatingValues.Like, RatingEventOrigins.Ui);
+        var (db, ratings, profileId, titleId) = await SeedAsync();
+        await ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui);
 
-        await ratings.ClearAsync(titleId, RatingEventOrigins.Ui);
+        await ratings.ClearAsync(profileId, titleId, RatingEventOrigins.Ui);
 
         (await db.Ratings.CountAsync()).ShouldBe(0);
         var cleared = await db.RatingEvents.OrderByDescending(e => e.Id).FirstAsync();
@@ -54,23 +55,75 @@ public sealed class RatingServiceTests : IAsyncLifetime
     [Fact]
     public async Task Set_when_disabled_throws_RecoDisabled()
     {
-        var (_, ratings, titleId) = await SeedAsync(enabled: false);
+        var (_, ratings, profileId, titleId) = await SeedAsync(enabled: false);
 
         await Should.ThrowAsync<RecoDisabledException>(() =>
-            ratings.SetAsync(titleId, RatingValues.Like, RatingEventOrigins.Ui));
+            ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui));
     }
 
     [Fact]
     public async Task Second_identical_put_is_idempotent_without_extra_event()
     {
-        var (db, ratings, titleId) = await SeedAsync();
-        await ratings.SetAsync(titleId, RatingValues.Like, RatingEventOrigins.Ui);
-        await ratings.SetAsync(titleId, RatingValues.Like, RatingEventOrigins.Ui);
+        var (db, ratings, profileId, titleId) = await SeedAsync();
+        await ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui);
+        await ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui);
 
         (await db.RatingEvents.CountAsync(e => e.TitleId == titleId)).ShouldBe(1);
     }
 
-    private async Task<(PickarrDbContext Db, RatingService Ratings, int TitleId)> SeedAsync(bool enabled = true)
+    [Fact]
+    public async Task Set_and_clear_do_not_change_another_profile()
+    {
+        var (db, ratings, profileId, titleId) = await SeedAsync();
+        var other = new Profile
+        {
+            Name = "Other",
+            Color = Profile.DefaultColor,
+            CreatedAt = DateTime.UtcNow,
+        };
+        db.Profiles.Add(other);
+        await db.SaveChangesAsync();
+
+        await ratings.SetAsync(profileId, titleId, RatingValues.Like, RatingEventOrigins.Ui);
+        await ratings.SetAsync(other.Id, titleId, RatingValues.Dislike, RatingEventOrigins.Ui);
+        await ratings.ClearAsync(profileId, titleId, RatingEventOrigins.Ui);
+
+        var remaining = await db.Ratings.SingleAsync();
+        remaining.ProfileId.ShouldBe(other.Id);
+        remaining.Value.ShouldBe(RatingValues.Dislike);
+        (await db.RatingEvents.CountAsync(e => e.ProfileId == profileId)).ShouldBe(2);
+        (await db.RatingEvents.CountAsync(e => e.ProfileId == other.Id)).ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task Set_rebuilds_the_voter_and_profiles_still_under_n0()
+    {
+        var scheduler = new RecordingScheduler();
+        var (db, ratings, profileId, titleId) = await SeedAsync(scheduler: scheduler);
+        var now = DateTime.UtcNow;
+        var cold = new Profile { Name = "Cold", Color = Profile.DefaultColor, CreatedAt = now };
+        var warm = new Profile { Name = "Warm", Color = Profile.DefaultColor, CreatedAt = now };
+        var unseen = new Profile { Name = "New", Color = Profile.DefaultColor, CreatedAt = now };
+        db.Profiles.AddRange(cold, warm, unseen);
+        await db.SaveChangesAsync();
+        db.RecoStates.AddRange(
+            new RecoState { ProfileId = cold.Id, EffectiveN = 4, Stage = RecoLearning.StageCold },
+            new RecoState
+            {
+                ProfileId = warm.Id,
+                EffectiveN = RecoLearning.DefaultN0,
+                Stage = RecoLearning.StagePersonalized,
+            });
+        await db.SaveChangesAsync();
+
+        await ratings.SetAsync(profileId, titleId, RatingValues.Love, RatingEventOrigins.Ui);
+
+        scheduler.ProfileIds.ShouldBe([profileId, cold.Id, unseen.Id]);
+    }
+
+    private async Task<(PickarrDbContext Db, RatingService Ratings, int ProfileId, int TitleId)> SeedAsync(
+        bool enabled = true,
+        IRecoRebuildScheduler? scheduler = null)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
@@ -98,12 +151,24 @@ public sealed class RatingServiceTests : IAsyncLifetime
             CreatedAt = now,
             UpdatedAt = now,
         };
+        var profile = new Profile
+        {
+            Name = "Rater",
+            Color = Profile.DefaultColor,
+            CreatedAt = now,
+        };
+        db.Profiles.Add(profile);
         db.Titles.Add(title);
         await db.SaveChangesAsync();
 
         var settings = new MemorySettingsStore(enabled);
-        var ratings = new RatingService(db, new FixedClock(now), settings, new NoopRebuildScheduler(), new NoopEventLog());
-        return (db, ratings, title.Id);
+        var ratings = new RatingService(
+            db,
+            new FixedClock(now),
+            settings,
+            scheduler ?? new NoopRebuildScheduler(),
+            new NoopEventLog());
+        return (db, ratings, profile.Id, title.Id);
     }
 
     private sealed class FixedClock(DateTime utcNow) : IClock
@@ -111,9 +176,16 @@ public sealed class RatingServiceTests : IAsyncLifetime
         public DateTime UtcNow { get; } = utcNow;
     }
 
+    private sealed class RecordingScheduler : IRecoRebuildScheduler
+    {
+        public List<int> ProfileIds { get; } = [];
+
+        public void ScheduleDebouncedRebuild(int profileId) => ProfileIds.Add(profileId);
+    }
+
     private sealed class NoopRebuildScheduler : IRecoRebuildScheduler
     {
-        public void ScheduleDebouncedRebuild() { }
+        public void ScheduleDebouncedRebuild(int profileId) { }
     }
 
     private sealed class NoopEventLog : IRecoEventLogService
@@ -121,6 +193,7 @@ public sealed class RatingServiceTests : IAsyncLifetime
         public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default) => Task.FromResult(false);
 
         public Task LogAsync(
+            int profileId,
             int titleId,
             string eventKind,
             int? version = null,
@@ -130,6 +203,7 @@ public sealed class RatingServiceTests : IAsyncLifetime
             Task.CompletedTask;
 
         public Task LogManyAsync(
+            int profileId,
             IReadOnlyList<RecoEventLogEntry> entries,
             CancellationToken cancellationToken = default) =>
             Task.CompletedTask;

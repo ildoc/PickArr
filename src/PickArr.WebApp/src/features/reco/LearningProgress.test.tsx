@@ -42,19 +42,20 @@ describe('LearningProgress', () => {
     expect(bar?.style.width).toBe('20%')
   })
 
-  it('hides teach your taste once effective ratings reach the target', () => {
-    wrap(
+  it('hides the whole progress card once effective ratings reach the target', () => {
+    const { container } = wrap(
       <LearningProgress
         status={{
           ...status,
           stage: 'personalized',
-          effectiveN: 30,
-          ratingCount: 28,
+          effectiveN: 51.3,
+          ratingCount: 40,
         }}
       />,
     )
 
+    expect(container).toBeEmptyDOMElement()
+    expect(screen.queryByText(/effective ratings/i)).toBeNull()
     expect(screen.queryByRole('link', { name: 'Teach your taste' })).toBeNull()
-    expect(screen.getByText('30 / 30 effective ratings')).toBeTruthy()
   })
 })

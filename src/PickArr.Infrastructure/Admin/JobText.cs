@@ -9,15 +9,17 @@ internal static class JobText
         _ => code,
     };
 
-    public static string IncrementalName(string code) => $"Import recent titles ({code})";
+    public static string IncrementalName(string provider, string code) =>
+        $"Import recent titles ({provider} {code})";
 
-    public static string IncrementalDescription(string code) =>
-        $"Downloads the newest pages of the Netflix catalog for {CountryName(code)}.";
+    public static string IncrementalDescription(string provider, string code) =>
+        $"Downloads the newest pages of the {provider} catalog for {CountryName(code)}.";
 
-    public static string FullName(string code) => $"Full catalog import ({code})";
+    public static string FullName(string provider, string code) =>
+        $"Full catalog import ({provider} {code})";
 
-    public static string FullDescription(string code) =>
-        $"Walks the whole Netflix catalog for {CountryName(code)} and records titles that are no longer available.";
+    public static string FullDescription(string provider, string code) =>
+        $"Walks the whole {provider} catalog for {CountryName(code)} and records titles that are no longer available.";
 
     public static string LeavingName(string code) => $"Titles leaving soon ({code})";
 

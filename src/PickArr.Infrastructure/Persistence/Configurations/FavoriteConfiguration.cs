@@ -9,10 +9,14 @@ public sealed class FavoriteConfiguration : IEntityTypeConfiguration<Favorite>
     public void Configure(EntityTypeBuilder<Favorite> builder)
     {
         builder.ToTable("Favorites");
-        builder.HasKey(x => x.TitleId);
+        builder.HasKey(x => new { x.ProfileId, x.TitleId });
         builder.HasOne(x => x.Title)
-            .WithOne(x => x.Favorite)
-            .HasForeignKey<Favorite>(x => x.TitleId)
+            .WithMany(x => x.Favorites)
+            .HasForeignKey(x => x.TitleId)
+            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(x => x.Profile)
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

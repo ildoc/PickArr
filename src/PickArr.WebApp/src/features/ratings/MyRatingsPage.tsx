@@ -13,12 +13,14 @@ import { fetchSettings } from '../../api/settings'
 import type { CatalogSource, TitleListItem } from '../../api/types'
 import { loadPreferredSourceId, savePreferredSourceId } from '../../lib/sourcePreference'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
+import { useProfiles } from '../who/profileContext'
 import { FilterBar } from '../catalog/FilterBar'
 import { TitleGrid } from '../catalog/TitleGrid'
 import { TitleDialog } from '../title/TitleDialog'
 
 export function MyRatingsPage() {
   const { t } = useTranslation()
+  const { active } = useProfiles()
   const queryClient = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
   const [params, setParams] = useSearchParams()
@@ -49,25 +51,25 @@ export function MyRatingsPage() {
 
   const sourceId = useMemo(() => {
     const list = sourcesQuery.data ?? []
-    if (list.length === 0) return null
+    if (!active || list.length === 0) return null
     if (sourceParam) {
       const id = Number(sourceParam)
       if (list.some((s) => s.id === id)) return id
     }
-    const preferred = loadPreferredSourceId()
+    const preferred = loadPreferredSourceId(active.id, active.isAdmin)
     if (preferred && list.some((s) => s.id === preferred)) return preferred
     return list[0]!.id
-  }, [sourcesQuery.data, sourceParam])
+  }, [sourcesQuery.data, sourceParam, active])
 
   useEffect(() => {
-    if (sourceId == null) return
-    savePreferredSourceId(sourceId)
+    if (!active || sourceId == null) return
+    savePreferredSourceId(active.id, sourceId)
     if (sourceParam !== String(sourceId)) {
       const next = new URLSearchParams(params)
       next.set('source', String(sourceId))
       setParams(next, { replace: true })
     }
-  }, [sourceId, sourceParam, params, setParams])
+  }, [active, sourceId, sourceParam, params, setParams])
 
   const patchParams = useCallback(
     (patch: Record<string, string | null>) => {

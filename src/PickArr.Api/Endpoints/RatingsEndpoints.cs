@@ -5,6 +5,7 @@ using Pickarr.Core.Domain;
 using Pickarr.Core.Recommendations;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -15,6 +16,8 @@ public static class RatingsEndpoints
         var group = endpoints.MapGroup("/api/v1/ratings");
 
         group.MapGet("", async (
+            HttpContext http,
+            PickarrDbContext db,
             ITitleQueryService titles,
             ISettingsStore settings,
             string? value,
@@ -27,6 +30,12 @@ public static class RatingsEndpoints
             int? pageSize,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             if (string.IsNullOrWhiteSpace(value) || !RatingValues.IsValid(value))
             {
                 return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, dislike, or not_interested." });
@@ -47,14 +56,20 @@ public static class RatingsEndpoints
                 Dir: dir ?? "desc",
                 Page: page ?? 1,
                 PageSize: pageSize ?? 48);
-            return Results.Ok(await titles.QueryRatingsAsync(value, request, ct));
+            return Results.Ok(await titles.QueryRatingsAsync(profileId, value, request, ct));
         });
 
-        group.MapGet("/export", async (IRatingService ratings, CancellationToken ct) =>
+        group.MapGet("/export", async (HttpContext http, IRatingService ratings, PickarrDbContext db, CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
-                return Results.Ok(await ratings.ExportAsync(ct));
+                return Results.Ok(await ratings.ExportAsync(profileId, ct));
             }
             catch (RecoDisabledException)
             {
@@ -66,9 +81,17 @@ public static class RatingsEndpoints
 
         group.MapPost("/import", async (
             RatingImportRequest? body,
+            HttpContext http,
             IRatingService ratings,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             if (body is null || body.Items is null)
             {
                 return Results.BadRequest(new { code = "INVALID_BODY", detail = "items are required." });
@@ -76,7 +99,7 @@ public static class RatingsEndpoints
 
             try
             {
-                var result = await ratings.ImportAsync(body, ct);
+                var result = await ratings.ImportAsync(profileId, body, ct);
                 return Results.Ok(result);
             }
             catch (ArgumentException ex)
@@ -93,9 +116,17 @@ public static class RatingsEndpoints
 
         group.MapPost("/onboarding", async (
             List<RatingOnboardingItem>? body,
+            HttpContext http,
             IRatingService ratings,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             if (body is null)
             {
                 return Results.BadRequest(new { code = "INVALID_BODY", detail = "items are required." });
@@ -103,7 +134,7 @@ public static class RatingsEndpoints
 
             try
             {
-                await ratings.OnboardingAsync(body, ct);
+                await ratings.OnboardingAsync(profileId, body, ct);
                 return Results.NoContent();
             }
             catch (RecoDisabledException)

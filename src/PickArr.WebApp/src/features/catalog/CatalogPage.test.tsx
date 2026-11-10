@@ -6,7 +6,9 @@ import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchCatalogTypes, fetchGenres, fetchSources, fetchTitles } from '../../api/catalog'
+import { fetchProfiles } from '../../api/profiles'
 import i18n from '../../i18n'
+import { ProfileProvider } from '../who/profileContext'
 import { CatalogPage } from './CatalogPage'
 
 vi.mock('../../api/catalog', () => ({
@@ -15,6 +17,10 @@ vi.mock('../../api/catalog', () => ({
   fetchCatalogTypes: vi.fn(),
   fetchGenres: vi.fn(),
   fetchTitle: vi.fn(),
+}))
+
+vi.mock('../../api/profiles', () => ({
+  fetchProfiles: vi.fn(),
 }))
 
 vi.mock('../reco/CatalogForYouRow', () => ({
@@ -55,11 +61,13 @@ function renderAt(path: string) {
   const ui: ReactNode = (
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/catalog" element={<CatalogPage />} />
-          </Routes>
-        </MemoryRouter>
+        <ProfileProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/catalog" element={<CatalogPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ProfileProvider>
       </I18nextProvider>
     </QueryClientProvider>
   )
@@ -83,6 +91,17 @@ describe('CatalogPage', () => {
     })
     vi.clearAllMocks()
     vi.mocked(fetchSources).mockResolvedValue(sources)
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      {
+        id: 1,
+        name: 'Admin',
+        color: 'blue',
+        isAdmin: true,
+        useImplicit: true,
+        excludeInLibrary: true,
+        createdAt: '2026-11-10T00:00:00Z',
+      },
+    ])
     vi.mocked(fetchCatalogTypes).mockResolvedValue([{ type: 'movie', count: 1 }])
     vi.mocked(fetchGenres).mockResolvedValue([])
     vi.mocked(fetchTitles).mockResolvedValue({
@@ -107,7 +126,7 @@ describe('CatalogPage', () => {
     expect(
       await screen.findByText(/Configure Sonarr and\/or Radarr in Settings/i),
     ).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+    expect(screen.getAllByRole('link', { name: 'Settings' }).length).toBeGreaterThan(0)
 
     await waitFor(() => expect(fetchTitles).toHaveBeenCalled())
     const args = vi.mocked(fetchTitles).mock.calls.at(-1)

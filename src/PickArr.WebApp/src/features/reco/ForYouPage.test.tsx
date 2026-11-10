@@ -8,7 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchCatalogTypes, fetchGenres, fetchSources } from '../../api/catalog'
 import { fetchRecommendations, fetchRecoStatus } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
+import { fetchProfiles } from '../../api/profiles'
 import i18n from '../../i18n'
+import { ProfileProvider } from '../who/profileContext'
 import { ForYouPage } from './ForYouPage'
 
 vi.mock('../../api/catalog', () => ({
@@ -26,6 +28,10 @@ vi.mock('../../api/settings', () => ({
   fetchSettings: vi.fn(),
 }))
 
+vi.mock('../../api/profiles', () => ({
+  fetchProfiles: vi.fn(),
+}))
+
 const emptyPage = { version: 1, stage: 'cold', page: 1, pageSize: 48, total: 0, items: [] }
 
 function renderPage(path: string) {
@@ -35,11 +41,13 @@ function renderPage(path: string) {
   const ui: ReactNode = (
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/for-you" element={<ForYouPage />} />
-          </Routes>
-        </MemoryRouter>
+        <ProfileProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/for-you" element={<ForYouPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ProfileProvider>
       </I18nextProvider>
     </QueryClientProvider>
   )
@@ -104,6 +112,17 @@ describe('ForYouPage', () => {
       version: 1,
       lastError: null,
     })
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      {
+        id: 1,
+        name: 'Admin',
+        color: 'blue',
+        isAdmin: true,
+        useImplicit: true,
+        excludeInLibrary: true,
+        createdAt: '2026-11-10T00:00:00Z',
+      },
+    ])
   })
 
   it('loads cross-provider recommendations and remembers source preference', async () => {
@@ -116,7 +135,7 @@ describe('ForYouPage', () => {
         expect.objectContaining({ scope: 'enabled', sourceId: 1, includeInLibrary: false }),
       ),
     )
-    expect(localStorage.getItem('pickarr.sourceId')).toBe('1')
+    expect(localStorage.getItem('pickarr.sourceId.1')).toBe('1')
     expect(screen.queryByRole('button', { name: 'This source' })).toBeNull()
   })
 
@@ -127,7 +146,7 @@ describe('ForYouPage', () => {
         expect.objectContaining({ scope: 'enabled', sourceId: 2 }),
       ),
     )
-    expect(localStorage.getItem('pickarr.sourceId')).toBe('2')
+    expect(localStorage.getItem('pickarr.sourceId.1')).toBe('2')
   })
 
   it('can include library titles', async () => {

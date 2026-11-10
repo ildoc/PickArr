@@ -49,11 +49,12 @@ describe('JobsPage', () => {
     vi.mocked(fetchAdminJobs).mockResolvedValue([
       {
         jobKey: 'catalog-incr-1',
-        displayName: 'Import recent titles (IT)',
+        displayName: 'Import recent titles (Netflix IT)',
         description: 'Downloads the newest pages of the Netflix catalog for Italy.',
         kind: 'CatalogIncremental',
         sourceId: 1,
         countryCode: 'IT',
+        providerName: 'Netflix',
         cron: '0 4 * * *',
         lastExecution: null,
         nextExecution: null,
@@ -70,6 +71,7 @@ describe('JobsPage', () => {
         kind: 'CatalogBootstrap',
         sourceId: null,
         countryCode: null,
+        providerName: null,
         cron: null,
         lastExecution: null,
         nextExecution: null,
@@ -87,6 +89,7 @@ describe('JobsPage', () => {
         kind: 'CatalogResume',
         sourceId: null,
         countryCode: null,
+        providerName: null,
         cron: '0 0 * * *',
         lastExecution: null,
         nextExecution: null,
@@ -124,6 +127,10 @@ describe('JobsPage', () => {
     wrap(<JobsPage />)
 
     expect(await screen.findByText('1 running · 1 queued · 1 failed')).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 3, name: 'Netflix' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 4, name: 'IT' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 3, name: 'System' })).toBeTruthy()
+    expect(screen.getByText('Import recent titles')).toBeTruthy()
     expect(screen.getAllByText('Initial catalog import').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Resume paused imports').length).toBeGreaterThan(0)
     expect(screen.getByText(/does not download titles by itself/)).toBeTruthy()

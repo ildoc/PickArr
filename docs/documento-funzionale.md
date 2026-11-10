@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Versione** | 0.2 |
-| **Data** | 2026-11-06 |
+| **Versione** | 0.3 |
+| **Data** | 2026-11-10 |
 | **Lingua** | Italiano |
 | **Nome progetto** | *Pickarr* è un nome provvisorio (vedi D-08) |
 | **Documenti collegati** | `specifica-tecnica.md`, `raccomandazioni.md` (feature voto e *Per te*) |
@@ -31,7 +31,7 @@
 
 ### 1.1 Scopo
 
-Pickarr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo aggiornato dei contenuti disponibili su un servizio di streaming (inizialmente **Netflix**) in un dato **paese** e permette di sfogliarlo, cercarlo e salvarlo tra i preferiti. Da qui l'utente può inviare un titolo a **Sonarr** (serie) o **Radarr** (film), vedere lo stato della sua libreria e rimuoverlo.
+Pickarr è un'applicazione **self-hosted** senza autenticazione. Una installazione ospita fino a **10 profili** (gusti e liste separate); catalogo, integrazioni e libreria Sonarr/Radarr restano condivisi. Mantiene un catalogo aggiornato dei contenuti disponibili su un servizio di streaming (inizialmente **Netflix**) in un dato **paese** e permette di sfogliarlo, cercarlo e salvarlo tra i preferiti del profilo attivo. Da qui si può inviare un titolo a **Sonarr** (serie) o **Radarr** (film), vedere lo stato della libreria condivisa e rimuoverlo.
 
 ### 1.2 Obiettivi
 
@@ -53,8 +53,9 @@ Pickarr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 - UI web desktop, tema scuro, interfaccia internazionalizzata (inglese di default).
 - Ricerca server-side con filtri, preferiti, scheda di dettaglio.
 - Integrazione con una istanza Sonarr e una istanza Radarr: aggiunta, stato, eliminazione.
-- Amministrazione: impostazioni, controllo dei job, consumo dei crediti Watchmode.
-- Raccomandazioni locali (R1–R4): voto sul titolo, pagina *Per te*, simili, embedding ONNX opzionale, valutazione offline, livello supervisionato gated (dettaglio in `raccomandazioni.md`).
+- Profili (fino a 10) con selettore `/who`, memoria del profilo nel browser, dati personali per profilo e prior di casa a freddo (dettaglio in `raccomandazioni.md`).
+- Amministrazione: impostazioni, controllo dei job, consumo dei crediti Watchmode (solo profilo admin in UI).
+- Raccomandazioni locali (R1–R4): voto sul titolo per profilo, pagina *Per te*, simili, embedding ONNX opzionale, valutazione offline, livello supervisionato gated (dettaglio in `raccomandazioni.md`).
 - Distribuzione come singola immagine Docker.
 
 **Escluso (v1)**: vedi §10. I consigli personalizzati non sono più fuori ambito: sono specificati in `raccomandazioni.md` e rilasciati dopo l'MVP catalogo (fasi R1–R4 in §12).
@@ -63,7 +64,8 @@ Pickarr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 
 | Attore | Descrizione |
 |---|---|
-| **Utente** | L'unica persona che usa l'app. Esplora, cerca, gestisce preferiti, aggiunge ed elimina titoli. Ha anche il ruolo di amministratore. |
+| **Profilo** | Persona che usa l'installazione. Sceglie il profilo su `/who` (senza login). Esplora, cerca, gestisce i propri preferiti/voti, aggiunge ed elimina titoli. |
+| **Profilo admin** | Unico profilo con `IsAdmin`. Creato alla migrazione/seed col nome «Admin» (rinominabile). Destinatario dei dati personali preesistenti. Gestisce impostazioni, job e gli altri profili. Il ruolo non si cede e il profilo non si elimina. |
 | **Scheduler** | Componente interno che esegue i job (sync catalogo, arricchimento, sync Sonarr/Radarr). |
 | **Watchmode** | Fonte del catalogo e della disponibilità per servizio/paese. |
 | **TMDB** | Fonte dei metadati e degli id esterni. |
@@ -80,9 +82,11 @@ Pickarr è un'applicazione **self-hosted, single-user**. Mantiene un catalogo ag
 | **Baseline** | Primo import completo di una sorgente. I titoli presenti in quel momento non sono considerati "novità". |
 | **Crediti** | Unità di consumo delle API Watchmode (2.500/mese nel piano free). |
 | **Stato libreria** | Stato di un titolo in Sonarr/Radarr: non in libreria, mancante, in download, scaricato, parziale. |
-| **Voto (rating)** | Preferenza esplicita sul titolo: *Mi piace* o *Non mi piace*. Globale come il preferito (non legato alla sorgente). |
-| **Per te** | Lista di raccomandazioni calcolata in locale sul pool dei cataloghi abilitati, filtrabile per sorgente o unione. |
+| **Profilo (account di casa)** | Partizione dei gusti: nome, colore icona, preferiti, voti, visti, raccomandazioni e due preferenze reco (`useImplicit`, `excludeInLibrary`). Non è un account autenticato. |
+| **Voto (rating)** | Preferenza esplicita sul titolo per profilo: *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa*. Indipendente dalla sorgente; due profili possono divergere sullo stesso titolo. |
+| **Per te** | Lista di raccomandazioni del profilo attivo, calcolata in locale sul pool dei cataloghi abilitati, filtrabile per sorgente o unione. |
 | **Pool** | Unione dei titoli con almeno una disponibilità su sorgenti (servizio+paese) abilitate. `RemovedAt` non esclude. |
+| **Prior di casa** | Contributo a freddo ai consigli di un profilo con pochi segnali, costruito dai *Mi piace* / *Mi piace molto* degli altri profili (tetto 0,5; zero a `N_eff ≥ N0`). |
 
 ---
 
@@ -207,9 +211,9 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-FAV-01 | L'utente può aggiungere/rimuovere un titolo dai preferiti da card e da scheda. | M |
-| FR-FAV-02 | I preferiti sono **globali** (legati al titolo, non alla sorgente) e persistono sul backend. Il **voto** segue lo stesso modello di dato globale, con valori *Mi piace* / *Non mi piace* al posto del booleano. | M |
-| FR-FAV-03 | La pagina *La mia lista* (`/list`) mostra tutti i preferiti cross-provider e cross-country, ciascuno con un badge rispetto alla sorgente selezionata (presente / rimosso / assente). Non è una vista `view=favorites` del catalogo. | M |
+| FR-FAV-01 | Il profilo attivo può aggiungere/rimuovere un titolo dai preferiti da card e da scheda. | M |
+| FR-FAV-02 | Preferiti e **voto** sono del **profilo** (chiave profilo+titolo), non della sorgente. Due profili possono divergere sullo stesso titolo. I valori di voto sono *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa*. | M |
+| FR-FAV-03 | La pagina *La mia lista* (`/list`) mostra i preferiti del profilo attivo, cross-provider e cross-country, ciascuno con un badge rispetto alla sorgente selezionata (presente / rimosso / assente). Non è una vista `view=favorites` del catalogo. | M |
 | FR-FAV-04 | Aggiunta in blocco dei preferiti a Sonarr/Radarr. | C |
 
 ### 4.7 Aggiunta a Sonarr/Radarr (FR-ADD)
@@ -267,6 +271,17 @@ Priorità (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = W
 | FR-SET-09 | Le chiavi e i token non sono mai mostrati in chiaro dopo il salvataggio: la UI indica solo se sono impostati. | M |
 | FR-SET-10 | Autenticazione opzionale con password (vedi D-02). | C |
 | FR-SET-11 | Le stesse impostazioni (chiavi, URL, quote, default Sonarr/Radarr, finestre, lingua, raccomandazioni) si possono **dichiarare con variabili d'ambiente**. Se la variabile è impostata, quel valore è effettivo e non viene sostituito dal salvataggio in UI. I segreti dichiarati così non sono mostrati e non sono scritti nel database. | M |
+| FR-SET-12 | Link *Impostazioni* e route `/settings*` sono visibili/percorribili **solo per il profilo admin**. Un altro profilo non vede il link e una URL `/settings` lo riporta al catalogo. Le API `/api/v1/settings` (e job/sistema) restano chiamabili senza controllo di ruolo. | M |
+| FR-SET-13 | I toggle *segnali impliciti* e *escludi in libreria* sono preferenze del **profilo** (`useImplicit`, `excludeInLibrary`), non chiavi globali di calcolo. Modello ONNX, pesi e copertura restano impostazioni globali (solo admin in UI). | M |
+
+### 4.10bis Profili (FR-PRF)
+
+| ID | Requisito | Pri |
+|---|---|---|
+| FR-PRF-01 | Esiste sempre un profilo admin. Una installazione vuota o già popolata ne ha uno dopo migrazione/seed. Massimo **10** profili. Nome 1–40 caratteri, univoco senza distinzione di maiuscole. Icona = colore di palette fissa + iniziale del nome. | M |
+| FR-PRF-02 | Con un solo profilo si entra in catalogo senza selettore. Con due o più, un id ricordato e ancora valido entra diretto; id assente o eliminato apre `/who`. Il controllo in header apre sempre `/who`. | M |
+| FR-PRF-03 | L'admin crea ed elimina gli altri profili e modifica tutti. Ogni profilo modifica nome, colore e preferenze reco propri. L'admin non è eliminabile e `IsAdmin` non si cede. | M |
+| FR-PRF-04 | I dati personali già presenti alla migrazione (preferiti, voti, storico voti, visti, raccomandazioni, stato gusto, log reco, audit Arr) sono attribuiti all'admin. Catalogo, embedding, settings e righe libreria Arr restano globali. | M |
 
 ### 4.11 Amministrazione dei job (FR-ADM)
 
@@ -306,7 +321,7 @@ Requisiti dettagliati e priorità in `raccomandazioni.md` (FR-REC-*). Sintesi pr
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-RT | L'utente può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa* (o togliere il voto) da card e scheda; può *Hide* dalla scheda. Voto e hide sono globali sul `Title` e indipendenti. Mutazione ottimistica in UI. I votati e gli hide non compaiono in *Per te*. | M |
+| FR-REC-RT | Il profilo attivo può mettere *Mi piace molto* / *Mi piace* / *Non mi piace* / *Non mi interessa* (o togliere il voto) da card e scheda; può *Hide* dalla scheda. Voto e hide sono del profilo sul `Title` e indipendenti dalla sorgente. Mutazione ottimistica in UI. I votati e gli hide del profilo non compaiono in *Per te*. | M |
 | FR-REC-LIST | Pagina *Le mie valutazioni* (`/ratings`) con export/import; onboarding gusto su `/taste`. | M |
 | FR-REC-FY | Consigli per sorgente in riga sul catalogo; pagina *Per te* (`/for-you`) sull’unione delle sorgenti abilitate, con motivi, diversità (MMR) ed esplorazione. *La mia lista* è un segnale implicito temporaneo (dettaglio in `raccomandazioni.md`). | M |
 | FR-REC-SIM | Griglia *Simili* in fondo alla scheda (`GET /titles/{id}/similar`) sul pool abilitato, con `places`. | M |
@@ -549,7 +564,9 @@ Formato: *Come utente, voglio … per …* con criteri di accettazione (CA).
 
 Descrizione testuale (i mockup saranno prodotti in seguito).
 
-**Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni*), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
+**Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *Per te*, *La mia lista*, *Valutazioni*, *Impostazioni* solo per l’admin), controllo profilo (apre `/who`), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
+
+**Chi sei** (`/who`). Griglia dei profili (icona colore + iniziale). Scelta, creazione/eliminazione (admin), modifica nome/colore. Un solo profilo salta questa schermata all’avvio.
 
 **Home / Catalogo** (`/catalog`).
 - Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
@@ -557,9 +574,9 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 - Griglia di card poster 2:3 con scorrimento infinito.
 - Card: poster, tipo, titolo, anno, badge stato libreria (se presente in libreria), cuore, controlli *Mi piace* / *Non mi piace*.
 
-**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento, chip dei motivi e filtri tipo/genere. Link all’onboarding `/taste` solo finché `N_eff` è sotto la soglia di personalizzazione.
+**Per te** (`/for-you`). Griglia raccomandata per la sorgente selezionata (o scope unione), con progresso di apprendimento (nascosto quando `N_eff ≥ N0`), chip dei motivi e filtri tipo/genere.
 
-**La mia lista** (`/list`). Preferiti globali; badge rispetto alla sorgente selezionata.
+**La mia lista** (`/list`). Preferiti del profilo attivo; badge rispetto alla sorgente selezionata.
 
 **Le mie valutazioni** (`/ratings`). Elenco Like/Dislike con export/import.
 
@@ -569,7 +586,7 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 **Dialog Elimina.** Riepilogo (percorso, dimensione, file), due caselle, pulsante rosso di conferma.
 
-**Impostazioni.** Sezioni: Fonti dati · Sonarr · Radarr · Cataloghi · Raccomandazioni (stato modello/embedding, azioni rebuild/eval/reset) · Job · Interfaccia.
+**Impostazioni.** Solo profilo admin. Sezioni: Fonti dati · Sonarr · Radarr · Cataloghi · Raccomandazioni (stato modello/embedding, azioni rebuild/eval/reset) · Job · Sistema · Interfaccia. I toggle di gusto per profilo si gestiscono dal profilo su `/who`, non da queste sezioni globali.
 
 **Job.** Tabella job (anche coda `ml` per embedding/build/eval), pulsante Esegui ora, storico run, grafico/indicatore crediti, elenco titoli non mappati.
 
@@ -579,7 +596,8 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 **Non previsto in v1**
 
-- Autenticazione multi-utente e profili con preferiti separati.
+- Autenticazione (login, password, account protetti). I profili sono una partizione logica senza autenticazione.
+- Collaborative filtering o raccomandazioni utente-utente oltre al prior di casa a freddo.
 - Più istanze Sonarr/Radarr (es. HD e 4K) e instradamento automatico.
 - Anime e contenuti kids come categorie dedicate.
 - App mobile / layout responsive.
@@ -621,7 +639,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | ID | Tema | Proposta adottata |
 |---|---|---|
 | D-01 | **Default di profilo qualità e root folder.** Non è verificato che le API di Sonarr/Radarr espongano un "profilo predefinito" esplicito. | L'utente imposta i default nelle impostazioni (scelti dalle liste dell'istanza). Se non impostati, si preseleziona il primo elemento restituito dall'istanza. |
-| D-02 | **Autenticazione.** Single-user, ma l'app contiene chiavi sensibili e può eliminare file. | v1 senza login, da usare in LAN o dietro reverse proxy con autenticazione. Password opzionale come evoluzione (FR-SET-10). |
+| D-02 | **Autenticazione.** Più profili senza login; l'app contiene chiavi sensibili e può eliminare file. | Nessun login. Profili come partizione logica (header dichiarato). Da usare in LAN o dietro reverse proxy. Password opzionale come evoluzione (FR-SET-10). |
 | D-03 | **Voto IMDb.** TMDB non fornisce il voto IMDb. | Integrazione opzionale con OMDb (API key personale). Senza chiave, solo voto TMDB. |
 | D-04 | **Default delle opzioni di eliminazione.** | Entrambe disattivate, per sicurezza. L'utente può attivarle a ogni eliminazione. |
 | D-05 | **Costo reale per chiamata** Watchmode (e parametri esatti dell'elenco titoli). | Da misurare nello spike SP-1; il design usa un budget parametrico. |
@@ -632,7 +650,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-10 | **Storage di Hangfire su SQLite** (pacchetto di comunità). | Spike SP-4; in alternativa storage in memoria, dato che le schedulazioni si ricreano dal DB all'avvio. |
 | D-REC-01 | Scope predefinito di *Per te*. | Sorgente selezionata (`source`). |
 | D-REC-02 | Altro scope. | Unione delle sorgenti abilitate; nessuno scope oltre i cataloghi importati. |
-| D-REC-03 | Profilo. | Unico; il filtro di catalogo si applica alla lista, non all'apprendimento. |
+| D-REC-03 | Profilo di gusto. | Uno per profilo di casa. Il filtro di catalogo si applica alla lista, non all'apprendimento. Sotto `N0` entra il prior di casa (Love/Like altrui, tetto 0,5). |
 | D-REC-04 | Simili. | Sempre sull'unione delle sorgenti abilitate; mostrano `places`. |
 | D-REC-05 | `RemovedAt`. | Non esclude dal pool raccomandazioni. |
 | D-REC-06 | Valori di voto. | *Mi piace molto*, *Mi piace*, *Non mi piace*, *Non mi interessa*; *Hide* separato. |
@@ -642,7 +660,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-REC-10 | Default feature. | Attiva (`reco.enabled`); modello ONNX su richiesta. |
 | D-REC-11 | Modello. | `all-MiniLM-L6-v2` quantizzato (`@q8`), rivisto dopo SP-R2/SP-R4. |
 | D-REC-12 | Livello 3. | Originariamente fuori MVP; **override prodotto**: implementato in R4, attivo solo se batte L2 nella valutazione offline. |
-| D-REC-13 | Segnali impliciti. | Attivi di default, disattivabili. |
+| D-REC-13 | Segnali impliciti ed esclusione libreria. | Preferenze del profilo (`useImplicit`, `excludeInLibrary`), attive di default. |
 
 ---
 
@@ -651,7 +669,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | Fase | Contenuto |
 |---|---|
 | **MVP** | Sync catalogo Netflix IT/US con budget crediti e baseline; arricchimento TMDB; griglia, ricerca e filtri, dettaglio; preferiti (`/list`); impostazioni; aggiunta a Sonarr/Radarr con dialog; stato con sync periodica; eliminazione; admin job; i18n con inglese; immagine Docker; CI. |
-| **R1** | Voto globale, prior, *Per te* L0, API/status, UI card/scheda, `/ratings`. |
+| **R1** | Voto (poi per profilo), prior, *Per te* L0, API/status, UI card/scheda, `/ratings`. |
 | **R2** | Keyword/crediti/en-US, segnali impliciti, sparse L1, simili, reasons. |
 | **R3** | Modello ONNX, embedding, kNN L2, MMR/explore, `/taste`, settings/admin reco. |
 | **R4** | Valutazione offline, livello 3 gated, registro eventi (default off), taratura SP-R4. |

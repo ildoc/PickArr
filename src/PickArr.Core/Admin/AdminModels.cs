@@ -19,6 +19,7 @@ public sealed record AdminJobDto(
     string Kind,
     int? SourceId,
     string? CountryCode,
+    string? ProviderName,
     string? Cron,
     DateTime? LastExecution,
     DateTime? NextExecution,

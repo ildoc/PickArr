@@ -24,8 +24,7 @@ public sealed class RecoEvalService(
 
     public async Task<RecoEvalReportDto?> GetLatestAsync(CancellationToken cancellationToken = default)
     {
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var state = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
         if (state?.LastEvalJson is null)
         {
             return null;
@@ -54,10 +53,13 @@ public sealed class RecoEvalService(
                 .ToListAsync(cancellationToken);
 
         var poolIdSet = poolTitleIds.ToHashSet();
-        var ratings = await db.Ratings.AsNoTracking()
-            .Where(r => poolIdSet.Contains(r.TitleId))
-            .Select(r => new { r.TitleId, r.Value })
-            .ToListAsync(cancellationToken);
+        var adminId = await RecoProfileStates.AdminIdAsync(db, cancellationToken);
+        var ratings = adminId is int evalProfileId
+            ? await db.Ratings.AsNoTracking()
+                .Where(r => r.ProfileId == evalProfileId && poolIdSet.Contains(r.TitleId))
+                .Select(r => new { r.TitleId, r.Value })
+                .ToListAsync(cancellationToken)
+            : [];
 
         var likeCount = ratings.Count(r => RatingValues.IsPositive(r.Value));
         var dislikeCount = ratings.Count(r => r.Value == RatingValues.Dislike);
@@ -106,8 +108,7 @@ public sealed class RecoEvalService(
 
         var minCoverage = await GetDoubleAsync(SettingsKeys.RecoEmbeddingsMinCoverage, 0.8, cancellationToken);
         var embeddingsEnabled = await GetBoolAsync(SettingsKeys.RecoEmbeddingsEnabled, true, cancellationToken);
-        var statePeek = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var statePeek = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
         var coverage = statePeek?.EmbeddingCoverage ?? 0;
         var modelReady = string.Equals(statePeek?.ModelStatus, RecoModelStatuses.Ready, StringComparison.OrdinalIgnoreCase);
         var useL2 = embeddingsEnabled && modelReady && coverage >= minCoverage;
@@ -311,11 +312,10 @@ public sealed class RecoEvalService(
 
     private async Task PersistAsync(RecoEvalReportDto report, bool level3Active, CancellationToken ct)
     {
-        var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, ct);
+        var state = await RecoProfileStates.GetOrCreateAdminAsync(db, ct);
         if (state is null)
         {
-            state = new RecoState { Id = RecoState.SingletonId };
-            db.RecoStates.Add(state);
+            return;
         }
 
         state.LastEvalJson = JsonSerializer.Serialize(report, JsonOptions);

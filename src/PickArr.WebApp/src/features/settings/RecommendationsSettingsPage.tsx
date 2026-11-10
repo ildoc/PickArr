@@ -21,10 +21,8 @@ export function RecommendationsSettingsPage() {
   const status = useQuery({ queryKey: ['reco-status'], queryFn: fetchRecoStatus, refetchInterval: 5000 })
 
   const [enabled, setEnabled] = useState(true)
-  const [useImplicit, setUseImplicit] = useState(true)
   const [embeddingsEnabled, setEmbeddingsEnabled] = useState(true)
   const [exploreRate, setExploreRate] = useState(DEFAULT_EXPLORE_RATE)
-  const [excludeInLibrary, setExcludeInLibrary] = useState(true)
   const [n0, setN0] = useState(30)
   const [weightLove, setWeightLove] = useState(1.5)
   const [weightLike, setWeightLike] = useState(1)
@@ -43,10 +41,8 @@ export function RecommendationsSettingsPage() {
     if (!settings.data) return
     const reco = settings.data.reco
     setEnabled(reco.enabled !== false)
-    setUseImplicit(reco.useImplicit !== false)
     setEmbeddingsEnabled(reco.embeddingsEnabled !== false)
     setExploreRate(typeof reco.exploreRate === 'number' ? reco.exploreRate : DEFAULT_EXPLORE_RATE)
-    setExcludeInLibrary(reco.excludeInLibrary !== false)
     setN0(reco.n0 ?? 30)
     setWeightLove(reco.weightLove ?? 1.5)
     setWeightLike(reco.weightLike ?? 1)
@@ -67,10 +63,8 @@ export function RecommendationsSettingsPage() {
       updateSettings({
         reco: {
           enabled,
-          useImplicit,
           embeddingsEnabled,
           exploreRate,
-          excludeInLibrary,
           n0,
           weightLove,
           weightLike,
@@ -120,19 +114,6 @@ export function RecommendationsSettingsPage() {
           <input
             type="checkbox"
             className="mt-1"
-            checked={useImplicit}
-            disabled={!enabled}
-            onChange={(e) => setUseImplicit(e.target.checked)}
-          />
-          <span>
-            <span className="block">{t('settings.recoUseImplicit')}</span>
-            <span className="block text-xs text-[var(--muted)]">{t('settings.recoUseImplicitHint')}</span>
-          </span>
-        </label>
-        <label className="flex items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1"
             checked={embeddingsEnabled}
             disabled={!enabled}
             onChange={(e) => setEmbeddingsEnabled(e.target.checked)}
@@ -172,19 +153,6 @@ export function RecommendationsSettingsPage() {
         <details className="rounded-lg border border-white/10 bg-black/20 p-3">
           <summary className="cursor-pointer text-sm font-medium">{t('settings.recoAdvanced')}</summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            <label className="flex items-start gap-3 text-sm sm:col-span-2">
-              <input
-                type="checkbox"
-                className="mt-1"
-                checked={excludeInLibrary}
-                disabled={!enabled}
-                onChange={(e) => setExcludeInLibrary(e.target.checked)}
-              />
-              <span>
-                <span className="block">{t('settings.recoExcludeInLibrary')}</span>
-                <span className="block text-xs text-[var(--muted)]">{t('settings.recoExcludeInLibraryHint')}</span>
-              </span>
-            </label>
             <NumberField label={t('settings.recoN0')} value={n0} disabled={!enabled} onChange={setN0} step={1} />
             <NumberField
               label={t('settings.recoExploreRate')}

@@ -20,7 +20,8 @@ public sealed class ArrDeleteService(
         int titleId,
         bool deleteFiles,
         bool addImportExclusion,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? profileId = null)
     {
         var title = await db.Titles.AsNoTracking().FirstOrDefaultAsync(t => t.Id == titleId, cancellationToken)
                     ?? throw ArrOperationException.TitleNotFound(titleId);
@@ -47,6 +48,7 @@ public sealed class ArrDeleteService(
                 options,
                 ArrAuditOutcomes.Success,
                 error: null,
+                profileId,
                 cancellationToken);
 
             var detail = await titles.GetTitleAsync(titleId, sourceId: null, cancellationToken);
@@ -66,6 +68,7 @@ public sealed class ArrDeleteService(
                 options,
                 ArrAuditOutcomes.Failed,
                 ex.Message,
+                profileId,
                 cancellationToken);
             throw ArrAddService.MapClientException(ex);
         }
@@ -78,6 +81,7 @@ public sealed class ArrDeleteService(
                 options,
                 ArrAuditOutcomes.Failed,
                 ex.Message,
+                profileId,
                 cancellationToken);
             throw ArrOperationException.Unreachable(ex.Message);
         }
@@ -90,10 +94,12 @@ public sealed class ArrDeleteService(
         object options,
         string outcome,
         string? error,
+        int? profileId,
         CancellationToken cancellationToken)
     {
         db.ArrAuditLogs.Add(new ArrAuditLog
         {
+            ProfileId = profileId,
             At = clock.UtcNow,
             Action = ArrAuditActions.Delete,
             Kind = kind.ToStorage(),

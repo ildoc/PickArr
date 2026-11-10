@@ -7,7 +7,7 @@ namespace Pickarr.Infrastructure.Catalog;
 
 public sealed class FavoriteService(PickarrDbContext db, IClock clock) : IFavoriteService
 {
-    public async Task AddAsync(int titleId, CancellationToken cancellationToken = default)
+    public async Task AddAsync(int profileId, int titleId, CancellationToken cancellationToken = default)
     {
         var exists = await db.Titles.AnyAsync(t => t.Id == titleId, cancellationToken);
         if (!exists)
@@ -15,7 +15,7 @@ public sealed class FavoriteService(PickarrDbContext db, IClock clock) : IFavori
             throw new KeyNotFoundException($"Title {titleId} not found.");
         }
 
-        var favorite = await db.Favorites.FindAsync([titleId], cancellationToken);
+        var favorite = await db.Favorites.FindAsync([profileId, titleId], cancellationToken);
         if (favorite is not null)
         {
             return;
@@ -23,15 +23,16 @@ public sealed class FavoriteService(PickarrDbContext db, IClock clock) : IFavori
 
         db.Favorites.Add(new Favorite
         {
+            ProfileId = profileId,
             TitleId = titleId,
             CreatedAt = clock.UtcNow,
         });
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task RemoveAsync(int titleId, CancellationToken cancellationToken = default)
+    public async Task RemoveAsync(int profileId, int titleId, CancellationToken cancellationToken = default)
     {
-        var favorite = await db.Favorites.FindAsync([titleId], cancellationToken);
+        var favorite = await db.Favorites.FindAsync([profileId, titleId], cancellationToken);
         if (favorite is null)
         {
             return;

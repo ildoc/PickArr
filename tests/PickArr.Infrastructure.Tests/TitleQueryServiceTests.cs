@@ -191,8 +191,9 @@ public sealed class TitleQueryServiceTests
         };
         db.Titles.Add(orphan);
         await db.SaveChangesAsync();
-        db.Favorites.Add(new Favorite { TitleId = orphan.Id, CreatedAt = DateTime.UtcNow });
-        db.Favorites.Add(new Favorite { TitleId = titles.Movie.Id, CreatedAt = DateTime.UtcNow });
+        var profile = new Profile { Name = "List", Color = Profile.DefaultColor, CreatedAt = DateTime.UtcNow };
+        db.Favorites.Add(new Favorite { Profile = profile, TitleId = orphan.Id, CreatedAt = DateTime.UtcNow });
+        db.Favorites.Add(new Favorite { Profile = profile, TitleId = titles.Movie.Id, CreatedAt = DateTime.UtcNow });
         await db.SaveChangesAsync();
 
         var settings = await ConfigureArrAsync(sonarr: false, radarr: true);
@@ -200,11 +201,67 @@ public sealed class TitleQueryServiceTests
 
         var result = await sut.QueryTitlesAsync(
             source.Id,
-            new TitleQueryRequest(Favorite: true, IncludeRemoved: true));
+            new TitleQueryRequest(Favorite: true, IncludeRemoved: true),
+            personalProfileId: profile.Id);
 
         result.Total.ShouldBe(2);
         result.Items.ShouldContain(i => i.Id == orphan.Id && i.Availability == null);
         result.Items.ShouldContain(i => i.Id == titles.Movie.Id && i.IsFavorite);
+    }
+
+    [Fact]
+    public async Task Catalog_flags_follow_the_declared_profile_and_stay_empty_without_one()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedCatalogAsync(db);
+        var titles = await SeedTitlesAsync(db, source.Id);
+        var now = DateTime.UtcNow;
+        var admin = new Profile { Name = "Admin", Color = Profile.DefaultColor, IsAdmin = true, CreatedAt = now };
+        var other = new Profile { Name = "Other", Color = "teal", CreatedAt = now };
+        db.Profiles.AddRange(admin, other);
+        db.Favorites.Add(new Favorite { Profile = admin, TitleId = titles.Movie.Id, CreatedAt = now });
+        db.Watched.Add(new Watched { Profile = admin, TitleId = titles.Movie.Id, WatchedAt = now });
+        db.Ratings.Add(new Rating { Profile = admin, TitleId = titles.Movie.Id, Value = RatingValues.Love, RatedAt = now });
+        db.Ratings.Add(new Rating { Profile = other, TitleId = titles.Movie.Id, Value = RatingValues.Dislike, RatedAt = now });
+        await db.SaveChangesAsync();
+
+        var settings = await ConfigureArrAsync(sonarr: true, radarr: true);
+        var sut = new TitleQueryService(db, settings, new FixedClock(now));
+        var request = new TitleQueryRequest();
+
+        var forAdmin = await sut.QueryTitlesAsync(source.Id, request, personalProfileId: admin.Id);
+        var adminItem = forAdmin.Items.Single(i => i.Id == titles.Movie.Id);
+        adminItem.IsFavorite.ShouldBeTrue();
+        adminItem.IsWatched.ShouldBeTrue();
+        adminItem.Rating.ShouldBe("love");
+
+        var forOther = await sut.QueryTitlesAsync(source.Id, request, personalProfileId: other.Id);
+        var otherItem = forOther.Items.Single(i => i.Id == titles.Movie.Id);
+        otherItem.IsFavorite.ShouldBeFalse();
+        otherItem.IsWatched.ShouldBeFalse();
+        otherItem.Rating.ShouldBe("dislike");
+
+        var anonymous = await sut.QueryTitlesAsync(source.Id, request);
+        anonymous.Total.ShouldBe(3);
+        var bare = anonymous.Items.Single(i => i.Id == titles.Movie.Id);
+        bare.IsFavorite.ShouldBeFalse();
+        bare.IsWatched.ShouldBeFalse();
+        bare.Rating.ShouldBeNull();
+
+        var adminDetail = await sut.GetTitleAsync(titles.Movie.Id, source.Id, personalProfileId: admin.Id);
+        adminDetail!.IsFavorite.ShouldBeTrue();
+        adminDetail.IsWatched.ShouldBeTrue();
+        adminDetail.Rating.ShouldBe("love");
+
+        var otherDetail = await sut.GetTitleAsync(titles.Movie.Id, source.Id, personalProfileId: other.Id);
+        otherDetail!.IsFavorite.ShouldBeFalse();
+        otherDetail.IsWatched.ShouldBeFalse();
+        otherDetail.Rating.ShouldBe("dislike");
+
+        var bareDetail = await sut.GetTitleAsync(titles.Movie.Id, source.Id);
+        bareDetail!.IsFavorite.ShouldBeFalse();
+        bareDetail.IsWatched.ShouldBeFalse();
+        bareDetail.Rating.ShouldBeNull();
     }
 
     [Fact]
@@ -252,7 +309,13 @@ public sealed class TitleQueryServiceTests
             AddedAt = DateTime.UtcNow,
             IsBaseline = false,
         });
-        db.Favorites.Add(new Favorite { TitleId = overseas.Id, CreatedAt = DateTime.UtcNow });
+        var profile = new Profile { Name = "Overseas", Color = Profile.DefaultColor, CreatedAt = DateTime.UtcNow };
+        db.Favorites.Add(new Favorite
+        {
+            Profile = profile,
+            TitleId = overseas.Id,
+            CreatedAt = DateTime.UtcNow,
+        });
         await db.SaveChangesAsync();
 
         var settings = await ConfigureArrAsync(sonarr: false, radarr: true);
@@ -262,14 +325,14 @@ public sealed class TitleQueryServiceTests
         listed.Items.ShouldContain(i => i.Id == overseas.Id);
         listed.Items.Single(i => i.Id == overseas.Id).Places.ShouldContain(p => p.CountryCode == "US");
 
-        var found = await sut.QueryFavoritesAsync(new TitleQueryRequest(Q: "overseas"));
+        var found = await sut.QueryFavoritesAsync(profile.Id, new TitleQueryRequest(Q: "overseas"));
         found.Items.ShouldContain(i => i.Id == overseas.Id);
         found.Items.Single(i => i.Id == overseas.Id).Places.ShouldContain(p => p.CountryCode == "US");
 
         var catalog = await sut.QueryTitlesAsync(italy.Id, new TitleQueryRequest(Q: "overseas"));
         catalog.Total.ShouldBe(0);
 
-        var types = await sut.ListFavoriteTypesAsync();
+        var types = await sut.ListFavoriteTypesAsync(profile.Id);
         types.ShouldContain(t => t.Type == "movie");
     }
 
@@ -313,14 +376,17 @@ public sealed class TitleQueryServiceTests
         await using var db = await CreateDbAsync();
         var source = await SeedCatalogAsync(db);
         var titles = await SeedTitlesAsync(db, source.Id);
+        var profile = new Profile { Name = "Toggle", Color = Profile.DefaultColor, CreatedAt = DateTime.UtcNow };
+        db.Profiles.Add(profile);
+        await db.SaveChangesAsync();
         var favorites = new FavoriteService(db, new FixedClock(DateTime.UtcNow));
 
-        await favorites.AddAsync(titles.Movie.Id);
-        await favorites.AddAsync(titles.Movie.Id);
+        await favorites.AddAsync(profile.Id, titles.Movie.Id);
+        await favorites.AddAsync(profile.Id, titles.Movie.Id);
         (await db.Favorites.CountAsync()).ShouldBe(1);
 
-        await favorites.RemoveAsync(titles.Movie.Id);
-        await favorites.RemoveAsync(titles.Movie.Id);
+        await favorites.RemoveAsync(profile.Id, titles.Movie.Id);
+        await favorites.RemoveAsync(profile.Id, titles.Movie.Id);
         (await db.Favorites.CountAsync()).ShouldBe(0);
     }
 

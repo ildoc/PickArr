@@ -26,6 +26,9 @@ export function SettingsLayout() {
           <NavLink to="/settings/jobs" className={itemClass}>
             {t('settings.jobs')}
           </NavLink>
+          <NavLink to="/settings/system" className={itemClass}>
+            {t('settings.system')}
+          </NavLink>
         </nav>
       </div>
       <Outlet />

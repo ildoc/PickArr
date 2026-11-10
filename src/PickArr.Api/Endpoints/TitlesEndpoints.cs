@@ -16,9 +16,17 @@ public static class TitlesEndpoints
         endpoints.MapPut("/api/v1/titles/{id:int}/rating", async (
             int id,
             SetRatingRequest body,
+            HttpContext http,
             IRatingService ratings,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             if (body?.Value is null || !RatingValues.IsValid(body.Value))
             {
                 return Results.BadRequest(new { code = "INVALID_RATING", detail = "value must be love, like, dislike, or not_interested." });
@@ -26,7 +34,7 @@ public static class TitlesEndpoints
 
             try
             {
-                await ratings.SetAsync(id, RatingValues.Normalize(body.Value), RatingEventOrigins.Ui, ct);
+                await ratings.SetAsync(profileId, id, RatingValues.Normalize(body.Value), RatingEventOrigins.Ui, ct);
                 return Results.NoContent();
             }
             catch (KeyNotFoundException)
@@ -41,12 +49,20 @@ public static class TitlesEndpoints
 
         endpoints.MapDelete("/api/v1/titles/{id:int}/rating", async (
             int id,
+            HttpContext http,
             IRatingService ratings,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
-                await ratings.ClearAsync(id, RatingEventOrigins.Ui, ct);
+                await ratings.ClearAsync(profileId, id, RatingEventOrigins.Ui, ct);
                 return Results.NoContent();
             }
             catch (RecoDisabledException)
@@ -57,12 +73,20 @@ public static class TitlesEndpoints
 
         endpoints.MapPut("/api/v1/titles/{id:int}/watched", async (
             int id,
+            HttpContext http,
             IWatchedService watched,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
-                await watched.AddAsync(id, ct);
+                await watched.AddAsync(profileId, id, ct);
                 return Results.NoContent();
             }
             catch (KeyNotFoundException)
@@ -73,20 +97,36 @@ public static class TitlesEndpoints
 
         endpoints.MapDelete("/api/v1/titles/{id:int}/watched", async (
             int id,
+            HttpContext http,
             IWatchedService watched,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
-            await watched.RemoveAsync(id, ct);
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await watched.RemoveAsync(profileId, id, ct);
             return Results.NoContent();
         });
 
         endpoints.MapGet("/api/v1/titles/{id:int}", async (
             int id,
             int? sourceId,
+            HttpContext http,
             ITitleQueryService titles,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
-            var detail = await titles.GetTitleAsync(id, sourceId, ct);
+            var (profileId, error) = await ProfileRequest.ReadOptionalPersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            var detail = await titles.GetTitleAsync(id, sourceId, ct, profileId);
             return detail is null ? Results.NotFound() : Results.Ok(detail);
         });
 
@@ -94,13 +134,21 @@ public static class TitlesEndpoints
             int id,
             int? sourceId,
             int? limit,
+            HttpContext http,
             IRecoQueryService reco,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.ReadOptionalPersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
                 var result = await reco.QuerySimilarAsync(
-                    new SimilarTitlesQuery(id, sourceId, limit ?? 20),
+                    new SimilarTitlesQuery(id, sourceId, limit ?? 20, profileId),
                     ct);
                 return Results.Ok(result);
             }
@@ -140,7 +188,9 @@ public static class TitlesEndpoints
         endpoints.MapPost("/api/v1/titles/{id:int}/arr", async (
             int id,
             HttpRequest request,
+            HttpContext http,
             IArrAddService add,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
             JsonElement body;
@@ -155,9 +205,10 @@ public static class TitlesEndpoints
 
             try
             {
+                var profileId = await ProfileRequest.ReadAttributedIdAsync(http, db, ct);
                 var arr = LooksLikeSonarr(body)
-                    ? await add.AddAsync(id, ParseSonarrOptions(body), ct)
-                    : await add.AddAsync(id, ParseRadarrOptions(body), ct);
+                    ? await add.AddAsync(id, ParseSonarrOptions(body), ct, profileId)
+                    : await add.AddAsync(id, ParseRadarrOptions(body), ct, profileId);
                 return Results.Created($"/api/v1/titles/{id}", arr);
             }
             catch (ArrOperationException ex)
@@ -170,7 +221,9 @@ public static class TitlesEndpoints
             int id,
             bool? deleteFiles,
             bool? addImportExclusion,
+            HttpContext http,
             IArrDeleteService delete,
+            PickarrDbContext db,
             CancellationToken ct) =>
         {
             if (deleteFiles is null || addImportExclusion is null)
@@ -184,7 +237,8 @@ public static class TitlesEndpoints
 
             try
             {
-                var arr = await delete.DeleteAsync(id, deleteFiles.Value, addImportExclusion.Value, ct);
+                var profileId = await ProfileRequest.ReadAttributedIdAsync(http, db, ct);
+                var arr = await delete.DeleteAsync(id, deleteFiles.Value, addImportExclusion.Value, ct, profileId);
                 return Results.Ok(arr);
             }
             catch (ArrOperationException ex)

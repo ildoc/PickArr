@@ -8,6 +8,7 @@ using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Metadata;
 using Pickarr.Core.Recommendations;
 using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Infrastructure.Metadata.Reco;
@@ -178,11 +179,10 @@ public sealed class RecoEmbeddingService(
             .CountAsync(ct);
 
         var coverage = poolIds.Count == 0 ? 0 : (double)embedded / poolIds.Count;
-        var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, ct);
+        var state = await RecoProfileStates.GetOrCreateAdminAsync(db, ct);
         if (state is null)
         {
-            state = new RecoState { Id = RecoState.SingletonId };
-            db.RecoStates.Add(state);
+            return;
         }
 
         state.EmbeddingCoverage = coverage;

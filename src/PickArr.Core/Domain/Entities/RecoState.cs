@@ -1,11 +1,12 @@
 namespace Pickarr.Core.Domain.Entities;
 
-/// <summary>Singleton row (Id = 1) for the published recommendations version.</summary>
+/// <summary>One row per profile. Model fields are read and written only on the admin row.</summary>
 public sealed class RecoState
 {
     public const int SingletonId = 1;
 
-    public int Id { get; set; } = SingletonId;
+    public int Id { get; set; }
+    public int ProfileId { get; set; }
     public int CurrentVersion { get; set; }
     public DateTime? BuiltAt { get; set; }
     public int RatingCount { get; set; }

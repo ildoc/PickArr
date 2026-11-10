@@ -5,6 +5,7 @@ public interface IRecoEventLogService
     Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default);
 
     Task LogAsync(
+        int profileId,
         int titleId,
         string eventKind,
         int? version = null,
@@ -13,6 +14,7 @@ public interface IRecoEventLogService
         CancellationToken cancellationToken = default);
 
     Task LogManyAsync(
+        int profileId,
         IReadOnlyList<RecoEventLogEntry> entries,
         CancellationToken cancellationToken = default);
 }

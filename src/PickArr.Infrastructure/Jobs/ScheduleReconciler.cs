@@ -101,7 +101,7 @@ public sealed class ScheduleReconciler(
 
         recurringJobs.AddOrUpdate<RecoBuildJob>(
             RecoBuildJob.RecurringJobId,
-            j => j.ExecuteAsync(false, CancellationToken.None),
+            j => j.ExecuteAsync(null, false, CancellationToken.None),
             Cron.Hourly());
 
         recurringJobs.AddOrUpdate<RecoEmbeddingJob>(

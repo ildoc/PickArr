@@ -7,6 +7,7 @@ using Pickarr.Core.Abstractions;
 using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Recommendations;
 using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Infrastructure.Metadata.Reco;
@@ -25,8 +26,7 @@ public sealed class RecoModelService(
 
     public async Task<RecoModelInfoDto> GetInfoAsync(CancellationToken cancellationToken = default)
     {
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var state = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
         var dir = ResolveModelDirectory(await GetModelIdAsync(cancellationToken));
         long? size = null;
         var onnx = Path.Combine(dir, RecoModelCatalog.DefaultOnnxFileName);
@@ -198,11 +198,10 @@ public sealed class RecoModelService(
 
     private async Task SetStatusAsync(string status, string modelId, string? error, CancellationToken ct)
     {
-        var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, ct);
+        var state = await RecoProfileStates.GetOrCreateAdminAsync(db, ct);
         if (state is null)
         {
-            state = new RecoState { Id = RecoState.SingletonId };
-            db.RecoStates.Add(state);
+            return;
         }
 
         state.ModelStatus = status;

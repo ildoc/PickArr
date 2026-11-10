@@ -36,6 +36,36 @@ public sealed class DatabaseInitializer(
 
         await MigrateLegacySettingKeysAsync(now, cancellationToken);
         await EnsureDefaultSettingsAsync(now, cancellationToken);
+        await EnsureAdminProfileAsync(cancellationToken);
+    }
+
+    internal async Task EnsureAdminProfileAsync(CancellationToken cancellationToken = default)
+    {
+        if (await db.Profiles.AnyAsync(profile => profile.IsAdmin, cancellationToken))
+        {
+            return;
+        }
+
+        db.Profiles.Add(new Profile
+        {
+            Name = Profile.AdminName,
+            Color = Profile.DefaultColor,
+            IsAdmin = true,
+            UseImplicit = await ReadBoolSettingAsync(SettingsKeys.RecoUseImplicit, true, cancellationToken),
+            ExcludeInLibrary = await ReadBoolSettingAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken),
+            CreatedAt = clock.UtcNow,
+        });
+        await db.SaveChangesAsync(cancellationToken);
+        logger.LogInformation("Seeded admin profile {Name}", Profile.AdminName);
+    }
+
+    private async Task<bool> ReadBoolSettingAsync(string key, bool fallback, CancellationToken cancellationToken)
+    {
+        var value = await db.Settings.AsNoTracking()
+            .Where(setting => setting.Key == key)
+            .Select(setting => setting.ValueJson)
+            .FirstOrDefaultAsync(cancellationToken);
+        return value is null ? fallback : value == "true";
     }
 
     private async Task MigrateLegacySettingKeysAsync(DateTime now, CancellationToken cancellationToken)

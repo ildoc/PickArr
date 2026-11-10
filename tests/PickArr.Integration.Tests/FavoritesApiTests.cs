@@ -22,7 +22,7 @@ public sealed class FavoritesApiTests
     public FavoritesApiTests(ApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.WithAdmin();
     }
 
     [Fact]
@@ -70,7 +70,8 @@ public sealed class FavoritesApiTests
                     LastSeenAt = now,
                     AddedAt = now,
                 });
-                db.Favorites.Add(new Favorite { TitleId = movie.Id, CreatedAt = now });
+                var adminId = await db.Profiles.Where(profile => profile.IsAdmin).Select(profile => profile.Id).SingleAsync();
+                db.Favorites.Add(new Favorite { ProfileId = adminId, TitleId = movie.Id, CreatedAt = now });
                 await db.SaveChangesAsync();
             }
         }

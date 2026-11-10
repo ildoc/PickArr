@@ -39,7 +39,7 @@ public sealed class RecoEmbeddingJob(
 
             if (count > 0)
             {
-                jobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(false, CancellationToken.None));
+                jobs.Enqueue<RecoBuildJob>(j => j.ExecuteAsync(null, false, CancellationToken.None));
             }
         }
         catch (Exception ex)

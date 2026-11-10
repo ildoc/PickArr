@@ -17,5 +17,9 @@ public sealed class ArrAuditLogConfiguration : IEntityTypeConfiguration<ArrAudit
         builder.Property(x => x.Error).HasMaxLength(2048);
         builder.HasIndex(x => x.At);
         builder.HasIndex(x => x.TitleId);
+        builder.HasOne<Profile>()
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

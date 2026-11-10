@@ -8,7 +8,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchSources } from '../../api/catalog'
 import { exportRatings, fetchRatings, importRatings } from '../../api/ratings'
 import { fetchSettings } from '../../api/settings'
+import { fetchProfiles } from '../../api/profiles'
 import i18n from '../../i18n'
+import { ProfileProvider } from '../who/profileContext'
 import { MyRatingsPage } from './MyRatingsPage'
 
 vi.mock('../../api/catalog', () => ({
@@ -26,6 +28,10 @@ vi.mock('../../api/ratings', () => ({
 
 vi.mock('../../api/settings', () => ({
   fetchSettings: vi.fn(),
+}))
+
+vi.mock('../../api/profiles', () => ({
+  fetchProfiles: vi.fn(),
 }))
 
 vi.mock('../title/TitleDialog', () => ({
@@ -55,11 +61,13 @@ function renderAt(path: string, seedSettings?: Awaited<ReturnType<typeof fetchSe
   const ui: ReactNode = (
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/ratings" element={<MyRatingsPage />} />
-          </Routes>
-        </MemoryRouter>
+        <ProfileProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/ratings" element={<MyRatingsPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ProfileProvider>
       </I18nextProvider>
     </QueryClientProvider>
   )
@@ -86,6 +94,17 @@ describe('MyRatingsPage', () => {
       reco: { enabled: true },
     } as Awaited<ReturnType<typeof fetchSettings>>)
     vi.mocked(fetchSources).mockResolvedValue(sources)
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      {
+        id: 1,
+        name: 'Admin',
+        color: 'blue',
+        isAdmin: true,
+        useImplicit: true,
+        excludeInLibrary: true,
+        createdAt: '2026-11-10T00:00:00Z',
+      },
+    ])
     vi.mocked(fetchRatings).mockResolvedValue({
       page: 1,
       pageSize: 48,

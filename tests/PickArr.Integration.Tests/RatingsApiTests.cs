@@ -23,7 +23,7 @@ public sealed class RatingsApiTests
     public RatingsApiTests(ApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.WithAdmin();
     }
 
     [Fact]

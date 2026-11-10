@@ -7,6 +7,7 @@ import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchGenres, fetchSources, fetchTitles, fetchCatalogTypes } from '../api/catalog'
 import { fetchMyList, fetchMyListGenres, fetchMyListTypes } from '../api/favorites'
+import { fetchProfiles } from '../api/profiles'
 import i18n from '../i18n'
 import { AppRouter } from './router'
 
@@ -26,8 +27,19 @@ vi.mock('../api/favorites', () => ({
   removeFavorite: vi.fn(),
 }))
 
+vi.mock('../api/profiles', () => ({
+  fetchProfiles: vi.fn(),
+  createProfile: vi.fn(),
+  updateProfile: vi.fn(),
+  deleteProfile: vi.fn(),
+}))
+
 vi.mock('../api/settings', () => ({
   fetchSettings: vi.fn(async () => ({
+    watchmode: { apiKey: { isSet: false } },
+    tmdb: { apiKey: { isSet: false } },
+    sonarr: { url: null, apiKey: { isSet: false }, defaults: null },
+    radarr: { url: null, apiKey: { isSet: false }, defaults: null },
     reco: { enabled: true },
   })),
 }))
@@ -117,6 +129,17 @@ describe('catalog and my list routes', () => {
     vi.mocked(fetchMyList).mockResolvedValue(emptyPage)
     vi.mocked(fetchMyListTypes).mockResolvedValue([])
     vi.mocked(fetchMyListGenres).mockResolvedValue([])
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      {
+        id: 1,
+        name: 'Admin',
+        color: 'blue',
+        isAdmin: true,
+        useImplicit: true,
+        excludeInLibrary: true,
+        createdAt: '2026-11-10T00:00:00Z',
+      },
+    ])
   })
 
   it('keeps my list off the catalog page and on its own route', async () => {
@@ -155,4 +178,79 @@ describe('catalog and my list routes', () => {
       expect(fetchMyList).toHaveBeenCalledWith(expect.objectContaining({ q: 'matrix' })),
     )
   })
+
+  it('opens the catalog for one profile and remembers it', async () => {
+    renderAt('/')
+
+    expect(await screen.findByLabelText('Provider')).toBeTruthy()
+    expect(localStorage.getItem('pickarr.profileId')).toBe('1')
+  })
+
+  it('opens the catalog when the remembered profile still exists', async () => {
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      profile(1, 'Admin', true),
+      profile(2, 'Kid', false),
+    ])
+    localStorage.setItem('pickarr.profileId', '2')
+
+    renderAt('/')
+
+    expect(await screen.findByLabelText('Provider')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: "Who's watching?" })).toBeNull()
+  })
+
+  it('opens the profile picker when the remembered profile was deleted', async () => {
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      profile(1, 'Admin', true),
+      profile(2, 'Kid', false),
+    ])
+    localStorage.setItem('pickarr.profileId', '9')
+
+    renderAt('/')
+
+    expect(await screen.findByRole('heading', { name: "Who's watching?" })).toBeTruthy()
+    expect(screen.queryByLabelText('Provider')).toBeNull()
+  })
+
+  it('opens the profile picker from the header even when a profile is remembered', async () => {
+    const user = userEvent.setup()
+    renderAt('/catalog')
+
+    await user.click(await screen.findByRole('link', { name: 'Switch profile, Admin' }))
+
+    expect(await screen.findByRole('heading', { name: "Who's watching?" })).toBeTruthy()
+  })
+
+  it('sends a non-admin profile away from settings', async () => {
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      profile(1, 'Admin', true),
+      profile(2, 'Kid', false),
+    ])
+    localStorage.setItem('pickarr.profileId', '2')
+
+    renderAt('/settings/jobs')
+
+    expect(await screen.findByLabelText('Provider')).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Settings' })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Settings' })).toBeNull()
+  })
+
+  it('keeps settings reachable for the admin profile', async () => {
+    renderAt('/settings')
+
+    expect(await screen.findByRole('heading', { name: 'Connections' })).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+  })
 })
+
+function profile(id: number, name: string, isAdmin: boolean) {
+  return {
+    id,
+    name,
+    color: 'blue',
+    isAdmin,
+    useImplicit: true,
+    excludeInLibrary: true,
+    createdAt: '2026-11-10T00:00:00Z',
+  }
+}

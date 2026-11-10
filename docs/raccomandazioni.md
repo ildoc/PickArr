@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Versione** | 0.2 |
-| **Data** | 2026-11-05 |
+| **Versione** | 0.3 |
+| **Data** | 2026-11-10 |
 | **Lingua** | Italiano |
 | **Documenti collegati** | `documento-funzionale.md`, `specifica-tecnica.md` |
 | **Convenzioni** | Gli ID di questo documento usano il suffisso `REC` (FR-REC, BR-REC, NFR-REC, US-REC, UC-REC) o `SP-R` per gli spike, per non collidere con quelli dei documenti esistenti. I riferimenti a FR-, BR-, D-, SP- senza `REC` rimandano ai documenti collegati. |
@@ -12,6 +12,7 @@
 
 | Versione | Scelta |
 |---|---|
+| 0.3 | Voto, preferiti, visti e build reco sono per **profilo di casa** (chiave profilo+titolo). Sotto `N0` il prior non personale include il **prior di casa** (Love/Like degli altri, tetto 0,5). `useImplicit` e `excludeInLibrary` si leggono dal profilo. Libreria Arr condivisa; audit Add con `ProfileId` quando c’è l’header. |
 | 0.2 | Il voto è uno solo per `Title`, condiviso tra i provider. I consigli mostrati appartengono ai cataloghi già importati: per default la sorgente selezionata (servizio + paese), in più l’unione delle sorgenti abilitate. Un mi piace dato su un altro servizio entra nel profilo usato anche per la sorgente corrente. I titoli simili elencano i titoli presenti in almeno una sorgente abilitata, con i servizi. La pagina è `/for-you` e riusa la sorgente del catalogo. La rimozione dal servizio non esclude un titolo. Niente stato *Nascondi*. Niente raccolta di titoli assenti dai cataloghi. |
 | 0.1 | Bozza con pool TMDB, scope «tutto TMDB» e stato *Nascondi*. Sostituita da 0.2. |
 
@@ -52,19 +53,20 @@
 
 ### 1.1 Scopo
 
-Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **consigli** che usano quel voto. Il voto è unico anche se lo stesso titolo è su più servizi. I consigli che l’utente vede sono titoli già presenti nei cataloghi importati.
+Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **consigli** che usano quel voto. Il voto è del **profilo di casa** attivo ed è unico per quel profilo anche se lo stesso titolo è su più servizi. I consigli che il profilo vede sono titoli già presenti nei cataloghi importati.
 
 ### 1.2 Obiettivi
 
 - Permettere di votare un titolo con un gesto (un click), dalla card e dalla scheda.
-- Tenere **un solo voto per titolo**. Netflix e Prime Video che hanno lo stesso titolo condividono quel voto. Lo stesso vale tra paesi (Netflix IT e Netflix US).
+- Tenere **un solo voto per profilo e titolo**. Netflix e Prime Video che hanno lo stesso titolo condividono quel voto **del profilo**. Lo stesso vale tra paesi (Netflix IT e Netflix US). Due profili possono divergere.
 - Mostrare in **Per te**, per default, solo i titoli della **sorgente di catalogo selezionata** (servizio + paese: ad esempio Netflix Italia).
 - Offrire, sulla stessa pagina, la vista **Tutte le sorgenti abilitate**: ogni titolo una volta, se compare in almeno un catalogo acceso, con l’elenco dei servizi.
-- Far entrare nel profilo anche i voti dati su titoli di un altro servizio. Cambia il filtro di ciò che viene mostrato, non il profilo.
+- Far entrare nel profilo di gusto anche i voti dati su titoli di un altro servizio. Cambia il filtro di ciò che viene mostrato, non il profilo.
+- A freddo (`N_eff < N0`), aiutare un profilo nuovo con un **prior di casa** dai *Mi piace* / *Mi piace molto* degli altri profili (tetto 0,5); a regime conta solo quel profilo.
 - Funzionare dal primo giorno, senza alcun voto (qualità e popolarità dei titoli già in catalogo, più i «titoli simili»), e migliorare con l’uso.
 - Eseguire il calcolo **in locale**, nel container. Il modello di embedding, se installato, è locale.
 - Spiegare ogni consiglio.
-- Restare un’app a singola immagine Docker, single-user, self-hosted.
+- Restare un’app a singola immagine Docker, multi-profilo senza autenticazione, self-hosted.
 
 ### 1.3 Fuori ambito
 
@@ -72,7 +74,7 @@ Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 - Scope «tutto TMDB», etichetta *Fuori catalogo*, watch providers TMDB/JustWatch.
 - ~~Stato *Nascondi* generico~~ — superseduto: **Hide** (`Watched`) esclude senza peso di gusto (default 0); **Not interested** è un voto esplicito negativo ed esclude.
 - Ordinamento *Per te* mescolato nella griglia del catalogo. I consigli per **una** sorgente stanno in una **riga dedicata** su `/catalog` (al più 25 titoli). La pagina `/for-you` copre l’unione delle sorgenti abilitate.
-- Raccomandazioni collaborative, profili multipli, sync di cronologia esterna (Trakt, Plex, Jellyfin).
+- Collaborative filtering utente-utente (oltre al prior di casa a freddo). Sync di cronologia esterna (Trakt, Plex, Jellyfin).
 - Fine-tuning di modelli di linguaggio. Il modello di embedding, se usato, è in sola inferenza.
 - Notifiche push.
 
@@ -82,22 +84,24 @@ Aggiungere a Pickarr un **voto** (mi piace / non mi piace) sul titolo e dei **co
 |---|---|
 | **Titolo** | Riga `Titles`. Una sola per identità (BR-01): id Watchmode e, quando nota, coppia (tipo TMDB, id TMDB). I provider non duplicano il titolo: aggiungono una `Availability`. |
 | **Sorgente** | `CatalogSource`: un provider e un paese (Netflix IT, Netflix US, Prime Video IT sono sorgenti diverse). |
-| **Voto** | *Mi piace molto* (*Love*), *Mi piace*, *Non mi piace* o *Non mi interessa* sul `Title.Id`. Al più uno. Vale per ogni sorgente in cui il titolo compare. |
-| **Hide** | Flag `Watched` sul `Title.Id` (nascondi / già visto). Coesiste col voto. Esclude da *Per te* e simili; con peso default 0 non aggiunge massa di gusto. |
-| **Segnale implicito** | Interesse senza voto: *La mia lista* (interesse temporaneo / da guardare), Hide se il peso è &gt; 0, aggiunta a Sonarr/Radarr, download completato. Non sostituisce un voto esplicito. |
-| **Profilo** | Gusti dell’utente, costruiti da voti e segnali di qualunque sorgente. |
+| **Voto** | *Mi piace molto* (*Love*), *Mi piace*, *Non mi piace* o *Non mi interessa* sulla coppia profilo+`Title.Id`. Al più uno per profilo. Vale per ogni sorgente in cui il titolo compare. |
+| **Hide** | Flag `Watched` sulla coppia profilo+`Title.Id` (nascondi / già visto). Coesiste col voto. Esclude da *Per te* e simili; con peso default 0 non aggiunge massa di gusto. |
+| **Segnale implicito** | Interesse senza voto: *La mia lista* (interesse temporaneo / da guardare), Hide se il peso è &gt; 0, aggiunta a Sonarr/Radarr attribuita al profilo, download completato che segue quell’Add. Non sostituisce un voto esplicito. |
+| **Profilo (di casa)** | Partizione UI/dati (`Profiles`): nome, colore, toggle reco. |
+| **Profilo (di gusto)** | Vettore/gusti del profilo di casa, costruiti da voti e segnali di qualunque sorgente **di quel profilo**. |
 | **Pool** | Titoli tra cui si calcola il punteggio: i `Title` che hanno almeno una `Availability` su una sorgente abilitata. |
 | **Scope** | Filtro applicato ai punteggi già calcolati. `source`: la sorgente selezionata. `enabled`: tutte le sorgenti abilitate. |
-| **Prior** | Punteggio non personale da voto medio e popolarità TMDB già salvati sul titolo. |
-| **Embedding** | Vettore di 384 numeri calcolato in locale dal testo del titolo. |
-| **Cold start** | Fase con pochi segnali, in cui il prior pesa ancora molto. |
+| **Prior** | Punteggio non personale da voto medio e popolarità TMDB già salvati sul titolo. Sotto `N0` può essere fuso col prior di casa. |
+| **Prior di casa** | Media, per titolo, dei pesi Love/Like degli altri profili, valutata col livello 1 sparso. Entra solo nel slot non personale, con tetto 0,5. |
+| **Embedding** | Vettore di 384 numeri calcolato in locale dal testo del titolo (globale). |
+| **Cold start** | Fase con pochi segnali (`N_eff < N0`), in cui prior TMDB e prior di casa pesano ancora. |
 
 ---
 
 ## 2. Principi di progetto
 
-1. **Il voto sta sul titolo.** `Ratings.TitleId` è la chiave primaria di `Titles`. Non esiste un voto per coppia titolo+sorgente. Un mi piace dato mentre si guarda Prime Video è lo stesso record letto quando si guarda Netflix Italia.
-2. **Il profilo è unico, il filtro è di catalogo.** I punteggi si calcolano sul pool. *Per te* con scope `source` restituisce i titoli che hanno una `Availability` sulla sorgente selezionata. Lo scope `enabled` restituisce i titoli che ne hanno una su almeno una sorgente abilitata.
+1. **Il voto sta sul profilo e sul titolo.** PK `(ProfileId, TitleId)`. Non esiste un voto per coppia titolo+sorgente. Un mi piace del profilo dato mentre si guarda Prime Video è lo stesso record letto quando si guarda Netflix Italia.
+2. **Un profilo di gusto per profilo di casa; il filtro è di catalogo.** I punteggi si calcolano sul pool **per quel profilo**. *Per te* con scope `source` restituisce i titoli che hanno una `Availability` sulla sorgente selezionata. Lo scope `enabled` restituisce i titoli che ne hanno una su almeno una sorgente abilitata.
 3. **La rimozione dal servizio non toglie il titolo dal pool.** `Availability.RemovedAt` non è un filtro delle raccomandazioni. Il titolo resta consigliabile. La card può mostrare la data di rimozione già presente nel modello.
 4. **Prima semplice, poi personale.** Ogni livello dell’algoritmo funziona da solo. Se il modello locale manca, si usano i livelli inferiori.
 5. **Spiegabile.** Ogni elemento consigliato riporta i motivi.
@@ -131,7 +135,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-REC-SG-01 | Segnali positivi: riga in `Favorites` (interesse temporaneo / da guardare); riga in `Watched`; `ArrAuditLog` con azione `Add` ed esito `Success`; `ArrLibraryItem.State = Downloaded`. I pesi sono in BR-REC-02. | M |
+| FR-REC-SG-01 | Segnali positivi **del profilo**: riga in `Favorites`; riga in `Watched`; `ArrAuditLog` con azione `Add`, esito `Success` e `ProfileId` del profilo; `ArrLibraryItem.State = Downloaded` solo se segue un Add di quel profilo. I pesi sono in BR-REC-02. La libreria Arr resta globale. | M |
 | FR-REC-SG-02 | Se il titolo ha un voto esplicito, il profilo usa solo quel voto. | M |
 | FR-REC-SG-03 | L’utente può disattivare i segnali impliciti nelle impostazioni. | S |
 | FR-REC-SG-04 | L’eliminazione da Sonarr/Radarr (`ArrAuditLog` azione `Delete`) non è un segnale negativo. Il segnale «aggiunto» resta. | M |
@@ -216,7 +220,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 | ID | Regola |
 |---|---|
-| BR-REC-01 | **Un voto per titolo.** Valori `Love`, `Like`, `Dislike` o `NotInterested`. Una nuova scelta sostituisce la precedente. La rimozione cancella la riga. Ogni variazione è una riga in `RatingEvents`. |
+| BR-REC-01 | **Un voto per profilo e titolo.** Valori `Love`, `Like`, `Dislike` o `NotInterested`. Una nuova scelta sostituisce la precedente. La rimozione cancella la riga. Ogni variazione è una riga in `RatingEvents` con lo stesso `ProfileId`. |
 | BR-REC-02 | **Pesi.** *Mi piace molto* **+1,5**. *Mi piace* **+1,0**. *Non mi piace* **−1,0**. *Non mi interessa* **−0,75**. *La mia lista* **+0,5** (segnale temporaneo di interesse / watch-later: sparisce dal profilo quando si toglie il preferito o si assegna un voto). *Hide* **0** (solo esclusione). *Aggiunto a Sonarr/Radarr* **+0,6**. *Scaricato* **+0,4**. I segnali impliciti si sommano e si limitano a **[0, +1]**. Con un voto esplicito vale solo quello. Pesi configurabili. |
 | BR-REC-03 | **Decadimento.** Opzionale, emivita in giorni. Default: nessuno. |
 | BR-REC-04 | **Numerosità efficace.** `N_eff = Σ \|s_i\|` sui titoli con segnale. Governa il peso del profilo rispetto al prior (§12.2). |
@@ -228,7 +232,9 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 | BR-REC-10 | **Watchmode.** Nessuna funzione di raccomandazione chiama Watchmode. |
 | BR-REC-11 | **Sonarr/Radarr.** Un titolo consigliato si aggiunge con il flusso già esistente (`ArrAddService`), se ha l’id richiesto (BR-08). |
 | BR-REC-12 | **Ricostruzione.** Dopo un voto o un cambio di *Visto*, ricostruzione con debounce di 30 secondi, senza aspettare il job notturno. |
-| BR-REC-13 | **Sorgente selezionata.** È lo stesso id ricordato dal catalogo (`localStorage` `pickarr.sourceId`, query `source`). *Per te* lo legge e lo scrive. Cambiarlo qui cambia il catalogo alla visita successiva, e il contrario. |
+| BR-REC-13 | **Sorgente selezionata.** È lo stesso id ricordato dal catalogo per il profilo (`localStorage` `pickarr.sourceId.{profileId}`, query `source`). *Per te* lo legge e lo scrive. Cambiarlo qui cambia il catalogo alla visita successiva, e il contrario. |
+| BR-REC-15 | **Prior di casa.** Con `N_eff < N0`, lo slot non personale del punteggio può includere la media Love/Like degli altri profili (livello 1 sparso soltanto). Tetto `h = 0,5 · (1 − raw)` con `raw = min(1, N_eff/N0)`. A `N_eff ≥ N0`, `h = 0`. Dislike, preferiti e visti altrui non entrano. Un solo profilo nell’installazione riproduce il prior TMDB. Un voto ricostruisce il profilo votante e gli altri ancora sotto `N0`. |
+| BR-REC-16 | **Preferenze profilo.** Il build legge `UseImplicit` e `ExcludeInLibrary` dal profilo, non da `reco.useImplicit` / `reco.excludeInLibrary`. Le chiavi globali possono restare memorizzate. |
 | BR-REC-14 | **Simili e scope.** I simili applicano sempre l’appartenenza `enabled`, anche se *Per te* è sullo scope `source`. |
 
 ---
@@ -324,7 +330,7 @@ Priorità MoSCoW: **M** per l’MVP della feature, **S** should, **C** could.
 
 **Scheda (`TitleDialog`).** Azioni etichettate *Mi piace* / *Non mi piace* / *Non mi interessa*, *Hide*, e preferito. Scorciatoie `O` / `L` / `D` / `N` / `W`. Blocco *Perché te lo consigliamo* se si arriva da *Per te*. In fondo, griglia *Titoli simili* su più righe.
 
-**Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0`; link *Insegnami i tuoi gusti* solo se `N_eff < N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
+**Per te (`/for-you`).** Stesso selettore provider + paese del catalogo (`FilterBar`). Interruttore di scope: *Questa sorgente* / *Tutte le sorgenti abilitate*. Con una sola sorgente abilitata il secondo scope è nascosto. Indicatore `N_eff / N0` (con link *Insegnami i tuoi gusti*) solo se `N_eff < N0`. Filtri tipo, genere, anno, includi in libreria. Griglia a scorrimento infinito. Chip dei motivi.
 
 **Onboarding (`/taste`).** Griglia di titoli del pool, azioni grandi, contatore, *Mostra altri titoli*, *Fatto*.
 
@@ -353,7 +359,8 @@ Voce **Per te** nell’intestazione, accanto a *La mia lista*. *Le mie valutazio
 | Voto medio e popolarità | `Title.VoteTmdb`, `VoteTmdbCount`, `Popularity` | Prior. |
 | Preferiti | `Favorite` (`TitleId` PK) | Segnale implicito e modello UI del toggle ottimistico (`FavoriteButton`). |
 | Libreria | `ArrLibraryItem.State`, `ArrAuditLog` (`Add` / `Delete`, `Success` / `Failed`) | Segnali e filtro «in libreria». |
-| Sorgente UI | `src/Pickarr.WebApp/src/` (`pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
+| Sorgente UI | `pickarr.sourceId.{profileId}` (legacy admin: `pickarr.sourceId`), query `source` su `/catalog` | Stessa sorgente per `/for-you`. |
+| Profilo UI | `pickarr.profileId` → header `X-Pickarr-Profile` | Partiziona liste, flag e build. |
 | Card | `TitleListItem` / `TitleListItemDto`, `places`, `TitleCard`, `TitleDialog` | Si aggiunge il campo `rating`. |
 | Job | Hangfire, code `default`, `sync`, `arr` (`HangfireBootstrap`), `SyncRun` + `SyncRunKinds` | Nuova coda `ml` e nuovi `Kind`. |
 | Impostazioni | `AppSetting`, `SettingsKeys` | Chiavi `reco.*`. |
@@ -371,7 +378,7 @@ Titles già in catalogo + Availabilities
 TitleEmbeddings (se il modello c’è)
         │
         ▼
-RecoBuildJob: profilo unico + punteggio su tutto il pool
+RecoBuildJob: profilo di gusto del ProfileId + punteggio sul pool (+ prior di casa sotto N0)
         │
         ▼
 Recommendations (versionate)
@@ -413,10 +420,11 @@ Opzionali, se il livello 1 le calcola e le tiene:
 
 ### 10.2 Tabelle nuove
 
-**`Ratings`** — un voto corrente
+**`Ratings`** — un voto corrente per profilo
 
 | Colonna | Tipo | Note |
 |---|---|---|
+| ProfileId | int PK, FK → Profiles | |
 | TitleId | int PK, FK → Titles | |
 | Value | text | `Love` / `Like` / `Dislike` / `NotInterested` |
 | RatedAt | datetime | |
@@ -426,6 +434,7 @@ Opzionali, se il livello 1 le calcola e le tiene:
 | Colonna | Tipo | Note |
 |---|---|---|
 | Id | int PK | |
+| ProfileId | int FK | |
 | TitleId | int FK | |
 | Value | text null | null = voto rimosso |
 | At | datetime | |
@@ -450,45 +459,47 @@ Opzionali, se il livello 1 le calcola e le tiene:
 
 PK `(TitleId, ModelId)`.
 
-**`RecoState`** (una riga)
+**`RecoState`** (una riga per profilo; `ProfileId` univoco)
 
 | Colonna | Tipo | Note |
 |---|---|---|
+| ProfileId | int FK | |
 | CurrentVersion | int | |
 | BuiltAt | datetime null | |
 | RatingCount | int | |
 | EffectiveN | real | |
 | Stage | text | `cold` / `warming` / `personalized` |
-| ModelStatus | text | `Absent` / `Downloading` / `Ready` / `Error` |
-| ModelId | text null | |
-| EmbeddingCoverage | real | 0–1 sul pool |
-| ProfileJson | text null | profilo sparso troncato |
+| ModelStatus | text | `Absent` / `Downloading` / `Ready` / `Error` — scritti solo sulla riga admin |
+| ModelId | text null | solo admin |
+| EmbeddingCoverage | real | 0–1 sul pool; solo admin |
+| ProfileJson | text null | profilo sparso troncato del profilo |
 | LastError | text null | |
 
 **`Recommendations`**
 
 | Colonna | Tipo | Note |
 |---|---|---|
+| ProfileId | int FK | |
 | Version | int | |
 | TitleId | int FK | |
 | Score | real | |
 | Personal | real null | |
-| Prior | real | |
-| Rank | int | ordine globale di quella versione, prima dello scope |
+| Prior | real | slot non personale dopo eventuale blend di casa |
+| Rank | int | ordine di quella versione del profilo, prima dello scope |
 | ReasonsJson | text | motivi (§12.7) |
 
-PK `(Version, TitleId)`. Indice `(Version, Score DESC)`. Alla pubblicazione si cancellano le versioni precedenti.
+PK `(ProfileId, Version, TitleId)`. Indice `(ProfileId, Version, Score DESC)`. Alla pubblicazione si cancellano le versioni precedenti **di quel profilo**.
 
-**`RecoEventLog`** (solo se FR-REC-AD-05): `Id`, `At`, `TitleId`, `Event` (`Shown` / `Opened` / `Liked` / `Disliked` / `AddedToArr`), `Version`, `Rank`, `Scope`.
+**`RecoEventLog`** (solo se FR-REC-AD-05): `Id`, `ProfileId`, `At`, `TitleId`, `Event` (`Shown` / `Opened` / `Liked` / `Disliked` / `AddedToArr`), `Version`, `Rank`, `Scope`.
 
 ### 10.3 Segnali, senza tabelle duplicate
 
 Alla ricostruzione:
 
-- voto: `Ratings`;
-- preferito: `Favorites`;
-- aggiunto: `ArrAuditLog` con `Action = Add`, `Outcome = Success`, `TitleId` non nullo;
-- scaricato: `ArrLibraryItem` con `State = Downloaded` e `TitleId` non nullo.
+- voto: `Ratings` del `ProfileId`;
+- preferito: `Favorites` del `ProfileId`;
+- aggiunto: `ArrAuditLog` con `Action = Add`, `Outcome = Success`, `TitleId` non nullo e `ProfileId` del profilo (senza `ProfileId` il segnale non si attribuisce);
+- scaricato: `ArrLibraryItem` con `State = Downloaded` e `TitleId` non nullo, se l’Add attributo al profilo esiste.
 
 Un `Delete` riuscito non inverte l’`Add`.
 
@@ -544,15 +555,16 @@ aggiorna RecoState.EmbeddingCoverage sul pool
 ### 11.4 `RecoBuildJob`
 
 ```
-1. segnali → s_i , N_eff          (BR-REC-02)
-2. profilo sparso                 (§12.3)
-3. kNN embedding                  (§12.4) se modello pronto e copertura ≥ soglia
-4. prior su tutto il pool        (§12.2)
-5. fusione → Score, Reasons      (§12.5, §12.7)
-6. transazione: Recommendations(version+1), RecoState, cancella versioni vecchie
+1. segnali del profilo → s_i , N_eff   (BR-REC-02; UseImplicit/ExcludeInLibrary dal profilo)
+2. profilo sparso                      (§12.3)
+3. kNN embedding                       (§12.4) se modello pronto e copertura ≥ soglia (stato modello = riga admin)
+4. prior TMDB su tutto il pool         (§12.2)
+5. prior di casa (se N_eff < N0)       (§12.2bis, BR-REC-15)
+6. fusione → Score, Reasons            (§12.5, §12.7)
+7. transazione: Recommendations(ProfileId, version+1), RecoState del profilo, cancella versioni vecchie di quel profilo
 ```
 
-- Una ricostruzione alla volta. Altri voti durante l’esecuzione accodano un giro successivo (debounce).
+- Una ricostruzione alla volta **per profilo**. Un voto accoda il profilo votante e gli altri ancora sotto `N0`.
 - Copertura embedding sotto `reco.embeddings.minCoverage` (default 0,8): il livello 2 è escluso e il peso personale va al livello 1.
 - Lo scope non entra nel build. Due scope non significano due punteggi.
 
@@ -563,12 +575,15 @@ aggiorna RecoState.EmbeddingCoverage sul pool
 ### 12.1 Panoramica
 
 ```
-Score(t) = (1 − w) · Prior(t)  +  w · Personal(t)
-w        = min(1, N_eff / N0)                 N0 = 30
+raw      = min(1, N_eff / N0)                 N0 = 30
+w        = min(raw, 1 − ε)                    ε = 0,1
+h        = 0 se nessun Love/Like altrui, altrimenti 0,5 · (1 − raw)
+Prior'(t)= (1 − h) · Prior(t) + h · Household(t)
+Score(t) = (1 − w) · Prior'(t) + w · Personal(t)
 Personal = a · Sparse(t) + b · Knn(t)         b = 0 se il modello non c’è; a + b = 1
 ```
 
-Pesi iniziali `a = 0,4`, `b = 0,6`. Senza modello, `a = 1`. I punteggi componenti sono normalizzati in [0, 1] sul pool prima della fusione.
+`N_eff` e `FuseScore` restano quelli di `RecoLearning`. Il termine di casa modifica solo lo slot prior prima della fusione. Pesi iniziali `a = 0,4`, `b = 0,6`. Senza modello, `a = 1`. I punteggi componenti sono normalizzati in [0, 1] sul pool prima della fusione. `Household` è il livello 1 sparso sulla media Love/Like degli altri profili (BR-REC-15).
 
 | Livello | Cosa | Richiede | Attivo da |
 |---|---|---|---|
@@ -577,7 +592,7 @@ Pesi iniziali `a = 0,4`, `b = 0,6`. Senza modello, `a = 1`. I punteggi component
 | 2 | kNN embedding | modello + copertura | `N_eff > 0` e copertura ≥ 80% |
 | 3 | Classificatore | ≥ 100 voti espliciti e validazione | opzionale (§12.6) |
 
-Il profilo somma segnali di **tutte** le sorgenti. Un mi piace su un titolo presente solo su Prime Video alza `Sparse` e `Knn` dei titoli di Netflix Italia vicini a quello. Quei titoli di Prime Video non compaiono nello scope `source` di Netflix Italia perché la join su `Availability` li ferma in lettura.
+Il profilo di gusto somma segnali di **tutte** le sorgenti **del profilo**. Un mi piace su un titolo presente solo su Prime Video alza `Sparse` e `Knn` dei titoli di Netflix Italia vicini a quello. Quei titoli di Prime Video non compaiono nello scope `source` di Netflix Italia perché la join su `Availability` li ferma in lettura.
 
 ### 12.2 Livello 0 — Prior
 
@@ -589,6 +604,10 @@ Prior(t) = 0,7 · norm(bayes) + 0,3 · pop
 ```
 
 Titolo senza voto TMDB: `bayes` cade su `C`, `pop` su 0. Resta nel pool. Il prior si può calcolare per tipo (film / serie / stand-up). Il MMR (§12.8) completa la varietà.
+
+### 12.2bis Prior di casa
+
+Sotto `N0`, lo slot non personale diventa `Prior'` (formule in §12.1). `Household(t)` è il punteggio sparso (livello 1) della media, per titolo, dei pesi Love/Like degli altri profili; chi non ha votato il titolo non entra nella media. Solo livello 1: niente kNN sul vettore di casa. A `raw = 1` (o senza Love/Like altrui) si ritrova la fusione col solo prior TMDB. A `raw = 0` senza altri voti positivi si ritrova il prior.
 
 ### 12.3 Livello 1 — Profilo sparso
 
@@ -627,7 +646,7 @@ Knn(t)       = Σ sim(t,i)^γ · s_i  /  Σ sim(t,i)^γ          γ = 3
 
 - Il risultato è in [−1, 1] e si porta in [0, 1] prima della fusione.
 - Con meno di K vicini sopra `sim_min` (default 0,25), il punteggio si smorza verso 0,5.
-- I vicini possono stare su un’altra sorgente: è il profilo unico.
+- I vicini possono stare su un’altra sorgente: è il profilo di gusto unico **per profilo di casa**.
 
 **Titoli simili** (FR-REC-RC-09): per il titolo `q`, i vicini nel pool per `e_q · e_t`. Senza embedding, coseno sparso del livello 1. Poi si tengono solo i titoli con appartenenza `enabled` (BR-REC-14), si tolgono i votati e, se il filtro libreria è attivo, quelli in libreria. L’ordine è la similarità. La risposta include `places`.
 
@@ -635,12 +654,12 @@ Knn(t)       = Σ sim(t,i)^γ · s_i  /  Σ sim(t,i)^γ          γ = 3
 
 ```
 Personal(t) = a · Sparse'(t) + b · Knn'(t)
-Score(t)    = (1 − w) · Prior'(t) + w · Personal(t)
+Score(t)    = (1 − w) · Prior'(t) + w · Personal(t)     // FuseScore; Prior' include l’eventuale casa
 ```
 
-- `N_eff = 0` → `w = 0` → solo prior.
-- `N_eff ≥ N0` → il prior resta un residuo `ε = 0,1`: `Score = 0,1·Prior + 0,9·Personal`.
-- Parametri in `Settings` (§16).
+- `N_eff = 0` → `w = 0` → solo `Prior'` (TMDB e, se c’è, casa).
+- `N_eff ≥ N0` → `h = 0` e il prior TMDB resta un residuo `ε = 0,1`: `Score = 0,1·Prior + 0,9·Personal`.
+- Parametri globali in `Settings` (§16); toggle implicit/libreria sul profilo (BR-REC-16).
 
 ### 12.6 Livello 3 — opzionale
 
@@ -904,7 +923,7 @@ In `AppRouter`, dentro `AppShell`:
 ### 15.5 Componenti
 
 - **`RatingButtons`**: due pulsanti. Il voto attivo è premuto. Un secondo click sullo stesso lo rimuove.
-- **`LearningProgress`**: `N_eff / targetN` e lo stadio. Link a `/taste` solo se `N_eff < targetN` (soglia di personalizzazione).
+- **`LearningProgress`**: `N_eff / targetN` e lo stadio, con link a `/taste`. Nascosto interamente quando `N_eff ≥ targetN`.
 - **`ReasonChips`**: chiavi i18n `reco.reason.similarTo`, `reco.reason.terms`, `reco.reason.popular`, `reco.reason.explore`.
 - **Scope**: due voci. Con una sola sorgente abilitata resta solo *Questa sorgente*.
 - **`OnboardingTaste`**: 24 card, *Mostra altri titoli*, *Fatto*, scorciatoie `L` e `D`.
@@ -922,7 +941,7 @@ Chiavi in `AppSetting` / `SettingsKeys`, lette come le altre impostazioni.
 | Chiave | Default | Note |
 |---|---|---|
 | `reco.enabled` | `true` | FR-REC-ST-01 |
-| `reco.useImplicit` | `true` | |
+| `reco.useImplicit` | `true` | legacy; il build legge `Profile.UseImplicit` |
 | `reco.weights.love` | `1.5` | |
 | `reco.weights.like` | `1.0` | |
 | `reco.weights.dislike` | `-1.0` | |
@@ -941,7 +960,7 @@ Chiavi in `AppSetting` / `SettingsKeys`, lette come le altre impostazioni.
 | `reco.knn.simMin` | `0.25` | |
 | `reco.mmr.lambda` | `0.7` | 0 disattiva il MMR |
 | `reco.explore.rate` | `0.10` | 0 disattiva |
-| `reco.excludeInLibrary` | `true` | default del filtro in lettura |
+| `reco.excludeInLibrary` | `true` | legacy; il build/lettura usano `Profile.ExcludeInLibrary` |
 | `reco.embeddings.enabled` | `true` | ha effetto se il modello c’è |
 | `reco.embeddings.modelId` | `all-MiniLM-L6-v2@q8` | |
 | `reco.embeddings.threads` | `2` | |
@@ -977,7 +996,7 @@ Non c’è una lingua di visualizzazione separata: si usa `CatalogSource.Metadat
 | **Unit — import** | Id TMDB sconosciuto → `unknown`, nessuna riga `Titles` nuova. |
 | **Integrazione** | `WebApplicationFactory`: voto → rebuild → `GET /recommendations` per i due scope. Titolo su Netflix IT e Prime Video: una volta nello scope `enabled`, con due place; nello scope Netflix IT una volta, e il mi piace dato «dall’altra parte» è lo stesso `rating`. Simili: un vicino solo su Prime Video è restituito. |
 | **Modello** | Test condizionale, saltato se il file non c’è: frasi di riferimento, coseno ≥ 0,99; stesso testo → stesso vettore. |
-| **Frontend** | Mutazione ottimistica e rollback. Scope. `ReasonChips`. Sorgente condivisa: cambiare provider su *Per te* aggiorna `pickarr.sourceId`. |
+| **Frontend** | Mutazione ottimistica e rollback. Scope. `ReasonChips`. Sorgente per profilo: cambiare provider su *Per te* aggiorna `pickarr.sourceId.{profileId}`. Header profilo su ogni chiamata personale. |
 
 ### 17.2 Dati
 

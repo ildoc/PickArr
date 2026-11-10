@@ -25,6 +25,7 @@ export function fetchTitles(sourceId: number, params: TitleQueryParams) {
       page: params.page,
       pageSize: params.pageSize ?? 48,
     })}`,
+    { personal: true },
   )
 }
 
@@ -39,6 +40,7 @@ export function fetchGenres(sourceId: number) {
 export function fetchTitle(id: number, sourceId?: number) {
   return apiGet<TitleDetail>(
     `/api/v1/titles/${id}${buildQuery({ sourceId })}`,
+    { personal: true },
   )
 }
 

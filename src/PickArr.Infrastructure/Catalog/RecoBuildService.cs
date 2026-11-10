@@ -24,6 +24,21 @@ public sealed class RecoBuildService(
 
     public async Task<int> BuildAsync(CancellationToken cancellationToken = default)
     {
+        var profileIds = await db.Profiles.AsNoTracking()
+            .OrderBy(profile => profile.Id)
+            .Select(profile => profile.Id)
+            .ToListAsync(cancellationToken);
+        var version = 0;
+        foreach (var profileId in profileIds)
+        {
+            version = await BuildAsync(profileId, cancellationToken);
+        }
+
+        return version;
+    }
+
+    public async Task<int> BuildAsync(int profileId, CancellationToken cancellationToken = default)
+    {
         var sources = await db.CatalogSources
             .AsNoTracking()
             .Include(s => s.Provider)
@@ -36,7 +51,7 @@ public sealed class RecoBuildService(
         var enabledSourceIds = RecoMembership.EnabledSourceIds(sources);
         if (enabledSourceIds.Count == 0)
         {
-            return await PublishEmptyAsync(cancellationToken);
+            return await PublishEmptyAsync(profileId, cancellationToken);
         }
 
         // Pool: any Availability on enabled source+provider; RemovedAt is irrelevant (BR-REC-07).
@@ -49,7 +64,7 @@ public sealed class RecoBuildService(
 
         if (poolTitleIds.Count == 0)
         {
-            return await PublishEmptyAsync(cancellationToken);
+            return await PublishEmptyAsync(profileId, cancellationToken);
         }
 
         var poolIdSet = poolTitleIds.ToHashSet();
@@ -113,7 +128,10 @@ public sealed class RecoBuildService(
 
         var titleVectors = RecoSparse.BuildTitleVectors(sparseFeatures);
 
-        var useImplicit = await GetBoolSettingAsync(SettingsKeys.RecoUseImplicit, true, cancellationToken);
+        var useImplicit = await db.Profiles.AsNoTracking()
+            .Where(profile => profile.Id == profileId)
+            .Select(profile => (bool?)profile.UseImplicit)
+            .SingleOrDefaultAsync(cancellationToken) ?? true;
         var weights = new RecoSignalWeights(
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightLove, RecoSignals.DefaultWeightLove, cancellationToken),
             await GetDoubleSettingAsync(SettingsKeys.RecoWeightLike, RecoSignals.DefaultWeightLike, cancellationToken),
@@ -129,7 +147,7 @@ public sealed class RecoBuildService(
         var n0 = await GetDoubleSettingAsync(SettingsKeys.RecoN0, RecoLearning.DefaultN0, cancellationToken);
 
         // Signals are global (all titles), not limited to the current pool.
-        var signalFacts = await LoadSignalFactsAsync(cancellationToken);
+        var signalFacts = await LoadSignalFactsAsync(profileId, cancellationToken);
         var signalResult = RecoSignals.Compute(signalFacts, weights, useImplicit);
         var nEff = signalResult.EffectiveN;
         var stage = RecoLearning.StageFromEffectiveN(nEff, n0);
@@ -138,11 +156,12 @@ public sealed class RecoBuildService(
         var profile = RecoSparse.BuildProfile(signalResult.Signals, titleVectors);
         var sparseRaw = RecoSparse.ScoreAll(profile, titleVectors);
         var sparseNorm = RecoNormalize.MinMaxByTitle(sparseRaw);
+        var householdNorm = await LoadHouseholdNormAsync(profileId, weights, titleVectors, cancellationToken);
+        var slotWeight = RecoHousehold.SlotWeight(nEff, householdNorm is not null, n0);
 
         var minCoverage = await GetDoubleSettingAsync(SettingsKeys.RecoEmbeddingsMinCoverage, 0.8, cancellationToken);
         var embeddingsEnabled = await GetBoolSettingAsync(SettingsKeys.RecoEmbeddingsEnabled, true, cancellationToken);
-        var statePeek = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var statePeek = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
         var coverage = statePeek?.EmbeddingCoverage ?? 0;
         var modelReady = string.Equals(statePeek?.ModelStatus, RecoModelStatuses.Ready, StringComparison.OrdinalIgnoreCase);
         var useL2 = embeddingsEnabled && modelReady && coverage >= minCoverage && nEff > 0;
@@ -189,6 +208,7 @@ public sealed class RecoBuildService(
         if (level3Active && nEff > 0)
         {
             var ratingRows = await db.Ratings.AsNoTracking()
+                .Where(r => r.ProfileId == profileId)
                 .Select(r => new { r.TitleId, r.Value })
                 .ToListAsync(cancellationToken);
             var examples = new List<RecoLevel3Example>();
@@ -230,11 +250,13 @@ public sealed class RecoBuildService(
         foreach (var title in titles)
         {
             var prior = priorById[title.Id].Prior;
+            var household = householdNorm?.GetValueOrDefault(title.Id, 0.5) ?? prior;
+            var priorSlot = RecoHousehold.BlendPrior(prior, household, slotWeight);
             double? personal = null;
             double score;
             if (nEff <= 0 || personalWeight <= 0 || profile.IsEmpty)
             {
-                score = prior;
+                score = priorSlot;
             }
             else
             {
@@ -253,7 +275,7 @@ public sealed class RecoBuildService(
                         title.Popularity));
                 }
 
-                score = RecoLearning.FuseScore(prior, personal.Value, personalWeight);
+                score = RecoLearning.FuseScore(priorSlot, personal.Value, personalWeight);
             }
 
             var reasons = RecoReasons.Build(
@@ -282,7 +304,7 @@ public sealed class RecoBuildService(
             .ThenBy(s => s.TitleId)
             .ToList();
 
-        var ratingCount = await db.Ratings.CountAsync(cancellationToken);
+        var ratingCount = await db.Ratings.CountAsync(r => r.ProfileId == profileId, cancellationToken);
         var now = clock.UtcNow;
         var profileJson = profile.IsEmpty
             ? null
@@ -295,12 +317,7 @@ public sealed class RecoBuildService(
 
         await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
-        if (state is null)
-        {
-            state = new RecoState { Id = RecoState.SingletonId };
-            db.RecoStates.Add(state);
-        }
+        var state = await RecoProfileStates.GetOrCreateAsync(db, profileId, cancellationToken);
 
         var newVersion = state.CurrentVersion + 1;
         var oldVersion = state.CurrentVersion;
@@ -311,6 +328,7 @@ public sealed class RecoBuildService(
             var s = ordered[i];
             rows.Add(new Recommendation
             {
+                ProfileId = profileId,
                 Version = newVersion,
                 TitleId = s.TitleId,
                 Score = s.Score,
@@ -326,7 +344,7 @@ public sealed class RecoBuildService(
         if (oldVersion > 0)
         {
             await db.Recommendations
-                .Where(r => r.Version == oldVersion)
+                .Where(r => r.ProfileId == profileId && r.Version == oldVersion)
                 .ExecuteDeleteAsync(cancellationToken);
         }
 
@@ -343,23 +361,29 @@ public sealed class RecoBuildService(
         return newVersion;
     }
 
-    private async Task<IReadOnlyList<RecoSignalTitleFacts>> LoadSignalFactsAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<RecoSignalTitleFacts>> LoadSignalFactsAsync(
+        int profileId,
+        CancellationToken cancellationToken)
     {
         var ratings = await db.Ratings.AsNoTracking()
+            .Where(r => r.ProfileId == profileId)
             .Select(r => new { r.TitleId, r.Value })
             .ToListAsync(cancellationToken);
         var favorites = await db.Favorites.AsNoTracking()
+            .Where(f => f.ProfileId == profileId)
             .Select(f => f.TitleId)
             .ToListAsync(cancellationToken);
         var favoriteSet = favorites.ToHashSet();
 
         var watched = await db.Watched.AsNoTracking()
+            .Where(w => w.ProfileId == profileId)
             .Select(w => w.TitleId)
             .ToListAsync(cancellationToken);
         var watchedSet = watched.ToHashSet();
 
         var arrAdds = await db.ArrAuditLogs.AsNoTracking()
-            .Where(a => a.TitleId != null
+            .Where(a => a.ProfileId == profileId
+                        && a.TitleId != null
                         && a.Action == ArrAuditActions.Add
                         && a.Outcome == ArrAuditOutcomes.Success)
             .Select(a => a.TitleId!.Value)
@@ -368,7 +392,9 @@ public sealed class RecoBuildService(
         var arrAddSet = arrAdds.ToHashSet();
 
         var downloaded = await db.ArrLibraryItems.AsNoTracking()
-            .Where(a => a.TitleId != null && a.State == ArrStates.Downloaded)
+            .Where(a => a.TitleId != null
+                        && arrAddSet.Contains(a.TitleId.Value)
+                        && a.State == ArrStates.Downloaded)
             .Select(a => a.TitleId!.Value)
             .Distinct()
             .ToListAsync(cancellationToken);
@@ -533,17 +559,12 @@ public sealed class RecoBuildService(
         }
     }
 
-    private async Task<int> PublishEmptyAsync(CancellationToken cancellationToken)
+    private async Task<int> PublishEmptyAsync(int profileId, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
         await using var tx = await db.Database.BeginTransactionAsync(cancellationToken);
 
-        var state = await db.RecoStates.FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
-        if (state is null)
-        {
-            state = new RecoState { Id = RecoState.SingletonId };
-            db.RecoStates.Add(state);
-        }
+        var state = await RecoProfileStates.GetOrCreateAsync(db, profileId, cancellationToken);
 
         var newVersion = state.CurrentVersion + 1;
         var oldVersion = state.CurrentVersion;
@@ -551,13 +572,13 @@ public sealed class RecoBuildService(
         if (oldVersion > 0)
         {
             await db.Recommendations
-                .Where(r => r.Version == oldVersion)
+                .Where(r => r.ProfileId == profileId && r.Version == oldVersion)
                 .ExecuteDeleteAsync(cancellationToken);
         }
 
         state.CurrentVersion = newVersion;
         state.BuiltAt = now;
-        state.RatingCount = await db.Ratings.CountAsync(cancellationToken);
+        state.RatingCount = await db.Ratings.CountAsync(r => r.ProfileId == profileId, cancellationToken);
         state.EffectiveN = 0;
         state.Stage = RecoLearning.StageCold;
         state.ProfileJson = null;
@@ -590,6 +611,37 @@ public sealed class RecoBuildService(
         {
             return fallback;
         }
+    }
+
+    /// <summary>
+    /// Min-max sparse scores of the other profiles' Love/Like mean. Null when that vector is empty,
+    /// including when the only positive votes sit outside this pool.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<int, double>?> LoadHouseholdNormAsync(
+        int profileId,
+        RecoSignalWeights weights,
+        IReadOnlyDictionary<int, SparseVector> titleVectors,
+        CancellationToken cancellationToken)
+    {
+        var rows = await db.Ratings.AsNoTracking()
+            .Select(r => new { r.ProfileId, r.TitleId, r.Value })
+            .ToListAsync(cancellationToken);
+        var signals = RecoHousehold.AveragePositive(
+            rows.Select(r => new RecoHouseholdVote(r.ProfileId, r.TitleId, r.Value)),
+            profileId,
+            weights);
+        if (signals.Count == 0)
+        {
+            return null;
+        }
+
+        var householdProfile = RecoSparse.BuildProfile(signals, titleVectors);
+        if (householdProfile.IsEmpty)
+        {
+            return null;
+        }
+
+        return RecoNormalize.MinMaxByTitle(RecoSparse.ScoreAll(householdProfile, titleVectors));
     }
 
     private async Task<double> GetDoubleSettingAsync(string key, double fallback, CancellationToken ct)

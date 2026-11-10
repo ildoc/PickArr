@@ -18,14 +18,24 @@ describe('sourcePreference', () => {
     })
   })
 
-  it('round-trips a preferred source id', () => {
-    expect(loadPreferredSourceId()).toBeNull()
-    savePreferredSourceId(42)
-    expect(loadPreferredSourceId()).toBe(42)
+  it('round-trips a preferred source id for one profile', () => {
+    expect(loadPreferredSourceId(4, true)).toBeNull()
+    savePreferredSourceId(4, 42)
+    expect(loadPreferredSourceId(4, true)).toBe(42)
+    expect(loadPreferredSourceId(5, false)).toBeNull()
+  })
+
+  it('copies the legacy key once for the admin profile', () => {
+    localStorage.setItem('pickarr.sourceId', '7')
+    expect(loadPreferredSourceId(1, true)).toBe(7)
+    expect(localStorage.getItem('pickarr.sourceId.1')).toBe('7')
+    localStorage.setItem('pickarr.sourceId', '9')
+    expect(loadPreferredSourceId(1, true)).toBe(7)
+    expect(loadPreferredSourceId(2, false)).toBeNull()
   })
 
   it('returns null for non-numeric storage values', () => {
-    localStorage.setItem('pickarr.sourceId', 'nope')
-    expect(loadPreferredSourceId()).toBeNull()
+    localStorage.setItem('pickarr.sourceId.4', 'nope')
+    expect(loadPreferredSourceId(4, true)).toBeNull()
   })
 })

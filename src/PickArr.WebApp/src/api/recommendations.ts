@@ -24,11 +24,12 @@ export function fetchRecommendations(params: RecommendationsQueryParams) {
       page: params.page,
       pageSize: params.pageSize ?? 48,
     })}`,
+    { personal: true },
   )
 }
 
 export function fetchRecoStatus() {
-  return apiGet<RecoStatus>('/api/v1/recommendations/status')
+  return apiGet<RecoStatus>('/api/v1/recommendations/status', { personal: true })
 }
 
 export function fetchSimilarTitles(titleId: number, sourceId?: number | null, limit = 12) {
@@ -37,6 +38,7 @@ export function fetchSimilarTitles(titleId: number, sourceId?: number | null, li
       sourceId: sourceId ?? undefined,
       limit,
     })}`,
+    { personal: true },
   )
 }
 
@@ -46,11 +48,12 @@ export function fetchOnboarding(sourceId?: number | null, excludeTitleIds?: numb
       sourceId: sourceId ?? undefined,
       exclude: excludeTitleIds && excludeTitleIds.length > 0 ? excludeTitleIds.join(',') : undefined,
     })}`,
+    { personal: true },
   )
 }
 
 export function postOnboardingRatings(items: Array<{ titleId: number; value: string | null }>) {
-  return apiPost<void>('/api/v1/ratings/onboarding', items)
+  return apiPost<void>('/api/v1/ratings/onboarding', items, { personal: true })
 }
 
 export function postRecoRebuild() {
@@ -88,5 +91,5 @@ export function fetchLatestRecoEvaluation() {
 export function postRecoEvents(
   entries: Array<{ titleId: number; event: string; version?: number; rank?: number; scope?: string }>,
 ) {
-  return apiPost<void>('/api/v1/recommendations/events', entries)
+  return apiPost<void>('/api/v1/recommendations/events', entries, { personal: true })
 }

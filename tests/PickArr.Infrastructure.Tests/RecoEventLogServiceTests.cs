@@ -28,17 +28,18 @@ public sealed class RecoEventLogServiceTests : IAsyncLifetime
     [Fact]
     public async Task Log_is_noop_when_events_disabled_by_default()
     {
-        var (db, log, titleId) = await SeedAsync(eventsEnabled: false);
-        await log.LogAsync(titleId, RecoEventKinds.Shown, version: 1, rank: 3, scope: "source");
+        var (db, log, titleId, profileId) = await SeedAsync(eventsEnabled: false);
+        await log.LogAsync(profileId, titleId, RecoEventKinds.Shown, version: 1, rank: 3, scope: "source");
         (await db.RecoEventLogs.CountAsync()).ShouldBe(0);
     }
 
     [Fact]
     public async Task Log_persists_when_enabled()
     {
-        var (db, log, titleId) = await SeedAsync(eventsEnabled: true);
+        var (db, log, titleId, profileId) = await SeedAsync(eventsEnabled: true);
         await log.LogManyAsync(
-        [
+            profileId,
+            [
             new RecoEventLogEntry(titleId, RecoEventKinds.Shown, 2, 1, "enabled"),
             new RecoEventLogEntry(titleId, RecoEventKinds.Opened, 2, 1, "enabled"),
             new RecoEventLogEntry(titleId, RecoEventKinds.Liked, 2, 1, "enabled"),
@@ -46,10 +47,11 @@ public sealed class RecoEventLogServiceTests : IAsyncLifetime
 
         var rows = await db.RecoEventLogs.OrderBy(e => e.Id).ToListAsync();
         rows.Count.ShouldBe(3);
+        rows.ShouldAllBe(row => row.ProfileId == profileId);
         rows.Select(r => r.Event).ShouldBe([RecoEventKinds.Shown, RecoEventKinds.Opened, RecoEventKinds.Liked]);
     }
 
-    private async Task<(PickarrDbContext Db, RecoEventLogService Log, int TitleId)> SeedAsync(bool eventsEnabled)
+    private async Task<(PickarrDbContext Db, RecoEventLogService Log, int TitleId, int ProfileId)> SeedAsync(bool eventsEnabled)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
@@ -67,7 +69,9 @@ public sealed class RecoEventLogServiceTests : IAsyncLifetime
             CreatedAt = now,
             UpdatedAt = now,
         };
+        var profile = new Profile { Name = "Events", Color = Profile.DefaultColor, IsAdmin = true, CreatedAt = now };
         db.Titles.Add(title);
+        db.Profiles.Add(profile);
         await db.SaveChangesAsync();
 
         var settings = new MemorySettingsStore();
@@ -77,7 +81,7 @@ public sealed class RecoEventLogServiceTests : IAsyncLifetime
             false);
 
         var log = new RecoEventLogService(db, new FixedClock(now), settings);
-        return (db, log, title.Id);
+        return (db, log, title.Id, profile.Id);
     }
 
     private sealed class FixedClock(DateTime utcNow) : IClock

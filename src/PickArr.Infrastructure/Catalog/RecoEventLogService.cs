@@ -24,6 +24,7 @@ public sealed class RecoEventLogService(
     }
 
     public async Task LogAsync(
+        int profileId,
         int titleId,
         string eventKind,
         int? version = null,
@@ -32,11 +33,13 @@ public sealed class RecoEventLogService(
         CancellationToken cancellationToken = default)
     {
         await LogManyAsync(
+            profileId,
             [new RecoEventLogEntry(titleId, eventKind, version, rank, scope)],
             cancellationToken);
     }
 
     public async Task LogManyAsync(
+        int profileId,
         IReadOnlyList<RecoEventLogEntry> entries,
         CancellationToken cancellationToken = default)
     {
@@ -56,6 +59,7 @@ public sealed class RecoEventLogService(
 
             rows.Add(new RecoEventLog
             {
+                ProfileId = profileId,
                 At = now,
                 TitleId = entry.TitleId,
                 Event = RecoEventKinds.Normalize(entry.Event),

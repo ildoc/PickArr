@@ -40,7 +40,6 @@ export function SettingsPage() {
   const [watchmodeKey, setWatchmodeKey] = useState('')
   const [tmdbApiKey, setTmdbApiKey] = useState('')
   const [recoEnabled, setRecoEnabled] = useState(true)
-  const [recoUseImplicit, setRecoUseImplicit] = useState(true)
   const [saved, setSaved] = useState(false)
   const [sonarrTest, setSonarrTest] = useState<string | null>(null)
   const [radarrTest, setRadarrTest] = useState<string | null>(null)
@@ -84,7 +83,6 @@ export function SettingsPage() {
       rootFolderPath: settings.data.radarr.defaults?.rootFolderPath ?? '',
     })
     setRecoEnabled(settings.data.reco.enabled !== false)
-    setRecoUseImplicit(settings.data.reco.useImplicit !== false)
   }, [settings.data])
 
   useEffect(() => {
@@ -130,7 +128,6 @@ export function SettingsPage() {
         tmdb: tmdbApiKey.length > 0 ? { apiKey: tmdbApiKey } : undefined,
         reco: {
           enabled: recoEnabled,
-          useImplicit: recoUseImplicit,
         },
       }),
     onSuccess: async () => {
@@ -301,19 +298,6 @@ export function SettingsPage() {
           <span>
             <span className="block">{t('settings.recoEnabled')}</span>
             <span className="block text-xs text-[var(--muted)]">{t('settings.recoEnabledHint')}</span>
-          </span>
-        </label>
-        <label className="flex items-start gap-3 text-sm">
-          <input
-            type="checkbox"
-            className="mt-1"
-            checked={recoUseImplicit}
-            disabled={!recoEnabled}
-            onChange={(e) => setRecoUseImplicit(e.target.checked)}
-          />
-          <span>
-            <span className="block">{t('settings.recoUseImplicit')}</span>
-            <span className="block text-xs text-[var(--muted)]">{t('settings.recoUseImplicitHint')}</span>
           </span>
         </label>
       </section>

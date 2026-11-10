@@ -4,6 +4,9 @@ import { NavLink } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchSettings } from '../../api/settings'
 import { fetchSystemStatus } from '../../api/system'
+import { profileInitial, profileSwatch } from '../../features/who/colors'
+import { useProfiles } from '../../features/who/profileContext'
+import kofiLogo from '../../assets/kofiLogo.webp'
 
 const REPO_URL = 'https://github.com/ildoc/Pickarr'
 const KOFI_URL = 'https://ko-fi.com/pheeleeppo'
@@ -11,23 +14,9 @@ const KOFI_URL = 'https://ko-fi.com/pheeleeppo'
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `text-sm ${isActive ? 'text-[var(--text)]' : 'text-[var(--muted)] hover:text-[var(--text)]'}`
 
-function KofiIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      aria-hidden
-      fill="currentColor"
-    >
-      <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.697.776-.697.776s-.094 7.241-.029 11.396c.115 2.294 1.928 2.903 1.928 2.903s6.198.392 10.209.392c4.288 0 5.478-.233 6.43-1.418.949-1.184.928-3.237.928-3.237 4.823-.003 6.786-3.32 5.389-5.819zM2.846 18.614c-.115-1.385-.145-5.861-.145-5.861h8.985s.113 5.369-.029 6.195c-.188 1.077-1.077.962-1.077.962H3.877s-.924-.039-1.031-.296zm18.373-7.337c-1.924.115-3.154-.928-3.154-.928s.113-2.464.928-3.154c.814-.693 2.348-.464 3.154.232.808.695.693 2.541-.928 3.85z" />
-    </svg>
-  )
-}
-
 export function Header({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
+  const { active } = useProfiles()
   const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
   const system = useQuery({
     queryKey: ['system-status'],
@@ -59,11 +48,21 @@ export function Header({ children }: { children?: ReactNode }) {
             {t('nav.ratings')}
           </NavLink>
         )}
-        <NavLink to="/settings" className={linkClass}>
-          {t('nav.settings')}
-        </NavLink>
+        {active?.isAdmin && (
+          <NavLink to="/settings" className={linkClass}>
+            {t('nav.settings')}
+          </NavLink>
+        )}
       </nav>
       <div className="ml-auto flex items-center gap-4">
+        <NavLink
+          to="/who"
+          aria-label={t('who.open', { name: active?.name ?? t('who.heading') })}
+          className="grid h-8 w-8 place-items-center rounded-full text-sm font-semibold text-black"
+          style={{ background: profileSwatch(active?.color ?? 'blue') }}
+        >
+          {active ? profileInitial(active.name) : '?'}
+        </NavLink>
         {children}
         {version && (
           <a
@@ -82,9 +81,9 @@ export function Header({ children }: { children?: ReactNode }) {
           rel="noreferrer"
           aria-label={t('app.kofiLink')}
           title={t('app.kofiLink')}
-          className="text-[#ff5e5b] transition hover:text-[#ff7b78]"
+          className="inline-flex opacity-90 transition hover:opacity-100"
         >
-          <KofiIcon />
+          <img src={kofiLogo} alt="" width={72} height={24} className="h-6 w-auto" />
         </a>
       </div>
     </header>

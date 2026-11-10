@@ -32,6 +32,7 @@ public sealed class PickarrDbContext(DbContextOptions<PickarrDbContext> options)
     public DbSet<ArrLibraryItem> ArrLibraryItems => Set<ArrLibraryItem>();
     public DbSet<ArrSeasonState> ArrSeasonStates => Set<ArrSeasonState>();
     public DbSet<ArrAuditLog> ArrAuditLogs => Set<ArrAuditLog>();
+    public DbSet<Profile> Profiles => Set<Profile>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

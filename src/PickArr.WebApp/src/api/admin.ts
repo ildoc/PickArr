@@ -6,6 +6,7 @@ export type AdminJob = {
   kind: string
   sourceId: number | null
   countryCode: string | null
+  providerName: string | null
   cron: string | null
   lastExecution: string | null
   nextExecution: string | null

@@ -1,5 +1,6 @@
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
+using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -10,6 +11,8 @@ public static class FavoritesEndpoints
         var group = endpoints.MapGroup("/api/v1/favorites");
 
         group.MapGet("", async (
+            HttpContext http,
+            PickarrDbContext db,
             ITitleQueryService titles,
             string? q,
             string? type,
@@ -20,6 +23,12 @@ public static class FavoritesEndpoints
             int? pageSize,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             var request = new TitleQueryRequest(
                 Q: q,
                 Types: SplitCsv(type),
@@ -28,20 +37,32 @@ public static class FavoritesEndpoints
                 Dir: dir ?? "desc",
                 Page: page ?? 1,
                 PageSize: pageSize ?? 48);
-            return Results.Ok(await titles.QueryFavoritesAsync(request, ct));
+            return Results.Ok(await titles.QueryFavoritesAsync(profileId, request, ct));
         });
 
-        group.MapGet("/types", async (ITitleQueryService titles, CancellationToken ct) =>
-            Results.Ok(await titles.ListFavoriteTypesAsync(ct)));
-
-        group.MapGet("/genres", async (ITitleQueryService titles, CancellationToken ct) =>
-            Results.Ok(await titles.ListFavoriteGenresAsync(ct)));
-
-        group.MapPut("/{titleId:int}", async (int titleId, IFavoriteService favorites, CancellationToken ct) =>
+        group.MapGet("/types", async (HttpContext http, PickarrDbContext db, ITitleQueryService titles, CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            return error ?? Results.Ok(await titles.ListFavoriteTypesAsync(profileId, ct));
+        });
+
+        group.MapGet("/genres", async (HttpContext http, PickarrDbContext db, ITitleQueryService titles, CancellationToken ct) =>
+        {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            return error ?? Results.Ok(await titles.ListFavoriteGenresAsync(profileId, ct));
+        });
+
+        group.MapPut("/{titleId:int}", async (int titleId, HttpContext http, IFavoriteService favorites, PickarrDbContext db, CancellationToken ct) =>
+        {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
-                await favorites.AddAsync(titleId, ct);
+                await favorites.AddAsync(profileId, titleId, ct);
                 return Results.NoContent();
             }
             catch (KeyNotFoundException)
@@ -50,9 +71,15 @@ public static class FavoritesEndpoints
             }
         });
 
-        group.MapDelete("/{titleId:int}", async (int titleId, IFavoriteService favorites, CancellationToken ct) =>
+        group.MapDelete("/{titleId:int}", async (int titleId, HttpContext http, IFavoriteService favorites, PickarrDbContext db, CancellationToken ct) =>
         {
-            await favorites.RemoveAsync(titleId, ct);
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            await favorites.RemoveAsync(profileId, titleId, ct);
             return Results.NoContent();
         });
 

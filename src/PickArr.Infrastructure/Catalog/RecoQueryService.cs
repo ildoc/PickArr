@@ -32,9 +32,11 @@ public sealed class RecoQueryService(
 
         var page = Math.Max(1, query.Page);
         var pageSize = Math.Clamp(query.PageSize <= 0 ? 48 : query.PageSize, 1, 100);
+        var personalProfileId = query.ProfileId;
 
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var state = personalProfileId is int tasteProfileId
+            ? await RecoProfileStates.FindNoTrackingAsync(db, tasteProfileId, cancellationToken)
+            : null;
         var version = state?.CurrentVersion ?? 0;
         var stage = state?.Stage ?? RecoLearning.StageCold;
 
@@ -68,17 +70,25 @@ public sealed class RecoQueryService(
                 .ToHashSet();
         }
 
-        var ratedIds = (await db.Ratings.AsNoTracking()
+        var ratedQuery = db.Ratings.AsNoTracking();
+        var watchedQuery = db.Watched.AsNoTracking();
+        if (personalProfileId is int signalProfileId)
+        {
+            ratedQuery = ratedQuery.Where(r => r.ProfileId == signalProfileId);
+            watchedQuery = watchedQuery.Where(w => w.ProfileId == signalProfileId);
+        }
+
+        var ratedIds = (await ratedQuery
                 .Select(r => r.TitleId)
                 .ToListAsync(cancellationToken))
             .ToHashSet();
-        var watchedIds = (await db.Watched.AsNoTracking()
+        var watchedIds = (await watchedQuery
                 .Select(w => w.TitleId)
                 .ToListAsync(cancellationToken))
             .ToHashSet();
 
         var excludeInLibrary = !query.IncludeInLibrary
-            && await GetBoolSettingAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken);
+            && await ExcludesLibraryAsync(personalProfileId, cancellationToken);
         HashSet<int>? libraryIds = null;
         if (excludeInLibrary)
         {
@@ -151,8 +161,13 @@ public sealed class RecoQueryService(
             : pageEnd;
 
         // Light scan (no ReasonsJson) — payload dominates at 5k (NFR-REC-01).
-        var allRanks = await db.Recommendations.AsNoTracking()
-            .Where(r => r.Version == version)
+        var ranksQuery = db.Recommendations.AsNoTracking().Where(r => r.Version == version);
+        if (personalProfileId is int rankProfileId)
+        {
+            ranksQuery = ranksQuery.Where(r => r.ProfileId == rankProfileId);
+        }
+
+        var allRanks = await ranksQuery
             .OrderBy(r => r.Rank)
             .Select(r => new { r.TitleId, r.Score, r.Rank })
             .ToListAsync(cancellationToken);
@@ -191,7 +206,11 @@ public sealed class RecoQueryService(
 
         if (exploreRate > 0)
         {
-            var exploreCandidates = await PickExploreCandidatesAsync(orderedIds, IsEligible, cancellationToken);
+            var exploreCandidates = await PickExploreCandidatesAsync(
+                orderedIds,
+                IsEligible,
+                personalProfileId,
+                cancellationToken);
             orderedIds = RecoExplore.Inject(orderedIds, exploreCandidates, exploreRate, version)
                 .Where(IsEligible)
                 .ToList();
@@ -207,8 +226,14 @@ public sealed class RecoQueryService(
             return new RecommendationsPageDto(version, stage, page, pageSize, total, []);
         }
 
-        var pageRecRows = await db.Recommendations.AsNoTracking()
-            .Where(r => r.Version == version && pageIds.Contains(r.TitleId))
+        var pageQuery = db.Recommendations.AsNoTracking()
+            .Where(r => r.Version == version && pageIds.Contains(r.TitleId));
+        if (personalProfileId is int pageProfileId)
+        {
+            pageQuery = pageQuery.Where(r => r.ProfileId == pageProfileId);
+        }
+
+        var pageRecRows = await pageQuery
             .Select(r => new { r.TitleId, r.Score, r.Rank, r.ReasonsJson, r.Personal, r.Prior })
             .ToListAsync(cancellationToken);
         var recById = pageRecRows.ToDictionary(r => r.TitleId);
@@ -230,9 +255,9 @@ public sealed class RecoQueryService(
         var titles = await db.Titles.AsNoTracking()
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
-            .Include(t => t.Favorite)
-            .Include(t => t.Watched)
-            .Include(t => t.Rating)
+            .Include(t => t.Favorites)
+            .Include(t => t.WatchedItems)
+            .Include(t => t.Ratings)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => titleIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
@@ -290,7 +315,8 @@ public sealed class RecoQueryService(
                 enabledSourceIds,
                 language,
                 newCutoff,
-                arrItem));
+                arrItem,
+                personalProfileId));
         }
 
         return new RecommendationsPageDto(version, stage, page, pageSize, total, items);
@@ -475,9 +501,8 @@ public sealed class RecoQueryService(
         const int embeddingPairwiseCap = 48;
         if (titleIds.Count <= embeddingPairwiseCap)
         {
-            var state = await db.RecoStates.AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
-            var modelId = state?.ModelId ?? RecoModelCatalog.DefaultModelId;
+            var modelState = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
+            var modelId = modelState?.ModelId ?? RecoModelCatalog.DefaultModelId;
             var emb = await db.TitleEmbeddings.AsNoTracking()
                 .Where(e => e.ModelId == modelId && titleIds.Contains(e.TitleId))
                 .Select(e => new { e.TitleId, e.Vector })
@@ -537,13 +562,15 @@ public sealed class RecoQueryService(
     private async Task<IReadOnlyList<int>> PickExploreCandidatesAsync(
         IReadOnlyList<int> rankedIds,
         Func<int, bool> isEligible,
+        int? personalProfileId,
         CancellationToken cancellationToken)
     {
         // Mid-high prior titles not already near the top; prefer unseen genres vs profile.
         // Candidates must still pass IsEligible so explore never reintroduces rated/watched titles.
         var top = rankedIds.Take(40).ToHashSet();
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var state = personalProfileId is int exploreTasteId
+            ? await RecoProfileStates.FindNoTrackingAsync(db, exploreTasteId, cancellationToken)
+            : null;
         var profileGenres = new HashSet<int>();
         if (!string.IsNullOrWhiteSpace(state?.ProfileJson))
         {
@@ -569,8 +596,14 @@ public sealed class RecoQueryService(
             }
         }
 
-        var candidates = await db.Recommendations.AsNoTracking()
-            .Where(r => r.Version == (state == null ? 0 : state.CurrentVersion))
+        var exploreVersion = state == null ? 0 : state.CurrentVersion;
+        var exploreQuery = db.Recommendations.AsNoTracking().Where(r => r.Version == exploreVersion);
+        if (personalProfileId is int exploreProfileId)
+        {
+            exploreQuery = exploreQuery.Where(r => r.ProfileId == exploreProfileId);
+        }
+
+        var candidates = await exploreQuery
             .OrderByDescending(r => r.Prior)
             .Take(200)
             .Select(r => r.TitleId)
@@ -601,7 +634,8 @@ public sealed class RecoQueryService(
     public async Task<RecommendationsPageDto> GetOnboardingAsync(
         int? sourceId = null,
         IReadOnlyList<int>? excludeTitleIds = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        int? profileId = null)
     {
         await EnsureEnabledAsync(cancellationToken);
         var enabledSourceIds = await LoadEnabledSourceIdsAsync(cancellationToken);
@@ -616,9 +650,17 @@ public sealed class RecoQueryService(
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var rated = await db.Ratings.AsNoTracking().Select(r => r.TitleId).ToListAsync(cancellationToken);
+        var ratedQuery = db.Ratings.AsNoTracking().AsQueryable();
+        var watchedSkipQuery = db.Watched.AsNoTracking().AsQueryable();
+        if (profileId is int onboardingProfileId)
+        {
+            ratedQuery = ratedQuery.Where(r => r.ProfileId == onboardingProfileId);
+            watchedSkipQuery = watchedSkipQuery.Where(w => w.ProfileId == onboardingProfileId);
+        }
+
+        var rated = await ratedQuery.Select(r => r.TitleId).ToListAsync(cancellationToken);
         var skipSet = rated.ToHashSet();
-        foreach (var id in await db.Watched.AsNoTracking().Select(w => w.TitleId).ToListAsync(cancellationToken))
+        foreach (var id in await watchedSkipQuery.Select(w => w.TitleId).ToListAsync(cancellationToken))
         {
             skipSet.Add(id);
         }
@@ -674,9 +716,9 @@ public sealed class RecoQueryService(
         var titles = await db.Titles.AsNoTracking()
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
-            .Include(t => t.Favorite)
-            .Include(t => t.Watched)
-            .Include(t => t.Rating)
+            .Include(t => t.Favorites)
+            .Include(t => t.WatchedItems)
+            .Include(t => t.Ratings)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => picked.Contains(t.Id))
             .ToListAsync(cancellationToken);
@@ -704,18 +746,23 @@ public sealed class RecoQueryService(
                 enabledSourceIds,
                 language,
                 newCutoff,
-                arrItem: null));
+                arrItem: null,
+                personalProfileId: profileId));
         }
 
         return new RecommendationsPageDto(0, RecoLearning.StageCold, 1, 24, items.Count, items);
     }
 
-    public async Task<RecoStatusDto> GetStatusAsync(CancellationToken cancellationToken = default)
+    public async Task<RecoStatusDto> GetStatusAsync(
+        CancellationToken cancellationToken = default,
+        int? profileId = null)
     {
         var enabled = await GetBoolSettingAsync(SettingsKeys.RecoEnabled, true, cancellationToken);
         var n0 = await GetDoubleSettingAsync(SettingsKeys.RecoN0, RecoLearning.DefaultN0, cancellationToken);
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var modelState = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
+        var state = profileId is int tasteProfileId
+            ? await RecoProfileStates.FindNoTrackingAsync(db, tasteProfileId, cancellationToken)
+            : modelState;
 
         var enabledSourceIds = await LoadEnabledSourceIdsAsync(cancellationToken);
         var poolCount = enabledSourceIds.Count == 0
@@ -729,7 +776,9 @@ public sealed class RecoQueryService(
         var effectiveN = state?.EffectiveN ?? 0;
         var stage = state?.Stage ?? RecoLearning.StageCold;
         var ratingCount = state?.RatingCount
-            ?? await db.Ratings.CountAsync(cancellationToken);
+            ?? (profileId is int countedProfileId
+                ? await db.Ratings.CountAsync(r => r.ProfileId == countedProfileId, cancellationToken)
+                : await db.Ratings.CountAsync(cancellationToken));
 
         return new RecoStatusDto(
             Enabled: enabled,
@@ -739,11 +788,11 @@ public sealed class RecoQueryService(
             TargetN: n0,
             PersonalWeight: RecoLearning.PersonalWeight(effectiveN, n0),
             Model: new RecoModelStatusDto(
-                state?.ModelStatus ?? "Absent",
-                state?.ModelId,
+                modelState?.ModelStatus ?? "Absent",
+                modelState?.ModelId,
                 SizeBytes: null),
             Embeddings: new RecoEmbeddingsStatusDto(
-                state?.EmbeddingCoverage ?? 0,
+                modelState?.EmbeddingCoverage ?? 0,
                 Count: 0,
                 Pending: 0),
             Pool: new RecoPoolStatusDto(poolCount),
@@ -760,7 +809,8 @@ public sealed class RecoQueryService(
         HashSet<int> enabledSourceIds,
         string language,
         DateTime newCutoff,
-        ArrLibraryItem? arrItem)
+        ArrLibraryItem? arrItem,
+        int? personalProfileId = null)
     {
         var (name, _) = ResolveLocalization(title, language);
         AvailabilitySummaryDto? availability = null;
@@ -809,9 +859,11 @@ public sealed class RecoQueryService(
             MapGenres(title, language),
             title.VoteTmdb,
             RatingImdb: null,
-            title.Favorite is not null,
-            title.Watched is not null,
-            RatingValues.ToApiOrNull(title.Rating?.Value),
+            personalProfileId is int favoriteProfileId && title.Favorites.Any(f => f.ProfileId == favoriteProfileId),
+            personalProfileId is int watchedProfileId && title.WatchedItems.Any(w => w.ProfileId == watchedProfileId),
+            personalProfileId is int ratedProfileId
+                ? RatingValues.ToApiOrNull(title.Ratings.FirstOrDefault(r => r.ProfileId == ratedProfileId)?.Value)
+                : null,
             availability,
             BuildArrSummary(title.MediaType, arrItem),
             places,
@@ -848,16 +900,29 @@ public sealed class RecoQueryService(
             .ToListAsync(cancellationToken);
         var enabledPoolSet = enabledPoolIds.ToHashSet();
 
-        var ratedIds = await db.Ratings.AsNoTracking().Select(r => r.TitleId).ToListAsync(cancellationToken);
-        var exclude = ratedIds.ToHashSet();
-        foreach (var id in await db.Watched.AsNoTracking().Select(w => w.TitleId).ToListAsync(cancellationToken))
+        var exclude = new HashSet<int>();
+        if (query.ProfileId is int similarProfileId)
         {
-            exclude.Add(id);
+            foreach (var id in await db.Ratings.AsNoTracking()
+                         .Where(r => r.ProfileId == similarProfileId)
+                         .Select(r => r.TitleId)
+                         .ToListAsync(cancellationToken))
+            {
+                exclude.Add(id);
+            }
+
+            foreach (var id in await db.Watched.AsNoTracking()
+                         .Where(w => w.ProfileId == similarProfileId)
+                         .Select(w => w.TitleId)
+                         .ToListAsync(cancellationToken))
+            {
+                exclude.Add(id);
+            }
         }
 
         exclude.Add(query.TitleId);
 
-        var excludeInLibrary = await GetBoolSettingAsync(SettingsKeys.RecoExcludeInLibrary, true, cancellationToken);
+        var excludeInLibrary = await ExcludesLibraryAsync(query.ProfileId, cancellationToken);
         if (excludeInLibrary)
         {
             var inLibrary = await db.ArrLibraryItems.AsNoTracking()
@@ -872,8 +937,7 @@ public sealed class RecoQueryService(
         }
 
         IReadOnlyList<(int TitleId, double Similarity)> similar;
-        var state = await db.RecoStates.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == RecoState.SingletonId, cancellationToken);
+        var state = await RecoProfileStates.FindAdminNoTrackingAsync(db, cancellationToken);
         var modelId = state?.ModelId ?? RecoModelCatalog.DefaultModelId;
 
         // Prefer embeddings without loading sparse features for the whole pool (SP-R3).
@@ -935,9 +999,9 @@ public sealed class RecoQueryService(
         var titles = await db.Titles.AsNoTracking()
             .Include(t => t.Localizations)
             .Include(t => t.TitleGenres).ThenInclude(tg => tg.Genre)!.ThenInclude(g => g!.Localizations)
-            .Include(t => t.Favorite)
-            .Include(t => t.Watched)
-            .Include(t => t.Rating)
+            .Include(t => t.Favorites)
+            .Include(t => t.WatchedItems)
+            .Include(t => t.Ratings)
             .Include(t => t.Availabilities).ThenInclude(a => a.CatalogSource)!.ThenInclude(s => s!.Provider)
             .Where(t => titleIds.Contains(t.Id))
             .ToListAsync(cancellationToken);
@@ -978,7 +1042,8 @@ public sealed class RecoQueryService(
                 enabledSourceIds,
                 language,
                 newCutoff,
-                arrItem);
+                arrItem,
+                query.ProfileId);
             items.Add(mapped with
             {
                 Reco = mapped.Reco with { Similarity = Math.Round(similarity, 4) },
@@ -1047,6 +1112,24 @@ public sealed class RecoQueryService(
             .Select(s => s.Id)
             .ToListAsync(cancellationToken);
         return ids.ToHashSet();
+    }
+
+    /// <summary>
+    /// Library exclusion follows the profile. A missing profile keeps the column default.
+    /// The global <c>reco.excludeInLibrary</c> key is not read.
+    /// </summary>
+    private async Task<bool> ExcludesLibraryAsync(int? profileId, CancellationToken cancellationToken)
+    {
+        if (profileId is not int id)
+        {
+            return true;
+        }
+
+        var exclude = await db.Profiles.AsNoTracking()
+            .Where(profile => profile.Id == id)
+            .Select(profile => (bool?)profile.ExcludeInLibrary)
+            .SingleOrDefaultAsync(cancellationToken);
+        return exclude ?? true;
     }
 
     private async Task EnsureEnabledAsync(CancellationToken cancellationToken)

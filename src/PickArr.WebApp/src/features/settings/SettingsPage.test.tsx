@@ -115,11 +115,11 @@ describe('SettingsPage', () => {
     expect(fetchArrOptions).not.toHaveBeenCalled()
   })
 
-  it('shows recommendation toggles from settings', async () => {
+  it('keeps recommendation enable on connections and leaves taste signals to the profile', async () => {
     wrap(<SettingsPage />)
     expect(await screen.findByRole('heading', { name: 'Recommendations' })).toBeTruthy()
     expect(screen.getByLabelText(/Enable recommendations and ratings/i)).toBeChecked()
-    expect(screen.getByLabelText(/Use My list and library as temporary taste signals/i)).toBeChecked()
+    expect(screen.queryByLabelText(/Use My list and library as temporary taste signals/i)).toBeNull()
   })
 
   it('keeps the lists empty when the connection test fails', async () => {

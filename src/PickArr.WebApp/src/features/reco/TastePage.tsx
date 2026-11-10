@@ -5,13 +5,15 @@ import { Link, useNavigate } from 'react-router-dom'
 import { fetchOnboarding, postOnboardingRatings } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
 import { loadPreferredSourceId } from '../../lib/sourcePreference'
+import { useProfiles } from '../who/profileContext'
 
 export function TastePage() {
   const { t } = useTranslation()
+  const { active } = useProfiles()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
-  const sourceId = loadPreferredSourceId()
+  const sourceId = active ? loadPreferredSourceId(active.id, active.isAdmin) : null
   const [votes, setVotes] = useState<Record<number, 'love' | 'like' | 'dislike' | null>>({})
   const [excludeIds, setExcludeIds] = useState<number[]>([])
 

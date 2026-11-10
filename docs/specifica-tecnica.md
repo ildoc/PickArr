@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Versione** | 0.2 |
-| **Data** | 2026-11-06 |
+| **Versione** | 0.3 |
+| **Data** | 2026-11-10 |
 | **Lingua** | Italiano |
 | **Documenti collegati** | `documento-funzionale.md` (FR-/BR-/D- catalogo); `raccomandazioni.md` (FR-REC-*, D-REC-*, BR-REC-*) |
 
@@ -153,7 +153,7 @@ Gli endpoint di `Api` sono sottili: validano l'input, chiamano un servizio, mapp
 ### 3.4 Registrazione e composizione
 
 - `Program.cs`: `AddPickarrCore()`, `AddPickarrInfrastructure(config)`, `AddPickarrApi()`.
-- Gli endpoint sono definiti in classi `static` con un metodo `MapXxxEndpoints(this IEndpointRouteBuilder)` per feature: `Catalog`, `Titles`, `Favorites`, `Ratings`, `Recommendations`, `RecoAdmin`, `Arr`, `Settings`, `Admin`, `Webhooks`, `System`.
+- Gli endpoint sono definiti in classi `static` con un metodo `MapXxxEndpoints(this IEndpointRouteBuilder)` per feature: `Catalog`, `Titles`, `Favorites`, `Ratings`, `Recommendations`, `RecoAdmin`, `Arr`, `Profiles`, `Settings`, `Admin`, `Webhooks`, `System`.
 - Il fallback SPA (`MapFallbackToFile("index.html")`) esclude `/api`, `/docs`, `/health`.
 
 ---
@@ -271,23 +271,27 @@ Indice univoco `(TitleId, CatalogSourceId)`; indice `(CatalogSourceId, RemovedAt
 | SyncRunId | guid null | |
 | Details | text null | JSON |
 
-**`Favorites`** — PK `TitleId`, `CreatedAt`.
+**`Profiles`** — fino a 10; `Id`, `Name` (1–40, univoco case-insensitive), `Color` (palette: `blue`, `teal`, `green`, `yellow`, `orange`, `red`, `pink`, `purple`), `IsAdmin` (indice unico su `IsAdmin = 1`), `UseImplicit`, `ExcludeInLibrary`, `CreatedAt`. Seed/migrazione: un admin «Admin» / `blue`; i dati personali preesistenti ricevono il suo `ProfileId`.
 
-**`Ratings`** — PK `TitleId`; `Value` (`Like`/`Dislike`), `RatedAt`. Voto globale sul titolo (nessuna colonna `Origin` su `Titles`).
+**`Favorites`** — PK `(ProfileId, TitleId)`, `CreatedAt`.
 
-**`RatingEvents`** — storico: `Id`, `TitleId`, `Value` (null = clear), `At`, `Origin` (`Ui`/`Onboarding`/`Import`).
+**`Watched`** — PK `(ProfileId, TitleId)`, `CreatedAt` (hide / già visto).
+
+**`Ratings`** — PK `(ProfileId, TitleId)`; `Value` (`Love`/`Like`/`Dislike`/`NotInterested`), `RatedAt`.
+
+**`RatingEvents`** — storico: `Id`, `ProfileId`, `TitleId`, `Value` (null = clear), `At`, `Origin` (`Ui`/`Onboarding`/`Import`).
 
 **`Keywords`** (PK = id TMDB, `Name`), **`TitleKeywords`** `(TitleId, KeywordId)`.
 
 **`People`** (PK = id TMDB, `Name`), **`TitleCredits`** `(TitleId, PersonId, Role, Order)` con `Role` ∈ `Cast`/`Director`/`Creator`.
 
-**`TitleEmbeddings`** — PK `(TitleId, ModelId)`; `Vector` BLOB (float32 LE), `TextHash`, `UpdatedAt`.
+**`TitleEmbeddings`** — PK `(TitleId, ModelId)`; `Vector` BLOB (float32 LE), `TextHash`, `UpdatedAt`. Globali (non per profilo).
 
-**`Recommendations`** — PK `(Version, TitleId)`; `Score`, `Personal` null, `Prior`, `Rank`, `ReasonsJson`. Indice `(Version, Score DESC)`.
+**`Recommendations`** — PK `(ProfileId, Version, TitleId)`; `Score`, `Personal` null, `Prior`, `Rank`, `ReasonsJson`. Indice `(ProfileId, Version, Score DESC)`.
 
-**`RecoState`** — singleton `Id=1`: `CurrentVersion`, `BuiltAt`, `RatingCount`, `EffectiveN`, `Stage`, `ModelStatus`, `ModelId`, `EmbeddingCoverage`, `ProfileJson`, `LastError`, `LastEvalJson`, `LastEvalAt`, `Level3Active`.
+**`RecoState`** — una riga per profilo (`ProfileId` univoco): `CurrentVersion`, `BuiltAt`, `RatingCount`, `EffectiveN`, `Stage`, `ProfileJson`, `LastError`, … `ModelStatus`, `ModelId`, `EmbeddingCoverage`, `LastEvalJson`, `LastEvalAt`, `Level3Active` si leggono e si scrivono solo sulla riga dell’admin.
 
-**`RecoEventLog`** (solo se `reco.events.enabled`): `Id`, `At`, `TitleId`, `Event` (`Shown`/`Opened`/`Liked`/`Disliked`/`AddedToArr`), `Version`, `Rank`, `Scope`.
+**`RecoEventLog`** (solo se `reco.events.enabled`): `Id`, `ProfileId`, `At`, `TitleId`, `Event` (`Shown`/`Opened`/`Liked`/`Disliked`/`AddedToArr`), `Version`, `Rank`, `Scope`.
 
 **`ArrLibraryItems`** — cache della libreria Sonarr/Radarr
 
@@ -315,7 +319,7 @@ Indice univoco `(Kind, ArrId)`; indici su `TmdbId`, `TvdbId`, `TitleId`.
 
 **`ArrSeasonStates`** — PK `(ArrLibraryItemId, SeasonNumber)`: `Monitored`, `EpisodeFileCount`, `EpisodeCount`, `TotalEpisodeCount`, `SizeOnDisk`, `State`, `QueueProgress`.
 
-**`ArrAuditLog`**: `Id`, `At`, `Action` (`Add`/`Delete`), `Kind`, `ArrId`, `TitleId null`, `Options` (JSON), `Outcome`, `Error null`.
+**`ArrAuditLog`**: `Id`, `At`, `Action` (`Add`/`Delete`), `Kind`, `ArrId`, `TitleId null`, `ProfileId` null, `Options` (JSON), `Outcome`, `Error null`. `ArrLibraryItems` resta globale (nessun `ProfileId`). Un Add con header `X-Pickarr-Profile` salva il `ProfileId` e alimenta solo quel profilo; senza header l’azione è valida e il segnale di gusto non si attribuisce. Lo storico migrato va all’admin.
 
 **`SyncRuns`**
 
@@ -735,7 +739,7 @@ addBlockedReason ∈ { NotConfigured, MissingTvdbId, MissingTmdbId, AlreadyInLib
 3. Lookup sull'istanza; se vuoto → `ARR_REJECTED`.
 4. Costruisce la richiesta partendo dal lookup e applicando le opzioni; esegue `POST`.
 5. Se `searchNow` e l'istanza non lo gestisce già con `addOptions`, accoda `SearchAsync`.
-6. Scrive `ArrAuditLog` e accoda `ArrRefreshItemJob` (oppure aggiorna subito la cache con la risposta).
+6. Scrive `ArrAuditLog` (con `ProfileId` se il header profilo è presente) e accoda `ArrRefreshItemJob` (oppure aggiorna subito la cache con la risposta).
 7. Restituisce lo stato aggiornato.
 
 Gli errori di validazione restituiti da Sonarr/Radarr (400 con array di `errorMessage`) sono mappati in `ARR_REJECTED` con i messaggi originali nel campo `errors`.
@@ -837,14 +841,21 @@ I preferiti non si filtrano sul catalogo: usare `GET /favorites` e la route UI `
 
 Per un titolo non in libreria `arr` è `{ "kind": "radarr", "state": "notInLibrary", "canAdd": true, "canDelete": false, "addBlockedReason": null }`; senza istanza configurata `canAdd` è `false` e `addBlockedReason` è `notConfigured`.
 
-### 8.3 Preferiti
+### 8.3 Preferiti e profilo
+
+Header **`X-Pickarr-Profile: {id}`**: richiesto sulle mutazioni e liste personali (preferiti, voti, visti, raccomandazioni). Senza header → **400**. Catalogo e scheda senza header restano **200** con flag personali vuoti. Creare/eliminare un profilo o modificarne un altro senza un admin dichiarato → **403**. Eliminare l’admin o superare i 10 profili → **409**. Il controllo sull’id dichiarato è spoofabile (nessuna autenticazione).
 
 | Metodo | Percorso | Note |
 |---|---|---|
-| `PUT` | `/favorites/{titleId}` | Idempotente. 204. |
-| `DELETE` | `/favorites/{titleId}` | Idempotente. 204. |
+| `GET` | `/profiles` | Elenco profili. |
+| `POST` | `/profiles` | Crea (solo admin dichiarato). |
+| `PATCH` | `/profiles/{id}` | Aggiorna nome/colore/toggle; un non-admin solo sé. |
+| `DELETE` | `/profiles/{id}` | Elimina (solo admin; non l’admin stesso). |
+| `PUT` | `/favorites/{titleId}` | Idempotente. 204. Header obbligatorio. |
+| `DELETE` | `/favorites/{titleId}` | Idempotente. 204. Header obbligatorio. |
+| `GET` | `/favorites` | Lista preferiti del profilo (cross-provider). Tipi/generi: `/favorites/types`, `/favorites/genres`. |
 
-La lista dei preferiti si ottiene con `GET /catalog/sources/{id}/titles?favorite=true` (con `includeRemoved=true` per mostrare anche i non più disponibili). Nei risultati, i preferiti non presenti nella sorgente hanno `availability: null`.
+Un eventuale flag `favorite` sulla query catalogo è ignorato: la lista è `/favorites` e la route UI `/list`.
 
 ### 8.4 Sonarr/Radarr
 
@@ -955,21 +966,23 @@ Risposta `201` con lo stesso oggetto `arr` della scheda. Errori: `422 ARR_ID_UNM
 
 ### 8.5bis Ratings e raccomandazioni
 
+Tutte le route sotto richiedono `X-Pickarr-Profile` (400 se assente). Build, status e punteggi sono del profilo dichiarato; `useImplicit` e `excludeInLibrary` si leggono dai campi del profilo, non dalle chiavi globali `reco.*` (che possono restare memorizzate).
+
 | Metodo | Percorso | Descrizione |
 |---|---|---|
-| `PUT` / `DELETE` | `/titles/{id}/rating` | Imposta o rimuove Love/Like/Dislike. |
+| `PUT` / `DELETE` | `/titles/{id}/rating` | Imposta o rimuove Love/Like/Dislike/NotInterested. |
 | `PUT` / `DELETE` | `/titles/{id}/watched` | Marca o toglie *Visto* (`isWatched`). |
-| `GET` | `/ratings` | Elenco voti (pagina). |
+| `GET` | `/ratings` | Elenco voti del profilo (pagina). |
 | `GET` | `/ratings/export` | Export JSON. |
 | `POST` | `/ratings/import` | Import; id TMDB sconosciuti → `unknown`. |
 | `POST` | `/ratings/onboarding` | Batch voto da `/taste`. |
-| `GET` | `/recommendations` | *Per te* (scope `source`\|`enabled`, filtri, `diversify`, pagina). |
-| `GET` | `/recommendations/status` | Stage, N_eff, modello, coverage, pool, version. |
+| `GET` | `/recommendations` | *Per te* del profilo (scope `source`\|`enabled`, filtri, `diversify`, pagina). |
+| `GET` | `/recommendations/status` | Stage, N_eff, modello (riga admin), coverage, pool, version del profilo. |
 | `GET` | `/recommendations/onboarding` | 24 titoli pool per onboarding. Query `exclude` (CSV) per saltare titoli già mostrati. |
 | `POST` | `/recommendations/events` | Log Shown/Opened/… se `reco.events.enabled`. |
-| `GET` | `/titles/{id}/similar` | Simili sul pool abilitato. |
+| `GET` | `/titles/{id}/similar` | Simili sul pool abilitato (flag personali del profilo). |
 
-I DTO di elenco e dettaglio titolo espongono `rating` (`like`\|`dislike`\|null) e, dove applicabile, `reco` (score, reasons).
+I DTO di elenco e dettaglio titolo, con header, espongono `isFavorite`, `rating`, `isWatched` del profilo; senza header i flag personali sono vuoti. Dove applicabile, `reco` (score, reasons).
 
 `GET /admin/quota`:
 
@@ -984,7 +997,8 @@ I DTO di elenco e dettaglio titolo espongono `rating` (`like`\|`dislike`\|null) 
 |---|---|---|
 | `POST` | `/webhooks/sonarr?token=…` | Risponde `202` (o `401` con token errato, confronto a tempo costante). |
 | `POST` | `/webhooks/radarr?token=…` | idem |
-| `GET` | `/system/status` | Versione, uptime, DB OK, istanze configurate, ora server. |
+| `GET` | `/system/status` | Versione e ora server (usata dall’header). |
+| `GET` | `/system/stats` | Conteggio titoli (totale, per provider, paese, sorgente) e spazio su disco sotto `DataPath` (DB catalogo, jobs, log, modelli, keys). |
 | `GET` | `/health`, `/health/ready` | Liveness e readiness (DB, Hangfire). Fuori da `/api/v1`. |
 | `GET` | `/events` (C) | Server-Sent Events per aggiornamenti di stato (`arr-state-changed`, `run-updated`). |
 
@@ -999,6 +1013,7 @@ src/Pickarr.WebApp/src/
 ├─ app/            App.tsx, router.tsx, providers.tsx (QueryClient, i18n, toasts)
 ├─ api/            client.ts, types.ts, recommendations.ts, ratings.ts, …
 ├─ features/
+│  ├─ who/         WhoPage (selettore e gestione profili)
 │  ├─ catalog/     CatalogPage, TitleCard, FilterBar, QuickFilters
 │  ├─ list/        MyListPage
 │  ├─ title/       TitleDialog, SeasonTable, ArrStatusBadge, SimilarRow
@@ -1020,18 +1035,20 @@ src/Pickarr.WebApp/src/
 
 | Percorso | Contenuto |
 |---|---|
-| `/` | Redirect a `/catalog` |
+| `/` | Gate profilo: un solo profilo → `/catalog`; id `pickarr.profileId` valido → `/catalog`; altrimenti `/who` |
+| `/who` | Selettore e gestione profili |
 | `/catalog` | Griglia della sorgente selezionata; filtri (`q`, `view=all\|new\|leaving\|removed`, `type`, `genre`, …). Con reco attive e `view=all` senza `q`, riga *For you* (scope `source`, max 25). `view=favorites` reindirizza a `/list` |
-| `/list` | Preferiti globali (cross-provider / cross-country); segnale implicito temporaneo per le reco |
-| `/for-you` | Raccomandazioni sull’unione delle sorgenti abilitate (scope `enabled`) |
+| `/list` | Preferiti del profilo (cross-provider / cross-country); segnale implicito temporaneo per le reco |
+| `/for-you` | Raccomandazioni del profilo sull’unione delle sorgenti abilitate (scope `enabled`) |
 | `/taste` | Onboarding gusto |
-| `/ratings` | Le mie valutazioni + export/import |
-| `/settings` | Impostazioni generali |
+| `/ratings` | Valutazioni del profilo + export/import |
+| `/settings` | Impostazioni generali (**solo admin**; altrimenti redirect al catalogo) |
 | `/settings/catalogs` | Sorgenti di catalogo |
 | `/settings/recommendations` | Stato/azioni raccomandazioni |
 | `/settings/jobs` | Job e crediti (`/admin/jobs` reindirizza qui) |
+| `/settings/system` | Diagnostica: titoli per provider/paese e spazio disco (`GET /system/stats`) |
 
-La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usata dal catalogo (riga *For you* inclusa) e da *Per te* per preferenza/scheda.
+Profilo attivo in `localStorage` `pickarr.profileId`; il client lo manda come `X-Pickarr-Profile`. Sorgente catalogo in `pickarr.sourceId.{profileId}` (l’admin senza chiave propria può copiare una volta la legacy `pickarr.sourceId`). Usata dal catalogo (riga *For you* inclusa) e da *Per te*.
 
 ### 9.3 Gestione dello stato
 
@@ -1100,7 +1117,7 @@ La sorgente selezionata è salvata in `localStorage` (`pickarr.sourceId`) e usat
 - **Health:** `/health` (liveness, sempre 200 se il processo risponde) e `/health/ready` (verifica apertura DB e storage Hangfire).
 - **Business metrics:** `SyncRuns` e `ApiUsage` sono la fonte per la pagina Admin; non serve uno stack di metriche esterno.
 - **OpenTelemetry (C):** export OTLP opzionale con variabile d'ambiente, spento di default.
-- **Diagnostica:** `GET /system/status` riporta versione, hash di build, dimensione dei DB, ultime run per tipo.
+- **Diagnostica:** `GET /system/status` riporta versione e ora server; `GET /system/stats` riporta conteggi titoli e dimensioni sotto `DataPath` (tab Settings → System).
 
 ---
 

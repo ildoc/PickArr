@@ -7,8 +7,10 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchOnboarding, postOnboardingRatings } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
+import { fetchProfiles } from '../../api/profiles'
 import type { RecommendationsPage } from '../../api/types'
 import i18n from '../../i18n'
+import { ProfileProvider } from '../who/profileContext'
 import { TastePage } from './TastePage'
 
 vi.mock('../../api/recommendations', () => ({
@@ -18,6 +20,10 @@ vi.mock('../../api/recommendations', () => ({
 
 vi.mock('../../api/settings', () => ({
   fetchSettings: vi.fn(),
+}))
+
+vi.mock('../../api/profiles', () => ({
+  fetchProfiles: vi.fn(),
 }))
 
 function title(id: number, name: string): RecommendationsPage['items'][number] {
@@ -58,12 +64,14 @@ function renderPage() {
   const ui: ReactNode = (
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={i18n}>
-        <MemoryRouter initialEntries={['/taste']}>
-          <Routes>
-            <Route path="/taste" element={<TastePage />} />
-            <Route path="/for-you" element={<p>For you</p>} />
-          </Routes>
-        </MemoryRouter>
+        <ProfileProvider>
+          <MemoryRouter initialEntries={['/taste']}>
+            <Routes>
+              <Route path="/taste" element={<TastePage />} />
+              <Route path="/for-you" element={<p>For you</p>} />
+            </Routes>
+          </MemoryRouter>
+        </ProfileProvider>
       </I18nextProvider>
     </QueryClientProvider>
   )
@@ -91,6 +99,17 @@ describe('TastePage', () => {
     } as Awaited<ReturnType<typeof fetchSettings>>)
     vi.mocked(fetchOnboarding).mockResolvedValue(page([title(42, 'Onboarding Movie')]))
     vi.mocked(postOnboardingRatings).mockResolvedValue(undefined)
+    vi.mocked(fetchProfiles).mockResolvedValue([
+      {
+        id: 1,
+        name: 'Admin',
+        color: 'blue',
+        isAdmin: true,
+        useImplicit: true,
+        excludeInLibrary: true,
+        createdAt: '2026-11-10T00:00:00Z',
+      },
+    ])
   })
 
   it('loads onboarding titles and submits selected votes', async () => {

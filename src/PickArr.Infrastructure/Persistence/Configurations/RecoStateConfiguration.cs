@@ -16,5 +16,10 @@ public sealed class RecoStateConfiguration : IEntityTypeConfiguration<RecoState>
         builder.Property(x => x.LastError).HasMaxLength(2000);
         builder.Property(x => x.LastEvalJson);
         builder.Property(x => x.Level3Active).HasDefaultValue(false);
+        builder.HasIndex(x => x.ProfileId).IsUnique();
+        builder.HasOne<Profile>()
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -1,4 +1,5 @@
 using System.Reflection;
+using Pickarr.Core.Abstractions;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -13,6 +14,12 @@ public static class SystemEndpoints
                 version = ProductVersion(),
                 utcNow = DateTime.UtcNow,
             });
+        });
+
+        endpoints.MapGet("/api/v1/system/stats", async (ISystemStatsService stats, CancellationToken ct) =>
+        {
+            var dto = await stats.GetStatsAsync(ct);
+            return Results.Ok(dto);
         });
 
         return endpoints;

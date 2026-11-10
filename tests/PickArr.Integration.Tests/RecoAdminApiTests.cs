@@ -24,7 +24,7 @@ public sealed class RecoAdminApiTests
     public RecoAdminApiTests(ApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.WithAdmin();
     }
 
     [Fact]
@@ -212,8 +212,10 @@ public sealed class RecoAdminApiTests
                 AddedAt = now,
             });
 
+        var adminId = await db.Profiles.Where(profile => profile.IsAdmin).Select(profile => profile.Id).SingleAsync();
         db.Ratings.Add(new Rating
         {
+            ProfileId = adminId,
             TitleId = rated.Id,
             Value = RatingValues.Like,
             RatedAt = now,

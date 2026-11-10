@@ -4,6 +4,7 @@ namespace Pickarr.Core.Domain.Entities;
 public sealed class RecoEventLog
 {
     public long Id { get; set; }
+    public int ProfileId { get; set; }
     public DateTime At { get; set; }
     public int TitleId { get; set; }
     public string Event { get; set; } = string.Empty;

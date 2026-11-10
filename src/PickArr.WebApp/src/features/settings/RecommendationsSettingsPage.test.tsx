@@ -124,5 +124,8 @@ describe('RecommendationsSettingsPage', () => {
         }),
       ),
     )
+    const saved = vi.mocked(updateSettings).mock.calls[0]?.[0] as { reco: Record<string, unknown> }
+    expect(saved.reco).not.toHaveProperty('useImplicit')
+    expect(saved.reco).not.toHaveProperty('excludeInLibrary')
   })
 })

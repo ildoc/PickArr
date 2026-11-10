@@ -37,7 +37,7 @@ public sealed class Title
     public ICollection<TitleGenre> TitleGenres { get; set; } = new List<TitleGenre>();
     public ICollection<TitleKeyword> TitleKeywords { get; set; } = new List<TitleKeyword>();
     public ICollection<TitleCredit> TitleCredits { get; set; } = new List<TitleCredit>();
-    public Favorite? Favorite { get; set; }
-    public Watched? Watched { get; set; }
-    public Rating? Rating { get; set; }
+    public ICollection<Favorite> Favorites { get; set; } = new List<Favorite>();
+    public ICollection<Watched> WatchedItems { get; set; } = new List<Watched>();
+    public ICollection<Rating> Ratings { get; set; } = new List<Rating>();
 }

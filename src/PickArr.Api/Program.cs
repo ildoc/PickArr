@@ -64,6 +64,7 @@ try
     app.MapSystemEndpoints();
     app.MapCatalogEndpoints();
     app.MapTitlesEndpoints();
+    app.MapProfilesEndpoints();
     app.MapFavoritesEndpoints();
     app.MapRatingsEndpoints();
     app.MapRecommendationsEndpoints();

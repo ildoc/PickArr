@@ -1,6 +1,7 @@
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Recommendations;
 using Pickarr.Infrastructure.Catalog;
+using Pickarr.Infrastructure.Persistence;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -11,6 +12,8 @@ public static class RecommendationsEndpoints
         var group = endpoints.MapGroup("/api/v1/recommendations");
 
         group.MapGet("", async (
+            HttpContext http,
+            PickarrDbContext db,
             IRecoQueryService reco,
             string? scope,
             int? sourceId,
@@ -24,6 +27,12 @@ public static class RecommendationsEndpoints
             int? pageSize,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
                 var query = new RecommendationsQuery(
@@ -36,7 +45,8 @@ public static class RecommendationsEndpoints
                     IncludeInLibrary: includeInLibrary ?? false,
                     Diversify: diversify ?? true,
                     Page: page ?? 1,
-                    PageSize: pageSize ?? 48);
+                    PageSize: pageSize ?? 48,
+                    ProfileId: profileId);
                 return Results.Ok(await reco.QueryAsync(query, ct));
             }
             catch (ArgumentException ex)
@@ -52,18 +62,38 @@ public static class RecommendationsEndpoints
         });
 
         // Status stays readable when reco is disabled so the UI can show the toggle state.
-        group.MapGet("/status", async (IRecoQueryService reco, CancellationToken ct) =>
-            Results.Ok(await reco.GetStatusAsync(ct)));
+        group.MapGet("/status", async (
+            HttpContext http,
+            PickarrDbContext db,
+            IRecoQueryService reco,
+            CancellationToken ct) =>
+        {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
+            return Results.Ok(await reco.GetStatusAsync(ct, profileId));
+        });
 
         group.MapGet("/onboarding", async (
+            HttpContext http,
+            PickarrDbContext db,
             IRecoQueryService reco,
             int? sourceId,
             string? exclude,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             try
             {
-                return Results.Ok(await reco.GetOnboardingAsync(sourceId, ParseIntCsv(exclude), ct));
+                return Results.Ok(await reco.GetOnboardingAsync(sourceId, ParseIntCsv(exclude), ct, profileId));
             }
             catch (RecoDisabledException)
             {
@@ -75,15 +105,24 @@ public static class RecommendationsEndpoints
 
         group.MapPost("/events", async (
             List<RecoEventLogEntryDto>? body,
+            HttpContext http,
+            PickarrDbContext db,
             IRecoEventLogService eventLog,
             CancellationToken ct) =>
         {
+            var (profileId, error) = await ProfileRequest.RequirePersonalAsync(http, db, ct);
+            if (error is not null)
+            {
+                return error;
+            }
+
             if (body is null || body.Count == 0)
             {
                 return Results.NoContent();
             }
 
             await eventLog.LogManyAsync(
+                profileId,
                 body.Select(e => new RecoEventLogEntry(
                     e.TitleId,
                     e.Event,

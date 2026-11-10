@@ -127,6 +127,10 @@ public sealed class SpR3PerformanceSmokeTests
             .OrderBy(t => t.Id)
             .Select(t => t.Id)
             .FirstAsync();
+        var smokeProfileId = await db.Profiles.AsNoTracking()
+            .Where(profile => profile.IsAdmin)
+            .Select(profile => profile.Id)
+            .SingleAsync();
         for (var i = 0; i < GetWarmup; i++)
         {
             await query.QueryAsync(new RecommendationsQuery(
@@ -134,14 +138,16 @@ public sealed class SpR3PerformanceSmokeTests
                 SourceId: sourceId,
                 Diversify: false,
                 Page: 1,
-                PageSize: 48));
+                PageSize: 48,
+                ProfileId: smokeProfileId));
             await query.QueryAsync(new RecommendationsQuery(
                 Scope: RecoMembership.ScopeSource,
                 SourceId: sourceId,
                 Diversify: true,
                 Page: 1,
-                PageSize: 48));
-            await query.QuerySimilarAsync(new SimilarTitlesQuery(similarWarmTitleId, sourceId, Limit: 12));
+                PageSize: 48,
+                ProfileId: smokeProfileId));
+            await query.QuerySimilarAsync(new SimilarTitlesQuery(similarWarmTitleId, sourceId, Limit: 12, ProfileId: smokeProfileId));
         }
 
         var getPlainMs = await MeasureAsync(
@@ -152,7 +158,8 @@ public sealed class SpR3PerformanceSmokeTests
                 Diversify: false,
                 IncludeInLibrary: false,
                 Page: 1,
-                PageSize: 48)));
+                PageSize: 48,
+                ProfileId: smokeProfileId)));
 
         var getMmrMs = await MeasureAsync(
             GetIterations,
@@ -162,7 +169,8 @@ public sealed class SpR3PerformanceSmokeTests
                 Diversify: true,
                 IncludeInLibrary: false,
                 Page: 1,
-                PageSize: 48)));
+                PageSize: 48,
+                ProfileId: smokeProfileId)));
 
         var getEnabledMs = await MeasureAsync(
             GetIterations,
@@ -171,7 +179,8 @@ public sealed class SpR3PerformanceSmokeTests
                 Diversify: false,
                 IncludeInLibrary: false,
                 Page: 1,
-                PageSize: 48)));
+                PageSize: 48,
+                ProfileId: smokeProfileId)));
 
         // Multi-source membership (both sources enabled).
         _ = sourceIdB;
@@ -182,7 +191,7 @@ public sealed class SpR3PerformanceSmokeTests
             .FirstAsync();
         var getSimilarMs = await MeasureAsync(
             GetIterations,
-            () => query.QuerySimilarAsync(new SimilarTitlesQuery(similarTitleId, sourceId, Limit: 12)));
+            () => query.QuerySimilarAsync(new SimilarTitlesQuery(similarTitleId, sourceId, Limit: 12, ProfileId: smokeProfileId)));
 
         var getPlainP95 = Percentile(getPlainMs, 0.95);
         var getMmrP95 = Percentile(getMmrMs, 0.95);
@@ -433,17 +442,20 @@ public sealed class SpR3PerformanceSmokeTests
             .Take(SignalCount)
             .Select(t => t.Id)
             .ToListAsync();
+        var profile = new Profile { Name = "Smoke", Color = Profile.DefaultColor, IsAdmin = true, CreatedAt = now };
         for (var i = 0; i < rateIds.Count; i++)
         {
             var value = i % 4 == 0 ? RatingValues.Dislike : RatingValues.Like;
             db.Ratings.Add(new Rating
             {
+                Profile = profile,
                 TitleId = rateIds[i],
                 Value = value,
                 RatedAt = now.AddMinutes(-i),
             });
             db.RatingEvents.Add(new RatingEvent
             {
+                Profile = profile,
                 TitleId = rateIds[i],
                 Value = value,
                 At = now.AddMinutes(-i),

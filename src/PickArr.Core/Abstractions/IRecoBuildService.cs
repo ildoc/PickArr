@@ -2,6 +2,9 @@ namespace Pickarr.Core.Abstractions;
 
 public interface IRecoBuildService
 {
-    /// <summary>Rebuild recommendations (L0 prior + L1 sparse when signals exist). Returns the new version.</summary>
+    /// <summary>Rebuild every profile. Returns the last published version.</summary>
     Task<int> BuildAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Rebuild one profile. Returns its new version.</summary>
+    Task<int> BuildAsync(int profileId, CancellationToken cancellationToken = default);
 }

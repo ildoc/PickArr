@@ -14,7 +14,7 @@ public sealed class RecoBuildJob(
 
     [Queue("ml")]
     [DisableConcurrentExecution(timeoutInSeconds: 60 * 30)]
-    public async Task ExecuteAsync(bool isManual = false, CancellationToken cancellationToken = default)
+    public async Task ExecuteAsync(int? profileId, bool isManual, CancellationToken cancellationToken = default)
     {
         var trigger = isManual ? SyncRunTriggers.Manual : SyncRunTriggers.Schedule;
         var run = await syncRuns.StartAsync(
@@ -25,7 +25,9 @@ public sealed class RecoBuildJob(
 
         try
         {
-            var version = await build.BuildAsync(cancellationToken);
+            var version = profileId is int id
+                ? await build.BuildAsync(id, cancellationToken)
+                : await build.BuildAsync(cancellationToken);
             var tracked = await syncRuns.GetAsync(run.Id, cancellationToken);
             if (tracked is not null)
             {

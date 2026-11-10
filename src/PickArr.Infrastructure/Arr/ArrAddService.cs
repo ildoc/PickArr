@@ -16,7 +16,11 @@ public sealed class ArrAddService(
     ITitleQueryService titles,
     IClock clock) : IArrAddService
 {
-    public Task<ArrDetailDto> AddAsync(int titleId, SonarrAddOptions options, CancellationToken cancellationToken = default) =>
+    public Task<ArrDetailDto> AddAsync(
+        int titleId,
+        SonarrAddOptions options,
+        CancellationToken cancellationToken = default,
+        int? profileId = null) =>
         AddCoreAsync(
             titleId,
             ArrKind.Sonarr,
@@ -50,9 +54,14 @@ public sealed class ArrAddService(
                     title.ImdbId,
                     seasons);
             },
-            cancellationToken);
+            cancellationToken,
+            profileId);
 
-    public Task<ArrDetailDto> AddAsync(int titleId, RadarrAddOptions options, CancellationToken cancellationToken = default) =>
+    public Task<ArrDetailDto> AddAsync(
+        int titleId,
+        RadarrAddOptions options,
+        CancellationToken cancellationToken = default,
+        int? profileId = null) =>
         AddCoreAsync(
             titleId,
             ArrKind.Radarr,
@@ -74,14 +83,16 @@ public sealed class ArrAddService(
                     radarr.MinimumAvailability,
                     radarr.SearchNow);
             },
-            cancellationToken);
+            cancellationToken,
+            profileId);
 
     private async Task<ArrDetailDto> AddCoreAsync(
         int titleId,
         ArrKind expectedKind,
         object options,
         Func<Title, object, ArrAddRequest> buildRequest,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? profileId)
     {
         var title = await db.Titles.AsNoTracking().FirstOrDefaultAsync(t => t.Id == titleId, cancellationToken)
                     ?? throw ArrOperationException.TitleNotFound(titleId);
@@ -121,10 +132,11 @@ public sealed class ArrAddService(
                     kind,
                     existing.ArrId,
                     titleId,
-                    options,
-                    ArrAuditOutcomes.Failed,
-                    "Already exists",
-                    cancellationToken);
+                options,
+                ArrAuditOutcomes.Failed,
+                "Already exists",
+                profileId,
+                cancellationToken);
                 throw ArrOperationException.AlreadyExists("Title is already present in the Arr library.");
             }
 
@@ -147,6 +159,7 @@ public sealed class ArrAddService(
                 options,
                 ArrAuditOutcomes.Success,
                 error: null,
+                profileId,
                 cancellationToken);
 
             var detail = await titles.GetTitleAsync(titleId, sourceId: null, cancellationToken);
@@ -167,6 +180,7 @@ public sealed class ArrAddService(
                 options,
                 ArrAuditOutcomes.Failed,
                 ex.Message,
+                profileId,
                 cancellationToken);
             throw MapClientException(ex);
         }
@@ -180,6 +194,7 @@ public sealed class ArrAddService(
                 options,
                 ArrAuditOutcomes.Failed,
                 ex.Message,
+                profileId,
                 cancellationToken);
             throw ArrOperationException.Unreachable(ex.Message);
         }
@@ -193,10 +208,12 @@ public sealed class ArrAddService(
         object options,
         string outcome,
         string? error,
+        int? profileId,
         CancellationToken cancellationToken)
     {
         db.ArrAuditLogs.Add(new ArrAuditLog
         {
+            ProfileId = profileId,
             At = clock.UtcNow,
             Action = action,
             Kind = kind.ToStorage(),

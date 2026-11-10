@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
+using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Persistence;
 using Shouldly;
@@ -51,5 +52,12 @@ public sealed class DatabaseInitializerTests
         eventsEnabled.ValueJson.ShouldBe("false");
         var minRatings = await db.Settings.SingleAsync(s => s.Key == SettingsKeys.RecoMlMinRatings);
         minRatings.ValueJson.ShouldBe("100");
+
+        var admins = await db.Profiles.Where(profile => profile.IsAdmin).ToListAsync();
+        admins.Count.ShouldBe(1);
+        admins[0].Name.ShouldBe(Profile.AdminName);
+        admins[0].Color.ShouldBe(Profile.DefaultColor);
+        admins[0].UseImplicit.ShouldBeTrue();
+        admins[0].ExcludeInLibrary.ShouldBeTrue();
     }
 }

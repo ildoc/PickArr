@@ -12,7 +12,8 @@ public sealed record RecommendationsQuery(
     bool IncludeInLibrary = false,
     bool Diversify = true,
     int Page = 1,
-    int PageSize = 48);
+    int PageSize = 48,
+    int? ProfileId = null);
 
 public sealed record RecommendationsPageDto(
     int Version,
@@ -49,7 +50,8 @@ public sealed record RecoItemScoreDto(
 public sealed record SimilarTitlesQuery(
     int TitleId,
     int? SourceId = null,
-    int Limit = 20);
+    int Limit = 20,
+    int? ProfileId = null);
 
 public sealed record SimilarTitlesDto(IReadOnlyList<RecommendationItemDto> Items);
 

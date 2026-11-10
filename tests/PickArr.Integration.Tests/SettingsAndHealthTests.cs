@@ -42,6 +42,23 @@ public sealed class SettingsAndHealthTests
     }
 
     [Fact]
+    public async Task System_stats_returns_title_and_storage_shape()
+    {
+        var response = await _client.GetAsync("/api/v1/system/stats");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("totalTitles").GetInt64().ShouldBeGreaterThanOrEqualTo(0);
+        body.GetProperty("byProvider").ValueKind.ShouldBe(JsonValueKind.Array);
+        body.GetProperty("byCountry").ValueKind.ShouldBe(JsonValueKind.Array);
+        body.GetProperty("bySource").ValueKind.ShouldBe(JsonValueKind.Array);
+        var storage = body.GetProperty("storage");
+        storage.GetProperty("totalBytes").GetInt64().ShouldBeGreaterThanOrEqualTo(0);
+        storage.GetProperty("entries").ValueKind.ShouldBe(JsonValueKind.Array);
+        storage.GetProperty("entries").GetArrayLength().ShouldBeGreaterThan(0);
+    }
+
+    [Fact]
     public async Task Settings_hides_secrets_and_persists_isSet()
     {
         var put = await _client.PutAsJsonAsync("/api/v1/settings", new

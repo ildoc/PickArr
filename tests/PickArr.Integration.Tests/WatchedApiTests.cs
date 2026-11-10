@@ -22,7 +22,7 @@ public sealed class WatchedApiTests
     public WatchedApiTests(ApiFactory factory)
     {
         _factory = factory;
-        _client = factory.CreateClient();
+        _client = factory.WithAdmin();
     }
 
     [Fact]

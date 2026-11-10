@@ -18,5 +18,9 @@ public sealed class RecoEventLogConfiguration : IEntityTypeConfiguration<RecoEve
             .WithMany()
             .HasForeignKey(x => x.TitleId)
             .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<Profile>()
+            .WithMany()
+            .HasForeignKey(x => x.ProfileId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

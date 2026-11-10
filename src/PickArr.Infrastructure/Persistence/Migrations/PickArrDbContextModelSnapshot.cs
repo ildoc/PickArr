@@ -114,12 +114,17 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("TitleId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
                     b.HasIndex("At");
+
+                    b.HasIndex("ProfileId");
 
                     b.HasIndex("TitleId");
 
@@ -380,13 +385,18 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Favorite", b =>
                 {
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("TitleId");
+                    b.HasKey("ProfileId", "TitleId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("Favorites", (string)null);
                 });
@@ -450,6 +460,47 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.ToTable("People", (string)null);
                 });
 
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.Profile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("ExcludeInLibrary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("UseImplicit")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsAdmin")
+                        .IsUnique()
+                        .HasFilter("\"IsAdmin\" = 1");
+
+                    b.ToTable("Profiles", (string)null);
+                });
+
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Provider", b =>
                 {
                     b.Property<int>("Id")
@@ -491,6 +542,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Rating", b =>
                 {
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
 
@@ -502,7 +556,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("TitleId");
+                    b.HasKey("ProfileId", "TitleId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("Ratings", (string)null);
                 });
@@ -521,6 +577,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
 
@@ -529,6 +588,8 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProfileId");
 
                     b.HasIndex("TitleId", "At");
 
@@ -549,6 +610,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("Rank")
                         .HasColumnType("INTEGER");
 
@@ -565,6 +629,8 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("At");
+
+                    b.HasIndex("ProfileId");
 
                     b.HasIndex("TitleId", "At");
 
@@ -613,6 +679,9 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                         .HasMaxLength(32)
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ProfileJson")
                         .HasColumnType("TEXT");
 
@@ -626,11 +695,17 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
+
                     b.ToTable("RecoState", (string)null);
                 });
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Recommendation", b =>
                 {
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Version")
                         .HasColumnType("INTEGER");
 
@@ -654,7 +729,7 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.Property<double>("Score")
                         .HasColumnType("REAL");
 
-                    b.HasKey("Version", "TitleId");
+                    b.HasKey("ProfileId", "Version", "TitleId");
 
                     b.HasIndex("TitleId");
 
@@ -965,15 +1040,28 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
                 {
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("TitleId")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("WatchedAt")
                         .HasColumnType("TEXT");
 
-                    b.HasKey("TitleId");
+                    b.HasKey("ProfileId", "TitleId");
+
+                    b.HasIndex("TitleId");
 
                     b.ToTable("Watched", (string)null);
+                });
+
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrAuditLog", b =>
+                {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.SetNull);
                 });
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.ArrLibraryItem", b =>
@@ -1040,11 +1128,19 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Favorite", b =>
                 {
-                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
-                        .WithOne("Favorite")
-                        .HasForeignKey("Pickarr.Core.Domain.Entities.Favorite", "TitleId")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
+                        .WithMany("Favorites")
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
 
                     b.Navigation("Title");
                 });
@@ -1062,28 +1158,50 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Rating", b =>
                 {
-                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
-                        .WithOne("Rating")
-                        .HasForeignKey("Pickarr.Core.Domain.Entities.Rating", "TitleId")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
+                        .WithMany("Ratings")
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
 
                     b.Navigation("Title");
                 });
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.RatingEvent", b =>
                 {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Profile");
 
                     b.Navigation("Title");
                 });
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.RecoEventLog", b =>
                 {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
@@ -1093,8 +1211,23 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                     b.Navigation("Title");
                 });
 
+            modelBuilder.Entity("Pickarr.Core.Domain.Entities.RecoState", b =>
+                {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Recommendation", b =>
                 {
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
                         .WithMany()
                         .HasForeignKey("TitleId")
@@ -1195,11 +1328,19 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("Pickarr.Core.Domain.Entities.Watched", b =>
                 {
-                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
-                        .WithOne("Watched")
-                        .HasForeignKey("Pickarr.Core.Domain.Entities.Watched", "TitleId")
+                    b.HasOne("Pickarr.Core.Domain.Entities.Profile", "Profile")
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Pickarr.Core.Domain.Entities.Title", "Title")
+                        .WithMany("WatchedItems")
+                        .HasForeignKey("TitleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Profile");
 
                     b.Navigation("Title");
                 });
@@ -1240,11 +1381,11 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("Availabilities");
 
-                    b.Navigation("Favorite");
+                    b.Navigation("Favorites");
 
                     b.Navigation("Localizations");
 
-                    b.Navigation("Rating");
+                    b.Navigation("Ratings");
 
                     b.Navigation("TitleCredits");
 
@@ -1252,7 +1393,7 @@ namespace Pickarr.Infrastructure.Persistence.Migrations
 
                     b.Navigation("TitleKeywords");
 
-                    b.Navigation("Watched");
+                    b.Navigation("WatchedItems");
                 });
 #pragma warning restore 612, 618
         }
