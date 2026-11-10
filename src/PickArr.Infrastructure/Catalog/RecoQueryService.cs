@@ -154,11 +154,10 @@ public sealed class RecoQueryService(
             ? await GetDoubleSettingAsync(SettingsKeys.RecoMmrLambda, RecoMmr.DefaultLambda, cancellationToken)
             : 0;
         var useMmr = query.Diversify && lambda > 0;
-
+        // MMR/explore must use a fixed prefix (§12.8). Growing the window with pageEnd
+        // re-injects explore titles that already appeared on earlier pages.
+        var diversify = useMmr || exploreRate > 0;
         var pageEnd = page * pageSize;
-        var take = useMmr || exploreRate > 0
-            ? Math.Max(RecoMmr.DefaultCandidateCap, pageEnd)
-            : pageEnd;
 
         // Light scan (no ReasonsJson) — payload dominates at 5k (NFR-REC-01).
         var ranksQuery = db.Recommendations.AsNoTracking().Where(r => r.Version == version);
@@ -173,7 +172,8 @@ public sealed class RecoQueryService(
             .ToListAsync(cancellationToken);
 
         var total = 0;
-        var ranked = new List<(int TitleId, double Score, int Rank)>(Math.Min(take, allRanks.Count));
+        var rankedCapacity = diversify ? allRanks.Count : Math.Min(pageEnd, allRanks.Count);
+        var ranked = new List<(int TitleId, double Score, int Rank)>(rankedCapacity);
         foreach (var row in allRanks)
         {
             if (!IsEligible(row.TitleId))
@@ -182,7 +182,7 @@ public sealed class RecoQueryService(
             }
 
             total++;
-            if (ranked.Count < take)
+            if (diversify || ranked.Count < pageEnd)
             {
                 ranked.Add((row.TitleId, row.Score, row.Rank));
             }
@@ -193,27 +193,49 @@ public sealed class RecoQueryService(
             return new RecommendationsPageDto(version, stage, page, pageSize, total, []);
         }
 
-        var orderedIds = ranked.Select(r => r.TitleId).ToList();
-        if (useMmr)
+        List<int> orderedIds;
+        if (!diversify)
         {
-            var mmrPoolIds = orderedIds.Take(RecoMmr.DefaultCandidateCap).ToList();
-            var sim = await BuildSimilarityLookupAsync(mmrPoolIds, cancellationToken);
-            orderedIds = RecoMmr.RerankIds(
-                ranked.Select(r => (r.TitleId, r.Score)).ToList(),
-                (a, b) => sim.TryGetValue((Math.Min(a, b), Math.Max(a, b)), out var s) ? s : 0,
-                lambda).ToList();
+            orderedIds = ranked.Select(r => r.TitleId).ToList();
         }
-
-        if (exploreRate > 0)
+        else
         {
-            var exploreCandidates = await PickExploreCandidatesAsync(
-                orderedIds,
-                IsEligible,
-                personalProfileId,
-                cancellationToken);
-            orderedIds = RecoExplore.Inject(orderedIds, exploreCandidates, exploreRate, version)
-                .Where(IsEligible)
-                .ToList();
+            var prefixCount = Math.Min(RecoMmr.DefaultCandidateCap, ranked.Count);
+            var prefixScored = ranked.Take(prefixCount).Select(r => (r.TitleId, r.Score)).ToList();
+            var prefixIds = prefixScored.Select(r => r.TitleId).ToList();
+
+            if (useMmr)
+            {
+                var sim = await BuildSimilarityLookupAsync(prefixIds, cancellationToken);
+                prefixIds = RecoMmr.RerankIds(
+                    prefixScored,
+                    (a, b) => sim.TryGetValue((Math.Min(a, b), Math.Max(a, b)), out var s) ? s : 0,
+                    lambda).ToList();
+            }
+
+            if (exploreRate > 0)
+            {
+                var exploreCandidates = await PickExploreCandidatesAsync(
+                    prefixIds,
+                    IsEligible,
+                    personalProfileId,
+                    cancellationToken);
+                prefixIds = RecoExplore.Inject(prefixIds, exploreCandidates, exploreRate, version)
+                    .Where(IsEligible)
+                    .ToList();
+            }
+
+            // Stable full order: diversified prefix, then remaining eligible once each.
+            var prefixSet = prefixIds.ToHashSet();
+            orderedIds = new List<int>(ranked.Count);
+            orderedIds.AddRange(prefixIds);
+            foreach (var row in ranked)
+            {
+                if (!prefixSet.Contains(row.TitleId))
+                {
+                    orderedIds.Add(row.TitleId);
+                }
+            }
         }
 
         var pageIds = orderedIds

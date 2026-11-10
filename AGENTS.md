@@ -43,6 +43,10 @@ EF migrations are generated from `src/Pickarr.Infrastructure` with startup proje
 
 ## Local database and the running API
 
+The SQLite database is critical and must never be discarded, reset, deleted, or replaced to “fix” a schema problem. It holds catalog data obtained from paid/limited API calls (Watchmode and related enrichment) and per-profile ratings, favorites, watched state, and recommendation/taste personalization. Losing it means re-consuming Watchmode quota and wiping user personalization; that is an unacceptable risk.
+
+Prefer extra or incremental EF migrations, careful schema evolution, and data-preserving fixes over any approach that drops tables, recreates the database, deletes `.data` / `/config`, or points the app at a fresh empty file. Do not suggest or run `EnsureDeleted`, wipe scripts, or “delete the DB and restart” as a remedy. Extra migrations are always preferable to data loss.
+
 `Pickarr:DataPath` (env `Pickarr__DataPath`) is the SQLite and Data Protection directory. Default is `/config`. The checkout used for development keeps data in `.data` (`Pickarr__DataPath` in `src/Pickarr.Api/Properties/launchSettings.json`); pass that path explicitly so a debug session and the agent do not open two databases. Application settings from the environment use flat names (`WATCHMODE_API_KEY`, `SONARR_URL`, …); the legacy `Pickarr__Settings__…` form still works.
 
 `Pickarr.Api` locks the DLLs in `src/Pickarr.Api/bin`. Stop that process before `dotnet build`, `dotnet test` of a project that references the API, or `dotnet ef`. A file-lock error is not a compile error.
@@ -81,3 +85,4 @@ Frontend tests use Vitest and Testing Library (`jsdom`). Stub `localStorage` whe
 - Add or update a test for a bug fix in the same change.
 - Do not commit, push, or edit git config unless the user asks.
 - Do not hand-edit generated EF snapshots without the matching migration.
+- Never delete, reset, or replace the developer or production SQLite database to unblock schema work; ship additional migrations instead. Data loss is not an acceptable tradeoff.
