@@ -248,6 +248,24 @@ public sealed class EnrichmentService(
             return false;
         }
 
+        // Partial unique (TmdbType, TmdbId): never assign a pair already owned by another row.
+        // Duplicate IMDb rows should have been merged at upsert / startup maintenance.
+        var conflict = await db.Titles.AsNoTracking().AnyAsync(
+            t => t.Id != title.Id
+                 && t.TmdbId == found.TmdbId
+                 && t.TmdbType == found.TmdbType,
+            cancellationToken);
+        if (conflict)
+        {
+            logger.LogWarning(
+                "Title {TitleId} IMDb {ImdbId} maps to {TmdbType}/{TmdbId} already owned by another title; leaving Unmapped",
+                title.Id,
+                title.ImdbId,
+                found.TmdbType,
+                found.TmdbId);
+            return false;
+        }
+
         title.TmdbId = found.TmdbId;
         title.TmdbType = found.TmdbType;
         return true;

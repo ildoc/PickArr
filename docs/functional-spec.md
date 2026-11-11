@@ -355,7 +355,7 @@ Decisioni D-REC-01…D-REC-13: vedi §11.3. Override rispetto a D-REC-12: il liv
 
 | ID | Regola |
 |---|---|
-| BR-01 | **Identità del titolo.** Un titolo ha una sola riga indipendente dal paese. Può essere disponibile in più sorgenti. L'identità è data dall'id Watchmode e, quando noto, dalla coppia (tipo TMDB, id TMDB). |
+| BR-01 | **Identità del titolo.** Un titolo ha una sola riga indipendente dal paese. Può essere disponibile in più sorgenti. L'identità è data dall'id Watchmode, dalla coppia (tipo TMDB, id TMDB) quando nota, e dall'id IMDb quando noto (Watchmode può emettere id distinti per varianti localizzate dello stesso titolo). |
 | BR-02 | **Classificazione.** *Serie*: tipo TMDB `tv`. *Film*: tipo TMDB `movie`. *Stand-up*: sottocategoria identificata da genere/keyword (es. keyword TMDB "stand-up comedy"). La regola esatta si definisce dopo lo spike (D-06). La categoria è solo un'etichetta di UI: la destinazione su Sonarr/Radarr dipende dal tipo TMDB. |
 | BR-03 | **Disponibilità attiva.** Una disponibilità è attiva se non ha data di rimozione. |
 | BR-04 | **Novità.** Titolo con disponibilità attiva, non baseline, aggiunta negli ultimi *N* giorni (default 14). I titoli della baseline non sono mai "novità". |

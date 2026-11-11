@@ -82,7 +82,7 @@ Add to Pickarr a **rating** (like / dislike) on the title and **recommendations*
 
 | Term | Meaning |
 |---|---|
-| **Title** | `Titles` row. One per identity (BR-01): Watchmode id and, when known, the (TMDB type, TMDB id) pair. Providers do not duplicate the title: they add an `Availability`. |
+| **Title** | `Titles` row. One per identity (BR-01): Watchmode id, and when known the (TMDB type, TMDB id) pair and/or IMDb id. Providers do not duplicate the title: they add an `Availability`. |
 | **Source** | `CatalogSource`: a provider and a country (Netflix IT, Netflix US, Prime Video IT are different sources). |
 | **Rating** | *Love*, *Like*, *Dislike*, or *Not interested* on the profile+`Title.Id` pair. At most one per profile. Applies to every source where the title appears. |
 | **Hide** | `Watched` flag on the profile+`Title.Id` pair (hide / already watched). Coexists with the rating. Excludes from *For you* and similar; with default weight 0 it does not add taste mass. |
@@ -145,7 +145,7 @@ MoSCoW priority: **M** for the feature MVP, **S** should, **C** could.
 | ID | Requirement | Pri |
 |---|---|---|
 | FR-REC-RC-01 | **For you** page (`/for-you`): titles ordered by score over the union of enabled sources, infinite scroll. | M |
-| FR-REC-RC-02 | On the selected source’s catalog (`/catalog`), a **dedicated row** shows up to **25** recommendations with scope `source`. The `/for-you` page uses scope `enabled` (titles with `Availability` on at least one enabled source). | M |
+| FR-REC-RC-02 | On the selected source’s catalog (`/catalog`), a **dedicated row** shows up to **25** recommendations with scope `source`. The `/for-you` page defaults to scope `enabled` (All providers/countries); choosing a concrete provider + country switches to scope `source` for that catalog. | M |
 | FR-REC-RC-03 | In the *All enabled sources* scope a title appears once, with `places` (provider name and country) for every enabled source where it has an `Availability`. | M |
 | FR-REC-RC-04 | A title without `Availability` on enabled sources is never returned. | M |
 | FR-REC-RC-05 | With no ratings or signals, *For you* shows the prior (level 0) and declares it, with the learning indicator. | M |
@@ -293,8 +293,8 @@ MoSCoW priority: **M** for the feature MVP, **S** should, **C** could.
 ### UC-REC-02 — Browse *For you*
 
 - **Actor:** User.
-- **Flow:** opens `/for-you` → page reads the source remembered by the catalog → default scope `source` → `GET /recommendations?scope=source&sourceId=` → cards with reasons, rating, favorite, *arr* status, and availability (including removal, if any).
-- **Alternative:** user switches to *All enabled sources* → `scope=enabled` → one title, multiple `places`. Empty pool or rebuild never run → message with link to status in settings.
+- **Flow:** opens `/for-you` → provider/country default to All → `GET /recommendations?scope=enabled` → cards with reasons, rating, favorite, *arr* status, and `places`.
+- **Alternative:** user picks a provider and country → `scope=source&sourceId=` and the list narrows immediately. Empty pool or rebuild never run → message with link to status in settings.
 
 ### UC-REC-03 — Similar titles
 
@@ -330,11 +330,11 @@ MoSCoW priority: **M** for the feature MVP, **S** should, **C** could.
 
 **Dialog (`TitleDialog`).** Labeled actions *Like* / *Dislike* / *Not interested*, *Hide*, and favorite. Shortcuts `O` / `L` / `D` / `N` / `W`. *Why we recommend this* block if arriving from *For you*. At the bottom, *Similar titles* grid on multiple rows.
 
-**For you (`/for-you`).** Same provider + country selector as the catalog (`FilterBar`). Scope switch: *This source* / *All enabled sources*. With a single enabled source the second scope is hidden. `N_eff / N0` indicator (with *Teach me your tastes* link) only if `N_eff < N0`. Type, genre, year, include-in-library filters. Infinite-scroll grid. Reason chips.
+**For you (`/for-you`).** Same provider + country selector as the catalog (`FilterBar`), with an **All** option on both (default). All → scope `enabled`; a concrete pair → scope `source` and refetch immediately (no text search on this page). `N_eff / N0` indicator (with *Teach me your tastes* link) only if `N_eff < N0`. Type, genre, include-in-library filters. Infinite-scroll grid. Reason chips.
 
 **Onboarding (`/taste`).** Grid of pool titles, large actions, counter, *Show more titles*, *Done*.
 
-**My ratings (`/ratings`).** Two tabs, search, rating actions, *Export* / *Import*. Global list. Badge relative to the selected source and `places` on enabled sources.
+**My ratings (`/ratings`).** Tabs, search, rating actions, *Export* / *Import*. Global list. Provider/country default to **All**; a selected source only drives presence badges, with `places` on enabled sources.
 
 **Settings → Recommendations (`/settings/recommendations`).** Switches, model status, coverage, pool, ratings, stage, §3.6 actions, reset. Jobs also appear in *Settings → Jobs*, like other `SyncRuns`.
 
@@ -350,7 +350,7 @@ MoSCoW priority: **M** for the feature MVP, **S** should, **C** could.
 
 | Piece | Where | Use |
 |---|---|---|
-| Unique title | `Title`, merge in `CatalogUpserter.ResolveTitleAsync` (first `WatchmodeId`, then `TmdbType`+`TmdbId`) | Rating points to `Title.Id`. |
+| Unique title | `Title`, merge in `CatalogUpserter.ResolveTitleAsync` (first `WatchmodeId`, then `TmdbType`+`TmdbId`, then `ImdbId`) | Rating points to `Title.Id`. |
 | Presence in a catalog | `Availability` (`TitleId`, `CatalogSourceId`, `RemovedAt`, `AddedAt`, `LeavingDate`) | Scope filter. `RemovedAt` does not exclude. |
 | Source | `CatalogSource` + `Provider` | Source = provider + `CountryCode`. On if `CatalogSource.IsEnabled` and `Provider.IsEnabled`. |
 | Name and plot | `TitleLocalization` (`TitleId`, `Language`) | Source language, fallback `en-US` (`LanguageFallback`). Add the `en-US` row if missing, for embeddings. |

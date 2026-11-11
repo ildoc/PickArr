@@ -75,4 +75,43 @@ describe('FilterBar', () => {
     await user.selectOptions(country, '2')
     expect(onCountryChange).toHaveBeenCalledWith(2)
   })
+
+  it('offers All provider and country when allowAllSources is set', async () => {
+    const user = userEvent.setup()
+    const onCountryChange = vi.fn()
+    render(
+      <I18nextProvider i18n={i18n}>
+        <FilterBar
+          q=""
+          onQChange={() => undefined}
+          view="all"
+          onViewChange={() => undefined}
+          sort="added"
+          onSortChange={() => undefined}
+          total={0}
+          sources={sources}
+          countrySourceId={null}
+          onCountryChange={onCountryChange}
+          type=""
+          onTypeChange={() => undefined}
+          types={[]}
+          genre=""
+          genres={[]}
+          onGenreChange={() => undefined}
+          dir="desc"
+          onDirChange={() => undefined}
+          hideViews
+          hideSearch
+          hideSort
+          allowAllSources
+        />
+      </I18nextProvider>,
+    )
+
+    const provider = screen.getByLabelText('Provider')
+    expect(provider).toHaveValue('')
+    expect(screen.getByLabelText('Country')).toBeDisabled()
+    await user.selectOptions(provider, 'netflix')
+    expect(onCountryChange).toHaveBeenCalledWith(1)
+  })
 })

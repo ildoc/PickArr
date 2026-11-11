@@ -148,7 +148,9 @@ export function CatalogPage() {
         total={emptyReason ? 0 : total}
         sources={sourcesQuery.data ?? []}
         countrySourceId={sourceId}
-        onCountryChange={(id) => patchParams({ source: String(id) })}
+        onCountryChange={(id) => {
+          if (id != null) patchParams({ source: String(id) })
+        }}
         type={type}
         onTypeChange={(value) => patchParams({ type: value || null })}
         types={typesQuery.data ?? []}

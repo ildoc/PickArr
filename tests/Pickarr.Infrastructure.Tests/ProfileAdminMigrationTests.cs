@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
@@ -57,7 +58,7 @@ public sealed class ProfileAdminMigrationTests
 
         await using (var db = new PickarrDbContext(options))
         {
-            var initializer = new DatabaseInitializer(db, new FixedClock(DateTime.UtcNow), NullLogger<DatabaseInitializer>.Instance);
+            var initializer = CreateInitializer(db, DateTime.UtcNow);
             await initializer.EnsureAdminProfileAsync();
             (await db.Profiles.CountAsync(profile => profile.IsAdmin)).ShouldBe(1);
             (await db.Profiles.SingleAsync(profile => profile.IsAdmin)).UseImplicit.ShouldBeFalse();
@@ -88,7 +89,7 @@ public sealed class ProfileAdminMigrationTests
         });
         await db.SaveChangesAsync();
 
-        var initializer = new DatabaseInitializer(db, new FixedClock(now), NullLogger<DatabaseInitializer>.Instance);
+        var initializer = CreateInitializer(db, now);
         await initializer.EnsureAdminProfileAsync();
         await initializer.EnsureAdminProfileAsync();
 
@@ -205,6 +206,13 @@ public sealed class ProfileAdminMigrationTests
         var result = await command.ExecuteScalarAsync();
         return Convert.ToInt64(result) > 0;
     }
+
+    private static DatabaseInitializer CreateInitializer(PickarrDbContext db, DateTime now) =>
+        new(
+            db,
+            new FixedClock(now),
+            new TitleIdentityMaintenance(db, NullLogger<TitleIdentityMaintenance>.Instance),
+            NullLogger<DatabaseInitializer>.Instance);
 
     private sealed class FixedClock(DateTime utcNow) : IClock
     {

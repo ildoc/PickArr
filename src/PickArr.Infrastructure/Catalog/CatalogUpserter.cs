@@ -66,9 +66,10 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
     {
         var watchmodeId = TryWatchmodeId(entry.ExternalId);
         var (tmdbId, tmdbType) = NormalizeTmdb(entry.TmdbId, entry.TmdbType);
+        var imdbId = NormalizeImdb(entry.ImdbId);
 
         // Local first: a title updated earlier in this page is not visible to SQL until SaveChanges.
-        Title? title = FindTracked(watchmodeId, tmdbId, tmdbType);
+        Title? title = FindTracked(watchmodeId, tmdbId, tmdbType, imdbId);
         if (title is null && watchmodeId is not null)
         {
             title = await db.Titles.FirstOrDefaultAsync(t => t.WatchmodeId == watchmodeId, cancellationToken);
@@ -81,6 +82,11 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
                 cancellationToken);
         }
 
+        if (title is null && imdbId is not null)
+        {
+            title = await db.Titles.FirstOrDefaultAsync(t => t.ImdbId == imdbId, cancellationToken);
+        }
+
         if (title is not null)
         {
             return (title, Created: false);
@@ -91,13 +97,13 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
             WatchmodeId = watchmodeId,
             TmdbId = tmdbId,
             TmdbType = tmdbType,
-            ImdbId = entry.ImdbId,
+            ImdbId = imdbId,
             MediaType = CatalogMediaMapping.ToMediaType(entry.Type),
             Category = CatalogMediaMapping.ToCategory(entry.Type),
             OriginalTitle = entry.Title,
             OriginalTitleNormalized = TextNormalizer.NormalizeName(entry.Title),
             ReleaseYear = entry.Year,
-            MetadataStatus = CatalogMediaMapping.InitialMetadataStatus(tmdbId),
+            MetadataStatus = CatalogMediaMapping.InitialMetadataStatus(tmdbId, imdbId),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -110,6 +116,8 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
     {
         var changed = false;
         var watchmodeId = TryWatchmodeId(entry.ExternalId);
+        // WatchmodeId is unique: only fill when the survivor has none. Different Watchmode rows
+        // for the same IMDb stay linked by ImdbId / TMDB pair instead of overwriting this key.
         if (title.WatchmodeId is null && watchmodeId is not null)
         {
             title.WatchmodeId = watchmodeId;
@@ -129,9 +137,15 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
             changed = true;
         }
 
-        if (string.IsNullOrWhiteSpace(title.ImdbId) && !string.IsNullOrWhiteSpace(entry.ImdbId))
+        var imdbId = NormalizeImdb(entry.ImdbId);
+        if (string.IsNullOrWhiteSpace(title.ImdbId) && imdbId is not null)
         {
-            title.ImdbId = entry.ImdbId;
+            title.ImdbId = imdbId;
+            if (title.MetadataStatus == MetadataStatuses.Unmapped)
+            {
+                title.MetadataStatus = MetadataStatuses.Pending;
+            }
+
             changed = true;
         }
 
@@ -221,7 +235,7 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
         return AvailabilityUpsertOutcome.Seen;
     }
 
-    private Title? FindTracked(int? watchmodeId, int? tmdbId, string? tmdbType)
+    private Title? FindTracked(int? watchmodeId, int? tmdbId, string? tmdbType, string? imdbId)
     {
         if (watchmodeId is not null)
         {
@@ -232,12 +246,22 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
             }
         }
 
-        if (tmdbId is null)
+        if (tmdbId is not null)
         {
-            return null;
+            var byTmdb = db.Titles.Local.FirstOrDefault(t => t.TmdbId == tmdbId && t.TmdbType == tmdbType);
+            if (byTmdb is not null)
+            {
+                return byTmdb;
+            }
         }
 
-        return db.Titles.Local.FirstOrDefault(t => t.TmdbId == tmdbId && t.TmdbType == tmdbType);
+        if (imdbId is not null)
+        {
+            return db.Titles.Local.FirstOrDefault(t =>
+                string.Equals(t.ImdbId, imdbId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return null;
     }
 
     private static int? TryWatchmodeId(string externalId) =>
@@ -252,6 +276,16 @@ public sealed class CatalogUpserter(PickarrDbContext db, IClock clock) : ICatalo
 
         var type = string.IsNullOrWhiteSpace(tmdbType) ? null : tmdbType.Trim();
         return (tmdbId, type);
+    }
+
+    private static string? NormalizeImdb(string? imdbId)
+    {
+        if (string.IsNullOrWhiteSpace(imdbId))
+        {
+            return null;
+        }
+
+        return imdbId.Trim();
     }
 
     private enum AvailabilityUpsertOutcome

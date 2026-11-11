@@ -636,7 +636,7 @@ Notes:
 
 For each page entry, in short per-page transactions:
 
-1. Look up the `Title` by `WatchmodeId`, then by `(TmdbType, TmdbId)`. If it does not exist, create it with `MetadataStatus = Pending` (or `Unmapped` if it has no `tmdb_id` and cannot be found via IMDb).
+1. Look up the `Title` by `WatchmodeId`, then by `(TmdbType, TmdbId)`, then by `ImdbId`. If it does not exist, create it with `MetadataStatus = Pending` when a `tmdb_id` or `ImdbId` is present (enrichment resolves IMDb via TMDB `/find`); otherwise `Unmapped`. When linking by IMDb, keep the survivor’s `WatchmodeId` if already set (unique).
 2. Look up the `Availability (TitleId, SourceId)`:
    - absent → create with `FirstSeenAt = LastSeenAt = now`; if baseline is completed `AddedAt = now`, otherwise `IsBaseline = true` and `AddedAt = null`; event `Added`;
    - present and active → `LastSeenAt = now`, `MissedFullScans = 0`;

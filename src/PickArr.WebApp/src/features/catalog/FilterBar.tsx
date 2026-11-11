@@ -25,6 +25,7 @@ export function FilterBar({
   hideViews = false,
   hideSearch = false,
   hideSort = false,
+  allowAllSources = false,
 }: {
   q: string
   onQChange: (value: string) => void
@@ -35,7 +36,7 @@ export function FilterBar({
   total: number | undefined
   sources: CatalogSource[]
   countrySourceId: number | null
-  onCountryChange: (sourceId: number) => void
+  onCountryChange: (sourceId: number | null) => void
   type: string
   onTypeChange: (type: string) => void
   types: CatalogTypeCount[]
@@ -48,16 +49,29 @@ export function FilterBar({
   hideViews?: boolean
   hideSearch?: boolean
   hideSort?: boolean
+  /** When true, provider/country offer an All option (cross-catalog pages). */
+  allowAllSources?: boolean
 }) {
   const { t } = useTranslation()
   const sortOptions = q.trim()
     ? ['relevance', 'added', 'year', 'rating', 'title']
     : ['added', 'year', 'rating', 'title']
-  const selected = sources.find((source) => source.id === countrySourceId) ?? sources[0]
+  const selected =
+    countrySourceId != null
+      ? (sources.find((source) => source.id === countrySourceId) ?? null)
+      : allowAllSources
+        ? null
+        : (sources[0] ?? null)
   const providers = [...new Map(sources.map((source) => [source.providerKey, source.providerName])).entries()]
-  const countries = sources.filter((source) => source.providerKey === selected?.providerKey)
+  const countries = selected
+    ? sources.filter((source) => source.providerKey === selected.providerKey)
+    : []
 
   const onProviderChange = (providerKey: string) => {
+    if (!providerKey) {
+      onCountryChange(null)
+      return
+    }
     const sameCountry = sources.find(
       (source) => source.providerKey === providerKey && source.countryCode === selected?.countryCode,
     )
@@ -81,6 +95,7 @@ export function FilterBar({
                 value={selected?.providerKey ?? ''}
                 onChange={(e) => onProviderChange(e.target.value)}
               >
+                {allowAllSources && <option value="">{t('catalog.providerAll')}</option>}
                 {providers.map(([key, name]) => (
                   <option key={key} value={key}>
                     {name}
@@ -93,8 +108,13 @@ export function FilterBar({
               <select
                 className="rounded-md border border-white/10 bg-[var(--surface-2)] px-2 py-2 text-[var(--text)]"
                 value={countrySourceId ?? ''}
-                onChange={(e) => onCountryChange(Number(e.target.value))}
+                onChange={(e) => {
+                  const value = e.target.value
+                  onCountryChange(value === '' ? null : Number(value))
+                }}
+                disabled={allowAllSources && selected == null}
               >
+                {allowAllSources && <option value="">{t('catalog.countryAll')}</option>}
                 {countries.map((source) => (
                   <option key={source.id} value={source.id}>
                     {t(`country.${source.countryCode}`, { defaultValue: source.countryCode })}

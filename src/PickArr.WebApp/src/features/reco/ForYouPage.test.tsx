@@ -125,25 +125,43 @@ describe('ForYouPage', () => {
     ])
   })
 
-  it('loads cross-provider recommendations and remembers source preference', async () => {
+  it('defaults to All sources with scope enabled', async () => {
     renderPage('/for-you')
     expect(
       await screen.findByText(/Across every enabled catalog/i),
     ).toBeTruthy()
+    expect(await screen.findByLabelText('Provider')).toHaveValue('')
     await waitFor(() =>
       expect(fetchRecommendations).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: 'enabled', sourceId: 1, includeInLibrary: false }),
+        expect.objectContaining({ scope: 'enabled', includeInLibrary: false }),
       ),
     )
-    expect(localStorage.getItem('pickarr.sourceId.1')).toBe('1')
-    expect(screen.queryByRole('button', { name: 'This source' })).toBeNull()
+    const lastCall = vi.mocked(fetchRecommendations).mock.calls.at(-1)?.[0]
+    expect(lastCall?.sourceId).toBeUndefined()
+    expect(localStorage.getItem('pickarr.sourceId.1')).toBeNull()
   })
 
-  it('keeps preferred source when opened with a source query', async () => {
+  it('switches to scope source immediately when a provider is chosen', async () => {
+    const user = userEvent.setup()
+    renderPage('/for-you')
+    await screen.findByLabelText('Provider')
+    await user.selectOptions(screen.getByLabelText('Provider'), 'prime')
+    await waitFor(() =>
+      expect(fetchRecommendations).toHaveBeenCalledWith(
+        expect.objectContaining({ scope: 'source', sourceId: 2 }),
+      ),
+    )
+    expect(localStorage.getItem('pickarr.sourceId.1')).toBe('2')
+    expect(
+      await screen.findByText(/Showing recommendations available on the selected provider/i),
+    ).toBeTruthy()
+  })
+
+  it('honors an explicit source query', async () => {
     renderPage('/for-you?source=2')
     await waitFor(() =>
       expect(fetchRecommendations).toHaveBeenCalledWith(
-        expect.objectContaining({ scope: 'enabled', sourceId: 2 }),
+        expect.objectContaining({ scope: 'source', sourceId: 2 }),
       ),
     )
     expect(localStorage.getItem('pickarr.sourceId.1')).toBe('2')

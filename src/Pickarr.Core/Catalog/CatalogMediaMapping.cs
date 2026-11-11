@@ -17,6 +17,12 @@ public static class CatalogMediaMapping
         _ => TitleCategories.Series,
     };
 
-    public static string InitialMetadataStatus(int? tmdbId) =>
-        tmdbId is > 0 ? MetadataStatuses.Pending : MetadataStatuses.Unmapped;
+    /// <summary>
+    /// Pending when Watchmode already has a TMDB id, or when an IMDb id can drive TMDB <c>/find</c>.
+    /// Unmapped only when neither id is usable at upsert time.
+    /// </summary>
+    public static string InitialMetadataStatus(int? tmdbId, string? imdbId = null) =>
+        tmdbId is > 0 || !string.IsNullOrWhiteSpace(imdbId)
+            ? MetadataStatuses.Pending
+            : MetadataStatuses.Unmapped;
 }

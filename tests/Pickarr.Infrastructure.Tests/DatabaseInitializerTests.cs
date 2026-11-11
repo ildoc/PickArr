@@ -5,6 +5,7 @@ using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
 using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
 using Shouldly;
 
@@ -28,7 +29,11 @@ public sealed class DatabaseInitializerTests
             .Options;
 
         await using var db = new PickarrDbContext(options);
-        var initializer = new DatabaseInitializer(db, new FixedClock(DateTime.UtcNow), NullLogger<DatabaseInitializer>.Instance);
+        var initializer = new DatabaseInitializer(
+            db,
+            new FixedClock(DateTime.UtcNow),
+            new TitleIdentityMaintenance(db, NullLogger<TitleIdentityMaintenance>.Instance),
+            NullLogger<DatabaseInitializer>.Instance);
         await initializer.InitializeAsync();
         await initializer.InitializeAsync();
 

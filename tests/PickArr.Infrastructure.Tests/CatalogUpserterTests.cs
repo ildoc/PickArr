@@ -62,6 +62,56 @@ public sealed class CatalogUpserterTests
         var titles = await db.Titles.OrderBy(t => t.WatchmodeId).ToListAsync();
         titles.Count.ShouldBe(2);
         titles.ShouldAllBe(t => t.TmdbId == null && t.TmdbType == null);
+        titles.ShouldAllBe(t => t.MetadataStatus == MetadataStatuses.Unmapped);
+    }
+
+    [Fact]
+    public async Task Upsert_marks_Pending_when_imdb_present_without_tmdb()
+    {
+        await using var db = await CreateDbAsync();
+        var source = await SeedSourceAsync(db, baselineCompleted: false);
+        var upserter = new CatalogUpserter(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+
+        await upserter.UpsertPageAsync(
+            source.Id,
+            [new CatalogEntry("555954", "Dead-End Job", 2026, CatalogEntryType.TvSeries, 0, "", "tt36458668")],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        var title = await db.Titles.SingleAsync();
+        title.TmdbId.ShouldBeNull();
+        title.ImdbId.ShouldBe("tt36458668");
+        title.MetadataStatus.ShouldBe(MetadataStatuses.Pending);
+    }
+
+    [Fact]
+    public async Task Upsert_merges_by_imdb_across_different_watchmode_ids()
+    {
+        await using var db = await CreateDbAsync();
+        var us = await SeedSourceAsync(db, baselineCompleted: false, country: "US");
+        var it = await SeedSourceAsync(db, baselineCompleted: false, country: "IT", reuseProvider: true);
+        var upserter = new CatalogUpserter(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+
+        await upserter.UpsertPageAsync(
+            it.Id,
+            [new CatalogEntry("3257219", "Die Falle", 2026, CatalogEntryType.TvSeries, 283371, "tv", "tt36470958")],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        await upserter.UpsertPageAsync(
+            us.Id,
+            [new CatalogEntry("3317128", "The Trap", 2026, CatalogEntryType.TvSeries, null, null, "tt36470958")],
+            Guid.NewGuid(),
+            baselineCompleted: false);
+
+        (await db.Titles.CountAsync()).ShouldBe(1);
+        var title = await db.Titles.Include(t => t.Availabilities).SingleAsync();
+        title.ImdbId.ShouldBe("tt36470958");
+        title.TmdbId.ShouldBe(283371);
+        title.WatchmodeId.ShouldBe(3257219);
+        title.Availabilities.Count.ShouldBe(2);
+        title.Availabilities.Select(a => a.CatalogSourceId).OrderBy(id => id).ToArray()
+            .ShouldBe(new[] { us.Id, it.Id }.OrderBy(id => id).ToArray());
     }
 
     [Fact]
@@ -147,25 +197,37 @@ public sealed class CatalogUpserterTests
         return db;
     }
 
-    private static async Task<CatalogSource> SeedSourceAsync(PickarrDbContext db, bool baselineCompleted)
+    private static async Task<CatalogSource> SeedSourceAsync(
+        PickarrDbContext db,
+        bool baselineCompleted,
+        string country = "US",
+        bool reuseProvider = false)
     {
-        var provider = new Provider
+        Provider provider;
+        if (reuseProvider)
         {
-            Key = "netflix",
-            DisplayName = "Netflix",
-            ProviderType = "watchmode",
-            ExternalId = "203",
-            IsEnabled = true,
-            CreatedAt = DateTime.UtcNow,
-        };
-        db.Providers.Add(provider);
-        await db.SaveChangesAsync();
+            provider = await db.Providers.SingleAsync(p => p.Key == "netflix");
+        }
+        else
+        {
+            provider = new Provider
+            {
+                Key = "netflix",
+                DisplayName = "Netflix",
+                ProviderType = "watchmode",
+                ExternalId = "203",
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow,
+            };
+            db.Providers.Add(provider);
+            await db.SaveChangesAsync();
+        }
 
         var source = new CatalogSource
         {
             ProviderId = provider.Id,
-            CountryCode = "US",
-            MetadataLanguage = "en-US",
+            CountryCode = country,
+            MetadataLanguage = country == "IT" ? "it-IT" : "en-US",
             IsEnabled = true,
             BaselineCompletedAt = baselineCompleted ? DateTime.UtcNow : null,
         };

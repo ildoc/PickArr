@@ -60,6 +60,7 @@ public static class DependencyInjection
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
         services.AddScoped<ICatalogUpserter, CatalogUpserter>();
+        services.AddScoped<TitleIdentityMaintenance>();
         services.AddScoped<ICatalogIncrementalSync, CatalogIncrementalSync>();
         services.AddScoped<ICatalogFullSync, CatalogFullSync>();
         services.AddScoped<ILeavingSync, LeavingSync>();

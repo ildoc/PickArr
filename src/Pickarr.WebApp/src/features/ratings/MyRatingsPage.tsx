@@ -11,7 +11,7 @@ import {
 } from '../../api/ratings'
 import { fetchSettings } from '../../api/settings'
 import type { CatalogSource, TitleListItem } from '../../api/types'
-import { loadPreferredSourceId, savePreferredSourceId } from '../../lib/sourcePreference'
+import { savePreferredSourceId } from '../../lib/sourcePreference'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
 import { useProfiles } from '../who/profileContext'
 import { FilterBar } from '../catalog/FilterBar'
@@ -49,27 +49,18 @@ export function MyRatingsPage() {
   const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
   const sourcesQuery = useQuery({ queryKey: ['sources'], queryFn: fetchSources })
 
+  // Default All: ratings stay global; a concrete source only drives presence badges.
   const sourceId = useMemo(() => {
     const list = sourcesQuery.data ?? []
-    if (!active || list.length === 0) return null
-    if (sourceParam) {
-      const id = Number(sourceParam)
-      if (list.some((s) => s.id === id)) return id
-    }
-    const preferred = loadPreferredSourceId(active.id, active.isAdmin)
-    if (preferred && list.some((s) => s.id === preferred)) return preferred
-    return list[0]!.id
-  }, [sourcesQuery.data, sourceParam, active])
+    if (list.length === 0 || !sourceParam) return null
+    const id = Number(sourceParam)
+    return list.some((s) => s.id === id) ? id : null
+  }, [sourcesQuery.data, sourceParam])
 
   useEffect(() => {
     if (!active || sourceId == null) return
     savePreferredSourceId(active.id, sourceId)
-    if (sourceParam !== String(sourceId)) {
-      const next = new URLSearchParams(params)
-      next.set('source', String(sourceId))
-      setParams(next, { replace: true })
-    }
-  }, [active, sourceId, sourceParam, params, setParams])
+  }, [active, sourceId])
 
   const patchParams = useCallback(
     (patch: Record<string, string | null>) => {
@@ -264,7 +255,7 @@ export function MyRatingsPage() {
         total={emptyReason ? 0 : total}
         sources={sourcesQuery.data ?? []}
         countrySourceId={sourceId}
-        onCountryChange={(id) => patchParams({ source: String(id) })}
+        onCountryChange={(id) => patchParams({ source: id == null ? null : String(id) })}
         type={type}
         onTypeChange={(value) => patchParams({ type: value || null })}
         types={[]}
@@ -272,6 +263,7 @@ export function MyRatingsPage() {
         genres={[]}
         onGenreChange={(value) => patchParams({ genre: value || null })}
         hideViews
+        allowAllSources
       />
 
       <p className="text-sm text-[var(--muted)]">{t('ratings.crossCatalog')}</p>

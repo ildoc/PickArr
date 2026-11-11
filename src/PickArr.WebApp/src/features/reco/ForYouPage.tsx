@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { fetchCatalogTypes, fetchGenres, fetchSources } from '../../api/catalog'
 import { fetchRecommendations, fetchRecoStatus } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
-import { loadPreferredSourceId, savePreferredSourceId } from '../../lib/sourcePreference'
+import { savePreferredSourceId } from '../../lib/sourcePreference'
 import { FilterBar } from '../catalog/FilterBar'
 import { TitleGrid } from '../catalog/TitleGrid'
 import { TitleDialog } from '../title/TitleDialog'
@@ -19,8 +19,6 @@ export function ForYouPage() {
 
   const type = params.get('type') ?? ''
   const genre = params.get('genre') ?? ''
-  // Per-source picks live on /catalog; this page is cross-provider.
-  const scope = 'enabled' as const
   const includeInLibrary = params.get('includeInLibrary') === '1'
   const sourceParam = params.get('source')
   const titleParam = params.get('title')
@@ -34,27 +32,20 @@ export function ForYouPage() {
     queryFn: fetchSources,
   })
 
+  // Default All (cross-catalog). A concrete ?source= switches to that catalog only.
   const sourceId = useMemo(() => {
     const list = sourcesQuery.data ?? []
-    if (!active || list.length === 0) return null
-    if (sourceParam) {
-      const id = Number(sourceParam)
-      if (list.some((s) => s.id === id)) return id
-    }
-    const preferred = loadPreferredSourceId(active.id, active.isAdmin)
-    if (preferred && list.some((s) => s.id === preferred)) return preferred
-    return list[0]!.id
-  }, [sourcesQuery.data, sourceParam, active])
+    if (list.length === 0 || !sourceParam) return null
+    const id = Number(sourceParam)
+    return list.some((s) => s.id === id) ? id : null
+  }, [sourcesQuery.data, sourceParam])
+
+  const scope = sourceId != null ? ('source' as const) : ('enabled' as const)
 
   useEffect(() => {
     if (!active || sourceId == null) return
     savePreferredSourceId(active.id, sourceId)
-    if (sourceParam !== String(sourceId)) {
-      const next = new URLSearchParams(params)
-      next.set('source', String(sourceId))
-      setParams(next, { replace: true })
-    }
-  }, [active, sourceId, sourceParam, params, setParams])
+  }, [active, sourceId])
 
   const patchParams = useCallback(
     (patch: Record<string, string | null>) => {
@@ -137,7 +128,9 @@ export function ForYouPage() {
     <div className="space-y-6">
       {statusQuery.data && <LearningProgress status={statusQuery.data} />}
 
-      <p className="text-sm text-[var(--muted)]">{t('reco.enabledScopeIntro')}</p>
+      <p className="text-sm text-[var(--muted)]">
+        {scope === 'enabled' ? t('reco.enabledScopeIntro') : t('reco.sourceScopeIntro')}
+      </p>
 
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-[var(--muted)]">
@@ -162,7 +155,13 @@ export function ForYouPage() {
         total={total}
         sources={sourcesQuery.data ?? []}
         countrySourceId={sourceId}
-        onCountryChange={(id) => patchParams({ source: String(id) })}
+        onCountryChange={(id) => {
+          patchParams({
+            source: id == null ? null : String(id),
+            type: null,
+            genre: null,
+          })
+        }}
         type={type}
         onTypeChange={(value) => patchParams({ type: value || null })}
         types={typesQuery.data ?? []}
@@ -172,6 +171,7 @@ export function ForYouPage() {
         hideViews
         hideSearch
         hideSort
+        allowAllSources
       />
 
       {recoQuery.isLoading && <p className="text-[var(--muted)]">{t('catalog.loading')}</p>}

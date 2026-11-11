@@ -115,10 +115,11 @@ describe('MyRatingsPage', () => {
     vi.mocked(importRatings).mockResolvedValue({ imported: 0, unknown: 0, ignored: 0 })
   })
 
-  it('shows the empty state and loads the liked tab by default', async () => {
-    renderAt('/ratings?source=1')
+  it('shows the empty state and loads the liked tab by default with All sources', async () => {
+    renderAt('/ratings')
 
     expect(await screen.findByText('No ratings in this tab yet.')).toBeTruthy()
+    expect(screen.getByLabelText('Provider')).toHaveValue('')
     await waitFor(() =>
       expect(fetchRatings).toHaveBeenCalledWith(
         expect.objectContaining({ value: 'like', page: 1 }),
@@ -128,7 +129,7 @@ describe('MyRatingsPage', () => {
 
   it('reloads with value dislike when the Disliked tab is chosen', async () => {
     const user = userEvent.setup()
-    renderAt('/ratings?source=1')
+    renderAt('/ratings')
 
     await waitFor(() => expect(fetchRatings).toHaveBeenCalled())
     await user.click(screen.getByRole('button', { name: 'Disliked' }))
@@ -146,7 +147,7 @@ describe('MyRatingsPage', () => {
     } as Awaited<ReturnType<typeof fetchSettings>>
     vi.mocked(fetchSettings).mockResolvedValue(disabled)
 
-    renderAt('/ratings?source=1', disabled)
+    renderAt('/ratings', disabled)
 
     expect(await screen.findByText('Ratings are turned off in Settings.')).toBeTruthy()
     expect(fetchRatings).not.toHaveBeenCalled()

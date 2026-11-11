@@ -16,8 +16,15 @@ public sealed class CatalogMediaMappingTests
     }
 
     [Fact]
-    public void Unmapped_when_no_tmdb_id()
+    public void Pending_when_imdb_present_without_tmdb()
+    {
+        CatalogMediaMapping.InitialMetadataStatus(null, "tt36458668").ShouldBe(MetadataStatuses.Pending);
+    }
+
+    [Fact]
+    public void Unmapped_when_no_tmdb_or_imdb()
     {
         CatalogMediaMapping.InitialMetadataStatus(null).ShouldBe(MetadataStatuses.Unmapped);
+        CatalogMediaMapping.InitialMetadataStatus(null, " ").ShouldBe(MetadataStatuses.Unmapped);
     }
 }

@@ -17,9 +17,11 @@ Type and genre options come from titles in the current scope. The grid stays emp
 ### Sync behavior (operator view)
 
 - Scheduled incremental and full sync jobs keep the local catalog current.
-- On the Watchmode **free** plan, change feeds and a full leaving calendar are not available: incremental sync uses recent list pages; removals are confirmed across full syncs; leaving dates are a short preview.
+- On the Watchmode **free** plan, change feeds and a full leaving calendar are not available: incremental sync uses recent list pages; removals are confirmed across full syncs; leaving dates are a short preview. Older catalog titles (for example a series whose last “new” release is a new season) usually appear only after a **full sync** completes and sets the source baseline.
+- Catalog search is scoped to the selected provider + country. A title present on Netflix IT does not appear under Netflix US until that source has an active availability row.
 - Free plan limits: about 2 500 credits/month and at most **3** distinct countries (several providers in one country count once).
 - Cached catalog data should be refreshed within Watchmode’s free-plan cache window; the UI warns when a source looks stale.
+- Titles imported with an IMDb id but no TMDB id stay in the enrichment queue (`Pending`) so TMDB `/find` can fill posters and metadata; duplicate Watchmode rows that share an IMDb id are merged into one title.
 
 ## Title detail
 
@@ -57,13 +59,13 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 **For you** (`/for-you`) shows local recommendations over titles already in enabled catalogs:
 
-- Default scope: the selected catalog source
-- Alternate scope: union of all enabled sources
+- Default filter: **All** providers and countries (union of enabled sources). Provider and country each offer an All option so the cross-catalog view is explicit.
+- Choosing a concrete provider + country narrows the list to that source immediately (no search box on this page).
 - Cold start: while effective ratings are below the personalization threshold (`N0`, default 30), recommendations can blend a **household prior** from other profiles’ Love/Like (capped); at full personalization that term is zero
 - Optional ONNX embedding model under the data path improves similarity when installed
 - Taste data never leaves the container
 
-`/ratings` lists votes with export/import. `/taste` helps teach taste while learning is cold.
+`/ratings` lists votes with export/import. Provider/country default to **All** (ratings stay global); a selected source only drives presence badges. `/taste` helps teach taste while learning is cold.
 
 ## Sonarr / Radarr
 

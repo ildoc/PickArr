@@ -4,12 +4,14 @@ using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
 using Pickarr.Core.Domain.Entities;
 using Pickarr.Core.Settings;
+using Pickarr.Infrastructure.Catalog;
 
 namespace Pickarr.Infrastructure.Persistence;
 
 public sealed class DatabaseInitializer(
     PickarrDbContext db,
     IClock clock,
+    TitleIdentityMaintenance titleIdentityMaintenance,
     ILogger<DatabaseInitializer> logger)
 {
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -19,6 +21,7 @@ public sealed class DatabaseInitializer(
         await db.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=WAL;", cancellationToken);
         await db.Database.ExecuteSqlRawAsync("PRAGMA busy_timeout=5000;", cancellationToken);
         await SeedAsync(cancellationToken);
+        await titleIdentityMaintenance.RunAsync(cancellationToken);
     }
 
     private async Task SeedAsync(CancellationToken cancellationToken)
