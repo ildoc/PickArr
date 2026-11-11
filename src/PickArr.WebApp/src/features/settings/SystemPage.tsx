@@ -1,7 +1,15 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { fetchSystemStats, fetchSystemStatus, type StorageEntry } from '../../api/system'
-import { formatBytes } from '../../lib/format'
+import {
+  clearSystemLogs,
+  downloadSystemLog,
+  fetchSystemLogs,
+  fetchSystemStats,
+  fetchSystemStatus,
+  type StorageEntry,
+} from '../../api/system'
+import { formatBytes, formatDateTime } from '../../lib/format'
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
 
@@ -15,8 +23,24 @@ function storageLabelKey(entry: StorageEntry): string {
 
 export function SystemPage() {
   const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
+  const [logMessage, setLogMessage] = useState<string | null>(null)
   const status = useQuery({ queryKey: ['system', 'status'], queryFn: fetchSystemStatus })
   const stats = useQuery({ queryKey: ['system', 'stats'], queryFn: fetchSystemStats })
+  const logs = useQuery({ queryKey: ['system', 'logs'], queryFn: fetchSystemLogs })
+
+  const clearLogs = useMutation({
+    mutationFn: clearSystemLogs,
+    onSuccess: async (result) => {
+      setLogMessage(
+        result.failed > 0
+          ? t('settings.systemLogsClearPartial', result)
+          : t('settings.systemLogsCleared', result),
+      )
+      await queryClient.invalidateQueries({ queryKey: ['system', 'logs'] })
+      await queryClient.invalidateQueries({ queryKey: ['system', 'stats'] })
+    },
+  })
 
   if (stats.isLoading) {
     return <p className="text-sm text-[var(--muted)]">{t('settings.systemLoading')}</p>
@@ -158,6 +182,69 @@ export function SystemPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-medium">{t('settings.systemLogs')}</h2>
+            <p className="mt-1 text-xs text-[var(--muted)]">{t('settings.systemLogsHint')}</p>
+          </div>
+          <button
+            type="button"
+            disabled={clearLogs.isPending || (logs.data?.items.length ?? 0) === 0}
+            onClick={() => {
+              if (window.confirm(t('settings.systemLogsClearConfirm'))) {
+                clearLogs.mutate()
+              }
+            }}
+            className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15 disabled:opacity-50"
+          >
+            {t('settings.systemLogsClear')}
+          </button>
+        </div>
+        {logMessage && <p className="text-sm text-emerald-300">{logMessage}</p>}
+        {logs.isLoading && <p className="text-sm text-[var(--muted)]">{t('settings.systemLoading')}</p>}
+        {logs.isError && <p className="text-sm text-red-300">{t('settings.systemLogsError')}</p>}
+        {logs.data && logs.data.items.length === 0 && (
+          <p className="text-sm text-[var(--muted)]">{t('settings.systemLogsEmpty')}</p>
+        )}
+        {logs.data && logs.data.items.length > 0 && (
+          <div className="overflow-x-auto rounded-lg border border-white/10">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-black/20 text-xs uppercase tracking-wide text-[var(--muted)]">
+                <tr>
+                  <th className="px-3 py-2 font-medium">{t('settings.systemLogsColName')}</th>
+                  <th className="px-3 py-2 font-medium">{t('settings.systemLogsColModified')}</th>
+                  <th className="px-3 py-2 font-medium text-right">{t('settings.systemColSize')}</th>
+                  <th className="px-3 py-2 font-medium" />
+                </tr>
+              </thead>
+              <tbody>
+                {logs.data.items.map((file) => (
+                  <tr key={file.fileName} className="border-t border-white/5">
+                    <td className="px-3 py-2 font-mono text-xs">{file.fileName}</td>
+                    <td className="px-3 py-2 text-[var(--muted)]">
+                      {formatDateTime(file.lastWriteUtc, i18n.language)}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      {formatBytes(file.bytes, i18n.language)}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        type="button"
+                        className="rounded-md bg-white/10 px-2.5 py-1 text-xs hover:bg-white/15"
+                        onClick={() => void downloadSystemLog(file.fileName)}
+                      >
+                        {t('settings.systemLogsDownload')}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
     </div>
   )

@@ -46,6 +46,7 @@ const emptySettings = {
     mlMinRatings: 100,
     eventsEnabled: false,
   },
+  jobs: { runHistoryLimit: 10 },
 }
 
 function wrap(ui: ReactNode) {

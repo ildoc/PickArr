@@ -193,5 +193,8 @@ public sealed class CreditBudgetServiceTests
 
         public Task MarkNeedsReviewAsync(Guid id, string? errorMessage = null, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
+
+        public Task PruneHistoryAsync(CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
     }
 }

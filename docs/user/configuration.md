@@ -105,6 +105,7 @@ A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
 | `reco.embeddings.batchSize` | `16` | |
 | `reco.embeddings.minCoverage` | `0.8` | |
 | `reco.embeddings.throttle` | `true` | |
+| `jobs.runHistoryLimit` | `10` | Finished SyncRuns kept per job (Kind + catalog source). Clamped 1–100. |
 
 ## Profiles and headers
 

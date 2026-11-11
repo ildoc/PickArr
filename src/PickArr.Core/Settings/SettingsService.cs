@@ -6,6 +6,10 @@ namespace Pickarr.Core.Settings;
 
 public sealed class SettingsService(ISettingsStore store)
 {
+    public const int DefaultRunHistoryLimit = 10;
+    public const int MinRunHistoryLimit = 1;
+    public const int MaxRunHistoryLimit = 100;
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     public async Task<SettingsResponse> GetAsync(CancellationToken cancellationToken = default)
@@ -75,6 +79,11 @@ public sealed class SettingsService(ISettingsStore store)
                 ExploreRate = await GetOrDefaultAsync(SettingsKeys.RecoExploreRate, RecoExplore.DefaultRate, cancellationToken),
                 MlMinRatings = await GetOrDefaultAsync(SettingsKeys.RecoMlMinRatings, RecoLevel3.DefaultMinRatings, cancellationToken),
                 EventsEnabled = await GetOrDefaultAsync(SettingsKeys.RecoEventsEnabled, false, cancellationToken),
+            },
+            Jobs = new JobsSettingsDto
+            {
+                RunHistoryLimit = ClampRunHistoryLimit(
+                    await GetOrDefaultAsync(SettingsKeys.JobsRunHistoryLimit, DefaultRunHistoryLimit, cancellationToken)),
             },
         };
     }
@@ -249,7 +258,22 @@ public sealed class SettingsService(ISettingsStore store)
                 await store.SetAsync(SettingsKeys.RecoEventsEnabled, ToJson(eventsEnabled), isSecret: false, cancellationToken);
             }
         }
+
+        if (request.Jobs is { } jobs)
+        {
+            if (jobs.RunHistoryLimit is { } limit)
+            {
+                await store.SetAsync(
+                    SettingsKeys.JobsRunHistoryLimit,
+                    ToJson(ClampRunHistoryLimit(limit)),
+                    isSecret: false,
+                    cancellationToken);
+            }
+        }
     }
+
+    public static int ClampRunHistoryLimit(int value) =>
+        Math.Clamp(value, MinRunHistoryLimit, MaxRunHistoryLimit);
 
     private async Task ApplySecretAsync(string key, string? value, CancellationToken cancellationToken)
     {

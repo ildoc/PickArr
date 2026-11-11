@@ -149,7 +149,7 @@ public sealed class CatalogFullSyncTests
             await settings.SetAsync(SettingsKeys.CatalogMaxRemovalRatio, maxRemovalRatio.ToString(System.Globalization.CultureInfo.InvariantCulture), false);
             await settings.SetAsync(SettingsKeys.CatalogRemovalConfirmations, "2", false);
 
-            var syncRuns = new EfSyncRunStore(db, clock);
+            var syncRuns = new EfSyncRunStore(db, clock, new TestSettingsStore());
             var usage = new FixedUsageReader();
             var budget = new CreditBudgetService(settings, usage, syncRuns, new WatchmodeQuotaObservation());
             var upserter = new CatalogUpserter(db, clock);

@@ -203,6 +203,9 @@ export type SettingsResponse = {
     mlMinRatings: number
     eventsEnabled: boolean
   }
+  jobs: {
+    runHistoryLimit: number
+  }
 }
 
 export type RecoEvalLevelMetrics = {

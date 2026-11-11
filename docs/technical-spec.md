@@ -339,6 +339,8 @@ Unique index `(Kind, ArrId)`; indexes on `TmdbId`, `TvdbId`, `TitleId`.
 | ErrorMessage | text null | |
 | CheckpointJson | text null | cursor for resume |
 
+Finished rows are pruned to `jobs.runHistoryLimit` (default 10, clamp 1–100) per `(Kind, CatalogSourceId)` after each terminal status; `Running` rows are kept. Related `ApiUsage` rows for deleted run ids are removed.
+
 **`ApiUsage`**: `Id`, `Service` (`watchmode`/`tmdb`/`omdb`), `Endpoint`, `Timestamp`, `Credits` (int), `QuotaUsed` (int null), `QuotaLimit` (int null), `StatusCode`, `SyncRunId` null. Index on `(Service, Timestamp)`.
 
 **`Settings`**: `Key` PK, `ValueJson`, `IsSecret` (value encrypted with Data Protection), `UpdatedAt`.
@@ -1002,6 +1004,9 @@ List and title-detail DTOs, with the header, expose the profile’s `isFavorite`
 | `POST` | `/webhooks/radarr?token=…` | same |
 | `GET` | `/system/status` | Server version and time (used by the header). |
 | `GET` | `/system/stats` | Title counts (total, per provider, country, source) and disk space under `DataPath` (catalog DB, jobs, logs, models, keys). |
+| `GET` | `/system/logs` | List `pickarr-*.log` files under `DataPath/logs`. |
+| `GET` | `/system/logs/{fileName}` | Download one log file (path-safe names only). |
+| `DELETE` | `/system/logs` | Delete all `pickarr-*.log` files; returns `{ deleted, failed }` (active file may fail). |
 | `GET` | `/health`, `/health/ready` | Liveness and readiness (DB, Hangfire). Outside `/api/v1`. |
 | `GET` | `/events` (C) | Server-Sent Events for state updates (`arr-state-changed`, `run-updated`). |
 
@@ -1049,7 +1054,7 @@ src/Pickarr.WebApp/src/
 | `/settings/catalogs` | Catalog sources |
 | `/settings/recommendations` | Recommendation status/actions |
 | `/settings/jobs` | Jobs and credits (`/admin/jobs` redirects here) |
-| `/settings/system` | Diagnostics: titles per provider/country and disk space (`GET /system/stats`) |
+| `/settings/system` | Diagnostics: titles per provider/country, disk space, log file list/download/clear |
 
 Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-Pickarr-Profile`. Catalog source in `pickarr.sourceId.{profileId}` (an admin without their own key may once copy the legacy `pickarr.sourceId`). Used by the catalog (including the *For you* row) and by *For you*.
 
@@ -1120,7 +1125,7 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 - **Health:** `/health` (liveness, always 200 if the process responds) and `/health/ready` (checks DB open and Hangfire storage).
 - **Business metrics:** `SyncRuns` and `ApiUsage` are the source for the Admin page; no external metrics stack is needed.
 - **OpenTelemetry (C):** optional OTLP export via environment variable, off by default.
-- **Diagnostics:** `GET /system/status` reports version and server time; `GET /system/stats` reports title counts and sizes under `DataPath` (Settings → System tab).
+- **Diagnostics:** `GET /system/status` reports version and server time; `GET /system/stats` reports title counts and sizes under `DataPath`; `GET/DELETE /system/logs` manage Serilog files (Settings → System tab). Finished `SyncRuns` are pruned per `(Kind, CatalogSourceId)` using `jobs.runHistoryLimit` (default 10, max 100).
 
 ---
 

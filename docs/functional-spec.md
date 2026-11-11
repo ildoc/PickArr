@@ -289,7 +289,8 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 |---|---|---|
 | FR-ADM-01 | Una pagina di amministrazione elenca i job (sync catalogo incrementale/completa per sorgente, arricchimento metadati, sync Sonarr/Radarr, sync scadenze) con ultima esecuzione, prossima esecuzione ed esito. | M |
 | FR-ADM-02 | L'utente può **avviare manualmente** un job; per la sync catalogo sceglie tra incrementale e completa. Non è possibile avviare due esecuzioni concorrenti dello stesso job. | M |
-| FR-ADM-03 | Storico delle esecuzioni con statistiche ed errori. | M |
+| FR-ADM-03 | Storico delle esecuzioni con statistiche ed errori. Si conservano le ultime *N* esecuzioni finite per ciascun job (Kind + sorgente); *N* è configurabile (1–100, default 10). Le statistiche mostrate dipendono dal tipo di job (crediti/pagine solo per sync catalogo, conteggi metadata/reco dove applicabile). | M |
+| FR-ADM-08 | Nella pagina System: elenco dei file di log sotto il data path, download singolo e azione per svuotare tutti i log Pickarr. | S |
 | FR-ADM-04 | Pannello **crediti Watchmode**: usati, quota, disponibili al netto della riserva, proiezione a fine mese. | M |
 | FR-ADM-05 | Possibilità di annullare una esecuzione in corso e di riprendere una esecuzione in pausa. | S |
 | FR-ADM-06 | Elenco dei titoli non mappati e dei titoli con arricchimento fallito, con possibilità di riprovare. | S |

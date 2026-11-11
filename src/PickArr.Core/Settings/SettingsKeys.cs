@@ -50,4 +50,5 @@ public static class SettingsKeys
     public const string RecoExploreRate = "reco.explore.rate";
     public const string RecoMlMinRatings = "reco.ml.minRatings";
     public const string RecoEventsEnabled = "reco.events.enabled";
+    public const string JobsRunHistoryLimit = "jobs.runHistoryLimit";
 }

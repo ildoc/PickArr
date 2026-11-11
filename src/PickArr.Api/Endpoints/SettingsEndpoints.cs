@@ -1,3 +1,4 @@
+using Pickarr.Core.Abstractions;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Jobs;
@@ -17,9 +18,15 @@ public static class SettingsEndpoints
             UpdateSettingsRequest request,
             SettingsService settings,
             CatalogBootstrap bootstrap,
+            ISyncRunStore syncRuns,
             CancellationToken ct) =>
         {
             await settings.UpdateAsync(request, ct);
+            if (request.Jobs?.RunHistoryLimit is not null)
+            {
+                await syncRuns.PruneHistoryAsync(ct);
+            }
+
             await bootstrap.StartAsync(force: false, ct);
             return Results.Ok(await settings.GetAsync(ct));
         });

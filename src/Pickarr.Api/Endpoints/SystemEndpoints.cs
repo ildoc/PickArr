@@ -22,6 +22,27 @@ public static class SystemEndpoints
             return Results.Ok(dto);
         });
 
+        endpoints.MapGet("/api/v1/system/logs", async (ILogFileService logs, CancellationToken ct) =>
+            Results.Ok(await logs.ListAsync(ct)));
+
+        endpoints.MapGet("/api/v1/system/logs/{fileName}", async (
+            string fileName,
+            ILogFileService logs,
+            CancellationToken ct) =>
+        {
+            var opened = await logs.OpenReadAsync(fileName, ct);
+            if (opened is null)
+            {
+                return Results.NotFound();
+            }
+
+            var (stream, contentType, downloadName) = opened.Value;
+            return Results.File(stream, contentType, downloadName);
+        });
+
+        endpoints.MapDelete("/api/v1/system/logs", async (ILogFileService logs, CancellationToken ct) =>
+            Results.Ok(await logs.ClearAllAsync(ct)));
+
         return endpoints;
     }
 

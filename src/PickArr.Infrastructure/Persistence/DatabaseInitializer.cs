@@ -159,6 +159,7 @@ public sealed class DatabaseInitializer(
         await EnsureSettingAsync(SettingsKeys.CatalogRemovedWindowDays, "30", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.CatalogStaleWarningDays, "21", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.UiLanguage, "\"en\"", false, now, cancellationToken);
+        await EnsureSettingAsync(SettingsKeys.JobsRunHistoryLimit, "10", false, now, cancellationToken);
         await EnsureSettingAsync("sonarr.syncIntervalMinutes", "15", false, now, cancellationToken);
         await EnsureSettingAsync("radarr.syncIntervalMinutes", "15", false, now, cancellationToken);
         await EnsureSettingAsync(SettingsKeys.RecoEnabled, "true", false, now, cancellationToken);

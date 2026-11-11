@@ -55,7 +55,7 @@ public sealed class MetadataJobRunTests
     public async Task Enrichment_records_a_succeeded_run_and_the_updated_count()
     {
         await using var db = await CreateDbAsync();
-        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)), new TestSettingsStore());
         var job = new EnrichmentJob(
             new ScriptedEnrichment(new EnrichmentBatchResult(2, 2, 0, 0), new EnrichmentBatchResult(0, 0, 0, 0)),
             store,
@@ -75,7 +75,7 @@ public sealed class MetadataJobRunTests
     public async Task Enrichment_marks_the_run_failed_when_tmdb_rejects_every_title()
     {
         await using var db = await CreateDbAsync();
-        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)), new TestSettingsStore());
         var job = new EnrichmentJob(
             new ScriptedEnrichment(new EnrichmentBatchResult(3, 0, 3, 0, "TMDB request failed (401).")),
             store,
@@ -93,7 +93,7 @@ public sealed class MetadataJobRunTests
     public async Task Enrichment_succeeds_when_titles_are_only_unmapped_not_auth_errors()
     {
         await using var db = await CreateDbAsync();
-        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
+        var store = new EfSyncRunStore(db, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)), new TestSettingsStore());
         var job = new EnrichmentJob(
             new ScriptedEnrichment(
                 new EnrichmentBatchResult(3, 0, 0, 3),

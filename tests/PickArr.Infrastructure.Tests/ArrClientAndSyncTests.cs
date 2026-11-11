@@ -121,7 +121,7 @@ public sealed class ArrClientAndSyncTests : IAsyncLifetime
         var sonarr = new SonarrClient(http, settings, NullLogger<SonarrClient>.Instance);
         var radarr = new RadarrClient(http, settings, NullLogger<RadarrClient>.Instance);
         var factory = new ArrClientFactory(sonarr, radarr, settings);
-        var syncRuns = new EfSyncRunStore(db, new SystemClock());
+        var syncRuns = new EfSyncRunStore(db, new SystemClock(), new TestSettingsStore());
         var sync = new ArrLibrarySync(db, factory, new SystemClock(), syncRuns, NullLogger<ArrLibrarySync>.Instance);
 
         await sync.SyncAsync(ArrKind.Sonarr);

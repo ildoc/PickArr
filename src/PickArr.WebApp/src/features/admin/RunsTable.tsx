@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { fetchAdminRuns, type AdminJob } from '../../api/admin'
 import { formatDate } from '../../lib/format'
+import { formatRunStats } from './runStats'
 
 const RUN_STATUSES = ['', 'Running', 'Failed', 'Paused', 'Succeeded', 'NeedsReview'] as const
 const PAGE_SIZES = [20, 50, 100] as const
@@ -132,12 +133,7 @@ export function RunsTable({
                     <div className="text-xs">{run.triggeredBy}</div>
                   </td>
                   <td className="px-3 py-2 text-xs text-[var(--muted)]">
-                    {t('admin.runStats', {
-                      credits: run.creditsUsed,
-                      pages: run.pagesFetched,
-                      added: run.titlesAdded,
-                      updated: run.titlesUpdated,
-                    })}
+                    {formatRunStats(run, t) || '—'}
                   </td>
                 </tr>
               ))}

@@ -77,7 +77,7 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 ## Administration
 
-Admin-only UI sections cover data sources, Sonarr/Radarr, catalogs, recommendations (model status, rebuild/eval/reset), jobs, system stats, and UI language preference. Job views show runs, Watchmode credit usage, and unmapped titles.
+Admin-only UI sections cover data sources, Sonarr/Radarr, catalogs, recommendations (model status, rebuild/eval/reset), jobs, system stats, and UI language preference. Job views show runs (with kind-specific stats), Watchmode credit usage, and unmapped titles; the Jobs page also configures how many finished runs to keep per job. System lists log files for download and can clear them.
 
 ## Attribution
 

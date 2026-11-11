@@ -110,7 +110,19 @@
     "colStatus": "Status",
     "colStarted": "Started",
     "colStats": "Stats",
-    "runStats": "{{credits}} credits · {{pages}} pages · +{{added}} / ~{{updated}}"
+    "runHistoryLimit": "Keep last runs per job",
+    "runHistoryLimitHint": "Finished runs kept for each job (1–100). Older history is deleted automatically.",
+    "runHistoryLimitSaved": "Run history limit saved.",
+    "runStats": {
+      "catalog": "{{credits}} Watchmode credits · {{pages}} pages · +{{added}} added · ~{{updated}} updated · −{{removed}} removed",
+      "leaving": "{{pages}} pages · {{updated}} leaving updates",
+      "metadata": "{{processed}} titles processed · {{ready}} ready",
+      "recoFeature": "{{processed}} processed · {{ready}} ready",
+      "recoEmbedding": "{{count}} embeddings written",
+      "recoBuild": "built version {{version}}",
+      "recoEval": "{{ratings}} ratings evaluated",
+      "generic": "{{credits}} credits · {{pages}} pages · +{{added}} / ~{{updated}}"
+    }
   },
   "catalog": {
     "searchPlaceholder": "Search titles…",
@@ -353,6 +365,17 @@
     "systemColItem": "Item",
     "systemColPath": "Path",
     "systemColSize": "Size",
+    "systemLogs": "Log files",
+    "systemLogsHint": "Rotated application logs under the data path. The active file may stay locked until the next roll.",
+    "systemLogsEmpty": "No log files yet.",
+    "systemLogsColName": "File",
+    "systemLogsColModified": "Modified",
+    "systemLogsDownload": "Download",
+    "systemLogsClear": "Clear all logs",
+    "systemLogsClearConfirm": "Delete every Pickarr log file under the data path?",
+    "systemLogsCleared": "Deleted {{deleted}} log file(s).",
+    "systemLogsClearPartial": "Deleted {{deleted}}; {{failed}} could not be removed (often the active file).",
+    "systemLogsError": "Could not load log files.",
     "storage": {
       "database": "Catalog database",
       "jobs": "Jobs database",

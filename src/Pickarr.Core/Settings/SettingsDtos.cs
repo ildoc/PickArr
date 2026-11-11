@@ -12,6 +12,13 @@ public sealed class SettingsResponse
     public required WebhookSettingsDto Webhooks { get; init; }
     public required UiSettingsDto Ui { get; init; }
     public required RecoSettingsDto Reco { get; init; }
+    public required JobsSettingsDto Jobs { get; init; }
+}
+
+public sealed class JobsSettingsDto
+{
+    /// <summary>Finished SyncRuns kept per job (Kind + CatalogSourceId). Clamped 1–100.</summary>
+    public required int RunHistoryLimit { get; init; }
 }
 
 public sealed class WatchmodeSettingsDto
@@ -87,6 +94,12 @@ public sealed class UpdateSettingsRequest
     public ArrInstanceUpdateDto? Radarr { get; init; }
     public UiSettingsDto? Ui { get; init; }
     public RecoUpdateDto? Reco { get; init; }
+    public JobsUpdateDto? Jobs { get; init; }
+}
+
+public sealed class JobsUpdateDto
+{
+    public int? RunHistoryLimit { get; init; }
 }
 
 public sealed class RecoUpdateDto

@@ -19,4 +19,9 @@ public interface ISyncRunStore
     Task SucceedAsync(Guid id, CancellationToken cancellationToken = default);
     Task FailAsync(Guid id, string errorMessage, CancellationToken cancellationToken = default);
     Task MarkNeedsReviewAsync(Guid id, string? errorMessage = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Drops finished runs beyond the configured per-job history limit (Kind + CatalogSourceId).
+    /// </summary>
+    Task PruneHistoryAsync(CancellationToken cancellationToken = default);
 }

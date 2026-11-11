@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Pickarr.Core.Abstractions;
 using Pickarr.Core.Domain;
 using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Persistence;
 using Shouldly;
@@ -26,7 +27,7 @@ public sealed class SyncRunStoreTests
         await db.Database.EnsureCreatedAsync();
 
         var clock = new FixedClock(new DateTime(2026, 11, 4, 12, 0, 0, DateTimeKind.Utc));
-        var store = new EfSyncRunStore(db, clock);
+        var store = new EfSyncRunStore(db, clock, new TestSettingsStore());
 
         var run = await store.StartAsync(
             SyncRunKinds.CatalogFull,
@@ -62,7 +63,7 @@ public sealed class SyncRunStoreTests
         await db.Database.EnsureCreatedAsync();
 
         var clock = new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc));
-        var store = new EfSyncRunStore(db, clock);
+        var store = new EfSyncRunStore(db, clock, new TestSettingsStore());
         var run = await store.StartAsync(SyncRunKinds.CatalogIncremental, null, SyncRunTriggers.Schedule);
 
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -76,6 +77,33 @@ public sealed class SyncRunStoreTests
 
         (await db.SyncRuns.SingleAsync()).Status.ShouldBe(SyncRunStatuses.Failed);
         (await db.Titles.CountAsync()).ShouldBe(0);
+    }
+
+    [Fact]
+    public async Task SucceedAsync_keeps_only_configured_history_per_job()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<PickarrDbContext>().UseSqlite(connection).Options;
+        await using var db = new PickarrDbContext(options);
+        await db.Database.EnsureCreatedAsync();
+
+        var settings = new TestSettingsStore();
+        settings.SetRaw(SettingsKeys.JobsRunHistoryLimit, "2");
+        var clock = new FixedClock(new DateTime(2026, 11, 11, 12, 0, 0, DateTimeKind.Utc));
+        var store = new EfSyncRunStore(db, clock, settings);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var run = await store.StartAsync(SyncRunKinds.Enrichment, null, SyncRunTriggers.Schedule);
+            await store.SucceedAsync(run.Id);
+            clock = new FixedClock(clock.UtcNow.AddMinutes(1));
+            store = new EfSyncRunStore(db, clock, settings);
+        }
+
+        var kept = await db.SyncRuns.OrderBy(r => r.StartedAt).ToListAsync();
+        kept.Count.ShouldBe(2);
+        kept.ShouldAllBe(r => r.Status == SyncRunStatuses.Succeeded);
     }
 
     private static Title SampleTitle(int watchmodeId) => new()

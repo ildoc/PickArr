@@ -71,6 +71,7 @@ internal static class SettingEnvironmentCatalog
         [SettingsKeys.RecoExploreRate] = SettingValueKind.Double,
         [SettingsKeys.RecoMlMinRatings] = SettingValueKind.Int32,
         [SettingsKeys.RecoEventsEnabled] = SettingValueKind.Boolean,
+        [SettingsKeys.JobsRunHistoryLimit] = SettingValueKind.Int32,
     };
 
     public static IEnumerable<string> CanonicalKeys => Keys.Keys;

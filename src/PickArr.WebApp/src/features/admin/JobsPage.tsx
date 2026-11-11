@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client'
 import { fetchAdminJobs, triggerAdminJob, type AdminJob } from '../../api/admin'
+import { fetchSettings, updateSettings } from '../../api/settings'
 import { formatDateTime } from '../../lib/format'
 import { groupAdminJobs, shortCatalogJobName } from './jobGroups'
 import { QuotaPanel } from './QuotaPanel'
@@ -144,11 +145,29 @@ export function JobsPage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [jobKey, setJobKey] = useState<string | undefined>(undefined)
+  const [historyLimit, setHistoryLimit] = useState(10)
+  const [historyMessage, setHistoryMessage] = useState<string | null>(null)
 
   const jobs = useQuery({
     queryKey: ['admin', 'jobs'],
     queryFn: fetchAdminJobs,
     refetchInterval: 4_000,
+  })
+
+  const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
+  useEffect(() => {
+    if (settings.data?.jobs.runHistoryLimit != null) {
+      setHistoryLimit(settings.data.jobs.runHistoryLimit)
+    }
+  }, [settings.data?.jobs.runHistoryLimit])
+
+  const saveHistoryLimit = useMutation({
+    mutationFn: (limit: number) => updateSettings({ jobs: { runHistoryLimit: limit } }),
+    onSuccess: async () => {
+      setHistoryMessage(t('admin.runHistoryLimitSaved'))
+      await queryClient.invalidateQueries({ queryKey: ['settings'] })
+      await queryClient.invalidateQueries({ queryKey: ['admin', 'runs'] })
+    },
   })
 
   const grouped = useMemo(
@@ -196,6 +215,35 @@ export function JobsPage() {
       </div>
 
       <QuotaPanel />
+
+      <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
+        <h2 className="text-lg font-semibold">{t('admin.runHistoryLimit')}</h2>
+        <p className="text-sm text-[var(--muted)]">{t('admin.runHistoryLimitHint')}</p>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="block text-sm">
+            <span className="mb-1 block text-[var(--muted)]">{t('admin.runHistoryLimit')}</span>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={historyLimit}
+              onChange={(e) => setHistoryLimit(Number(e.target.value))}
+              className="w-28 rounded-md border border-white/10 bg-black/30 px-2 py-1.5"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={saveHistoryLimit.isPending || !Number.isFinite(historyLimit)}
+            onClick={() =>
+              saveHistoryLimit.mutate(Math.min(100, Math.max(1, Math.round(historyLimit) || 10)))
+            }
+            className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15 disabled:opacity-50"
+          >
+            {t('settings.save')}
+          </button>
+        </div>
+        {historyMessage && <p className="text-sm text-emerald-300">{historyMessage}</p>}
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">{t('admin.jobsHeading')}</h2>

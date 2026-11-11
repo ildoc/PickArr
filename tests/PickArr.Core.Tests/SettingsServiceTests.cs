@@ -30,6 +30,25 @@ public sealed class SettingsServiceTests
         result.Reco.EmbeddingsEnabled.ShouldBeTrue();
         result.Reco.ExploreRate.ShouldBe(0.10);
         result.Reco.MmrLambda.ShouldBe(0.7);
+        result.Jobs.RunHistoryLimit.ShouldBe(SettingsService.DefaultRunHistoryLimit);
+    }
+
+    [Fact]
+    public async Task UpdateAsync_clamps_run_history_limit()
+    {
+        var store = Substitute.For<ISettingsStore>();
+        var sut = new SettingsService(store);
+
+        await sut.UpdateAsync(new UpdateSettingsRequest
+        {
+            Jobs = new JobsUpdateDto { RunHistoryLimit = 500 },
+        });
+
+        await store.Received(1).SetAsync(
+            SettingsKeys.JobsRunHistoryLimit,
+            "100",
+            false,
+            Arg.Any<CancellationToken>());
     }
 
     [Fact]

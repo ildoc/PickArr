@@ -89,6 +89,7 @@ public static class DependencyInjection
         services.AddScoped<IAdminJobService, AdminJobService>();
         services.AddScoped<IAdminQuotaService, AdminQuotaService>();
         services.AddScoped<ISystemStatsService, SystemStatsService>();
+        services.AddScoped<ILogFileService, LogFileService>();
         services.AddHttpClient<SonarrClient>();
         services.AddHttpClient<RadarrClient>();
         services.AddScoped<DatabaseInitializer>();
