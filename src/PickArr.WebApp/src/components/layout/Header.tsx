@@ -49,7 +49,7 @@ export function Header({ children }: { children?: ReactNode }) {
           </NavLink>
         )}
         {active?.isAdmin && (
-          <NavLink to="/settings" className={linkClass}>
+          <NavLink to="/settings/system" className={linkClass}>
             {t('nav.settings')}
           </NavLink>
         )}
@@ -58,10 +58,17 @@ export function Header({ children }: { children?: ReactNode }) {
         <NavLink
           to="/who"
           aria-label={t('who.open', { name: active?.name ?? t('who.heading') })}
-          className="grid h-8 w-8 place-items-center rounded-full text-sm font-semibold text-black"
-          style={{ background: profileSwatch(active?.color ?? 'blue') }}
+          title={t('who.open', { name: active?.name ?? t('who.heading') })}
+          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text)]"
         >
-          {active ? profileInitial(active.name) : '?'}
+          <span
+            aria-hidden
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold text-black"
+            style={{ background: profileSwatch(active?.color ?? 'blue') }}
+          >
+            {active ? profileInitial(active.name) : '?'}
+          </span>
+          {active && <span className="max-w-32 truncate">{active.name}</span>}
         </NavLink>
         {children}
         {version && (

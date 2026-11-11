@@ -407,10 +407,9 @@ public sealed class EnrichmentService(
                 SeriesSeasonJson.MergeSummaries(title.SeasonsJson, details.Seasons));
         }
 
-        var isStandUp = details.Keywords.Any(k => TmdbStandUp.IsStandUpKeyword(k.Id, k.Name));
-        title.Category = isStandUp
-            ? TitleCategories.StandUp
-            : title.MediaType == MediaTypes.Movie ? TitleCategories.Movie : TitleCategories.Series;
+        title.Category = TmdbStandUp.ResolveCategory(
+            title.MediaType,
+            details.Keywords.Select(k => k.Name));
     }
 
     private async Task UpsertGenresAsync(

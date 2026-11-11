@@ -371,6 +371,91 @@ public sealed class TitleQueryServiceTests
     }
 
     [Fact]
+    public async Task Enabled_types_and_genres_union_enabled_sources_only()
+    {
+        await using var db = await CreateDbAsync();
+        var enabled = await SeedCatalogAsync(db);
+        var enabledTitles = await SeedTitlesAsync(db, enabled.Id);
+
+        var disabledProvider = new Provider
+        {
+            Key = "prime",
+            DisplayName = "Prime Video",
+            ProviderType = "watchmode",
+            IsEnabled = true,
+            CreatedAt = DateTime.UtcNow,
+        };
+        db.Providers.Add(disabledProvider);
+        await db.SaveChangesAsync();
+        var disabled = new CatalogSource
+        {
+            ProviderId = disabledProvider.Id,
+            CountryCode = "US",
+            MetadataLanguage = "en-US",
+            IsEnabled = false,
+            BaselineCompletedAt = DateTime.UtcNow,
+            LastFullAt = DateTime.UtcNow,
+        };
+        db.CatalogSources.Add(disabled);
+        await db.SaveChangesAsync();
+
+        var now = new DateTime(2026, 11, 1, 0, 0, 0, DateTimeKind.Utc);
+        var disabledOnly = new Title
+        {
+            MediaType = MediaTypes.Movie,
+            Category = TitleCategories.Movie,
+            OriginalTitle = "Disabled Only",
+            OriginalTitleNormalized = "disabled only",
+            ReleaseYear = 2021,
+            MetadataStatus = MetadataStatuses.Ready,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Titles.Add(disabledOnly);
+        await db.SaveChangesAsync();
+        var orphanGenre = new Genre { Id = 9001 };
+        var sharedGenre = new Genre { Id = 9002 };
+        db.Genres.AddRange(orphanGenre, sharedGenre);
+        await db.SaveChangesAsync();
+        db.GenreLocalizations.AddRange(
+            new GenreLocalization
+            {
+                GenreId = orphanGenre.Id,
+                Language = "en-US",
+                Name = "Orphan",
+            },
+            new GenreLocalization
+            {
+                GenreId = sharedGenre.Id,
+                Language = "it-IT",
+                Name = "Dramma",
+            });
+        db.TitleGenres.AddRange(
+            new TitleGenre { TitleId = disabledOnly.Id, GenreId = orphanGenre.Id },
+            new TitleGenre { TitleId = enabledTitles.Movie.Id, GenreId = sharedGenre.Id });
+        db.Availabilities.Add(new Availability
+        {
+            TitleId = disabledOnly.Id,
+            CatalogSourceId = disabled.Id,
+            FirstSeenAt = now,
+            LastSeenAt = now,
+            AddedAt = now,
+            IsBaseline = false,
+        });
+        await db.SaveChangesAsync();
+
+        var settings = await ConfigureArrAsync(sonarr: true, radarr: true);
+        var sut = new TitleQueryService(db, settings, new FixedClock(now));
+
+        var types = await sut.ListEnabledTypesAsync();
+        types.Select(t => t.Type).ShouldBe(["movie", "series", "standup"]);
+
+        var genres = await sut.ListEnabledGenresAsync();
+        genres.ShouldContain(g => g.Id == sharedGenre.Id && g.Name == "Dramma");
+        genres.ShouldNotContain(g => g.Id == orphanGenre.Id);
+    }
+
+    [Fact]
     public async Task FavoriteService_add_remove_is_idempotent()
     {
         await using var db = await CreateDbAsync();

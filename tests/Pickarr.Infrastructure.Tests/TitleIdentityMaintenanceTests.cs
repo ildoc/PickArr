@@ -123,6 +123,51 @@ public sealed class TitleIdentityMaintenanceTests
         solo.MetadataAttempts.ShouldBe(0);
     }
 
+    [Fact]
+    public async Task Run_reclassifies_StandUp_from_keyword_names_not_ids()
+    {
+        await using var db = await CreateDbAsync();
+        var now = new DateTime(2026, 11, 11, 12, 0, 0, DateTimeKind.Utc);
+
+        var superhero = new Keyword { Id = 9001, Name = "superhero" };
+        var standup = new Keyword { Id = 9002, Name = "stand-up comedy" };
+        db.Keywords.AddRange(superhero, standup);
+
+        var falseStandUp = new Title
+        {
+            MediaType = MediaTypes.Movie,
+            Category = TitleCategories.StandUp,
+            OriginalTitle = "The Lego Movie",
+            MetadataStatus = MetadataStatuses.Ready,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        var trueStandUp = new Title
+        {
+            MediaType = MediaTypes.Series,
+            Category = TitleCategories.Series,
+            OriginalTitle = "Example Special",
+            MetadataStatus = MetadataStatuses.Ready,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Titles.AddRange(falseStandUp, trueStandUp);
+        await db.SaveChangesAsync();
+
+        db.TitleKeywords.AddRange(
+            new TitleKeyword { TitleId = falseStandUp.Id, KeywordId = superhero.Id },
+            new TitleKeyword { TitleId = trueStandUp.Id, KeywordId = standup.Id });
+        await db.SaveChangesAsync();
+
+        var maintenance = new TitleIdentityMaintenance(db, NullLogger<TitleIdentityMaintenance>.Instance);
+        await maintenance.RunAsync();
+
+        (await db.Titles.SingleAsync(t => t.Id == falseStandUp.Id)).Category
+            .ShouldBe(TitleCategories.Movie);
+        (await db.Titles.SingleAsync(t => t.Id == trueStandUp.Id)).Category
+            .ShouldBe(TitleCategories.StandUp);
+    }
+
     private static async Task<PickarrDbContext> CreateDbAsync()
     {
         var connection = new SqliteConnection("Data Source=:memory:");

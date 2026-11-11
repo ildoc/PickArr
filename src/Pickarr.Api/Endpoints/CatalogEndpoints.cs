@@ -13,6 +13,12 @@ public static class CatalogEndpoints
         group.MapGet("/sources", async (ITitleQueryService titles, CancellationToken ct) =>
             Results.Ok(await titles.ListSourcesAsync(ct)));
 
+        group.MapGet("/types", async (ITitleQueryService titles, CancellationToken ct) =>
+            Results.Ok(await titles.ListEnabledTypesAsync(ct)));
+
+        group.MapGet("/genres", async (ITitleQueryService titles, CancellationToken ct) =>
+            Results.Ok(await titles.ListEnabledGenresAsync(ct)));
+
         group.MapGet("/sources/{sourceId:int}/titles", async (
             int sourceId,
             HttpContext http,

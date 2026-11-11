@@ -11,8 +11,8 @@ import { RecommendationsSettingsPage } from '../features/settings/Recommendation
 import { SettingsLayout } from '../features/settings/SettingsLayout'
 import { SettingsPage } from '../features/settings/SettingsPage'
 import { SystemPage } from '../features/settings/SystemPage'
-import { ProfileProvider, useProfiles } from '../features/who/profileContext'
 import { WhoPage } from '../features/who/WhoPage'
+import { ProfileProvider, useProfiles } from '../features/who/profileContext'
 
 function CatalogRoute() {
   const [params] = useSearchParams()
@@ -52,11 +52,13 @@ export function AppRouter() {
             <Route path="ratings" element={<MyRatingsPage />} />
             <Route path="admin/jobs" element={<Navigate to="/settings/jobs" replace />} />
             <Route path="settings" element={<SettingsLayout />}>
-              <Route index element={<SettingsPage />} />
+              <Route index element={<Navigate to="/settings/connections" replace />} />
+              <Route path="system" element={<SystemPage />} />
+              <Route path="users" element={<WhoPage mode="management" />} />
               <Route path="catalogs" element={<CatalogSourcesPage />} />
               <Route path="recommendations" element={<RecommendationsSettingsPage />} />
+              <Route path="connections" element={<SettingsPage />} />
               <Route path="jobs" element={<JobsPage />} />
-              <Route path="system" element={<SystemPage />} />
             </Route>
           </Route>
         </Route>

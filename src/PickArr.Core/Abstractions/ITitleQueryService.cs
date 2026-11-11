@@ -13,16 +13,24 @@ public interface ITitleQueryService
         int? personalProfileId = null);
 
     Task<IReadOnlyList<GenreCountDto>> ListGenresAsync(
-        int sourceId,
+        int? sourceId,
         bool favoritesOnly,
         CancellationToken cancellationToken = default,
         int? personalProfileId = null);
 
     Task<IReadOnlyList<CatalogTypeCountDto>> ListTypesAsync(
-        int sourceId,
+        int? sourceId,
         bool favoritesOnly,
         CancellationToken cancellationToken = default,
         int? personalProfileId = null);
+
+    /// <summary>Types present on titles available in any enabled catalog source.</summary>
+    Task<IReadOnlyList<CatalogTypeCountDto>> ListEnabledTypesAsync(
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Genres present on titles available in any enabled catalog source.</summary>
+    Task<IReadOnlyList<GenreCountDto>> ListEnabledGenresAsync(
+        CancellationToken cancellationToken = default);
 
     Task<TitleDetailDto?> GetTitleAsync(
         int titleId,

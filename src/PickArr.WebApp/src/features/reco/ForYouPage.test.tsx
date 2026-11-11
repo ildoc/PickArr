@@ -5,7 +5,13 @@ import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchCatalogTypes, fetchGenres, fetchSources } from '../../api/catalog'
+import {
+  fetchCatalogTypes,
+  fetchEnabledCatalogGenres,
+  fetchEnabledCatalogTypes,
+  fetchGenres,
+  fetchSources,
+} from '../../api/catalog'
 import { fetchRecommendations, fetchRecoStatus } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
 import { fetchProfiles } from '../../api/profiles'
@@ -16,7 +22,9 @@ import { ForYouPage } from './ForYouPage'
 vi.mock('../../api/catalog', () => ({
   fetchSources: vi.fn(),
   fetchCatalogTypes: vi.fn(),
+  fetchEnabledCatalogTypes: vi.fn(),
   fetchGenres: vi.fn(),
+  fetchEnabledCatalogGenres: vi.fn(),
 }))
 
 vi.mock('../../api/recommendations', () => ({
@@ -96,7 +104,14 @@ describe('ForYouPage', () => {
       },
     ])
     vi.mocked(fetchCatalogTypes).mockResolvedValue([{ type: 'movie', count: 1 }])
+    vi.mocked(fetchEnabledCatalogTypes).mockResolvedValue([
+      { type: 'movie', count: 2 },
+      { type: 'series', count: 1 },
+    ])
     vi.mocked(fetchGenres).mockResolvedValue([])
+    vi.mocked(fetchEnabledCatalogGenres).mockResolvedValue([
+      { id: 18, name: 'Drama', count: 3 },
+    ])
     vi.mocked(fetchRecommendations).mockResolvedValue(emptyPage)
     vi.mocked(fetchRecoStatus).mockResolvedValue({
       enabled: true,
@@ -139,6 +154,29 @@ describe('ForYouPage', () => {
     const lastCall = vi.mocked(fetchRecommendations).mock.calls.at(-1)?.[0]
     expect(lastCall?.sourceId).toBeUndefined()
     expect(localStorage.getItem('pickarr.sourceId.1')).toBeNull()
+    await waitFor(() => expect(fetchEnabledCatalogTypes).toHaveBeenCalled())
+    expect(fetchEnabledCatalogGenres).toHaveBeenCalled()
+    expect(fetchCatalogTypes).not.toHaveBeenCalled()
+  })
+
+  it('filters by type and genre while All sources is selected', async () => {
+    const user = userEvent.setup()
+    renderPage('/for-you')
+    await screen.findByLabelText('Type')
+    await waitFor(() => expect(fetchEnabledCatalogTypes).toHaveBeenCalled())
+    await user.selectOptions(screen.getByLabelText('Type'), 'series')
+    await user.selectOptions(screen.getByLabelText('Genre'), '18')
+    await waitFor(() =>
+      expect(fetchRecommendations).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scope: 'enabled',
+          type: 'series',
+          genre: '18',
+        }),
+      ),
+    )
+    expect(fetchCatalogTypes).not.toHaveBeenCalled()
+    expect(fetchGenres).not.toHaveBeenCalled()
   })
 
   it('switches to scope source immediately when a provider is chosen', async () => {

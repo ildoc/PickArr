@@ -357,7 +357,7 @@ Decisioni D-REC-01…D-REC-13: vedi §11.3. Override rispetto a D-REC-12: il liv
 | ID | Regola |
 |---|---|
 | BR-01 | **Identità del titolo.** Un titolo ha una sola riga indipendente dal paese. Può essere disponibile in più sorgenti. L'identità è data dall'id Watchmode, dalla coppia (tipo TMDB, id TMDB) quando nota, e dall'id IMDb quando noto (Watchmode può emettere id distinti per varianti localizzate dello stesso titolo). |
-| BR-02 | **Classificazione.** *Serie*: tipo TMDB `tv`. *Film*: tipo TMDB `movie`. *Stand-up*: sottocategoria identificata da genere/keyword (es. keyword TMDB "stand-up comedy"). La regola esatta si definisce dopo lo spike (D-06). La categoria è solo un'etichetta di UI: la destinazione su Sonarr/Radarr dipende dal tipo TMDB. |
+| BR-02 | **Classificazione.** *Serie*: tipo TMDB `tv`. *Film*: tipo TMDB `movie`. *Stand-up*: sottocategoria UI quando un keyword TMDB ha nome “stand-up comedy” (match sul nome normalizzato, senza id TMDB cablati). La destinazione su Sonarr/Radarr dipende dal tipo TMDB (`MediaType`), non da `Category`. |
 | BR-03 | **Disponibilità attiva.** Una disponibilità è attiva se non ha data di rimozione. |
 | BR-04 | **Novità.** Titolo con disponibilità attiva, non baseline, aggiunta negli ultimi *N* giorni (default 14). I titoli della baseline non sono mai "novità". |
 | BR-05 | **Rimozione.** Un titolo è considerato rimosso solo da una **sync completa**, quando non compare nell'elenco per **2 sync complete consecutive** (parametro configurabile). Questo evita falsi positivi dovuti a elenchi paginati che cambiano durante la lettura. Alla rimozione si imposta la data e si registra un evento. Se il titolo ricompare, la disponibilità torna attiva e si registra un evento "riaggiunto" (e conta come novità). |
@@ -567,7 +567,7 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 **Layout generale.** Intestazione fissa in cima (sticky) con logo, link di navigazione (*Catalogo*, *For you*, *My list*, *Valutazioni*, *Impostazioni* solo per l’admin), controllo profilo (apre `/who`), a destra la versione dell’immagine Docker (link al repo GitHub) e icona Ko-fi. Il selettore sorgente e la ricerca stanno nella pagina catalogo. Piè di pagina con attribuzioni Watchmode/TMDB.
 
-**Chi sei** (`/who`). Griglia dei profili (icona colore + iniziale). Scelta, creazione/eliminazione (admin), modifica nome/colore. Un solo profilo salta questa schermata all’avvio.
+**Who** (`/who`). Profile grid (color and initial), with the active profile clearly marked. Users select a profile and can edit their own name, color, and recommendation toggles. A single-profile installation skips this screen at startup. The header also shows the active profile name.
 
 **Home / Catalogo** (`/catalog`).
 - Chip dei filtri rapidi: Tutti · Novità · In scadenza · Rimossi.
@@ -587,7 +587,7 @@ Descrizione testuale (i mockup saranno prodotti in seguito).
 
 **Dialog Elimina.** Riepilogo (percorso, dimensione, file), due caselle, pulsante rosso di conferma.
 
-**Impostazioni.** Solo profilo admin. Sezioni: Fonti dati · Sonarr · Radarr · Cataloghi · Raccomandazioni (stato modello/embedding, azioni rebuild/eval/reset) · Job · Sistema · Interfaccia. I toggle di gusto per profilo si gestiscono dal profilo su `/who`, non da queste sezioni globali.
+**Settings** (`/settings/*`). Admin only. Tabs, in order: System, Users, Catalogs, Recommendations, Connections, Jobs. Users (`/settings/users`) lets the admin create and delete profiles and edit any profile. Connections contains Sonarr, Radarr, Watchmode, and TMDB settings. The other tabs cover catalog sources, recommendations, jobs, and system statistics. Each profile manages its own taste preferences on `/who`, not in global settings. All tabs share a consistent content width and background surface.
 
 **Job.** Tabella job (anche coda `ml` per embedding/build/eval), pulsante Esegui ora, storico run, grafico/indicatore crediti, elenco titoli non mappati.
 
@@ -644,7 +644,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | D-03 | **Voto IMDb.** TMDB non fornisce il voto IMDb. | Integrazione opzionale con OMDb (API key personale). Senza chiave, solo voto TMDB. |
 | D-04 | **Default delle opzioni di eliminazione.** | Entrambe disattivate, per sicurezza. L'utente può attivarle a ogni eliminazione. |
 | D-05 | **Costo reale per chiamata** Watchmode (e parametri esatti dell'elenco titoli). | Da misurare nello spike SP-1; il design usa un budget parametrico. |
-| D-06 | **Classificazione stand-up.** | Preferenza per il genere Watchmode se presente, altrimenti keyword TMDB; verifica nello spike. |
+| D-06 | **Classificazione stand-up.** | Keyword TMDB per **nome** (“stand-up comedy” → `standupcomedy`). Niente id keyword cablati. Preferenza genere Watchmode ancora non implementata. All’avvio, `TitleIdentityMaintenance` ricalcola `Category` dai keyword già persistiti. |
 | D-07 | **Sezione "In scadenza" sul piano free** (solo anteprima dei prossimi 10 per paese). | Mostrata quando i dati ci sono, con nota sulla limitazione. Calendario completo con piano a pagamento. |
 | D-08 | **Nome del progetto.** | "Pickarr" provvisorio. |
 | D-09 | **Versioni minime** di Sonarr (v4) e Radarr (v5). | Da confermare con le istanze in uso. |

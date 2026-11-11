@@ -6,7 +6,7 @@ import { createProfile, deleteProfile, updateProfile, type Profile } from '../..
 import { profileInitial, profilePalette, profileSwatch } from './colors'
 import { useProfiles } from './profileContext'
 
-export function WhoPage() {
+export function WhoPage({ mode = 'picker' }: { mode?: 'picker' | 'management' }) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -36,29 +36,43 @@ export function WhoPage() {
     return <p className="text-[var(--muted)]">{t('catalog.loading')}</p>
   }
 
-  const canManage = active?.isAdmin === true
+  const canManage = mode === 'management' && active?.isAdmin === true
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className={`mx-auto w-full space-y-8 ${mode === 'picker' ? 'max-w-3xl' : ''}`}>
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{t('who.heading')}</h1>
-        <p className="mt-2 text-sm text-[var(--muted)]">{t('who.lead')}</p>
+        <h2 className="text-2xl font-semibold tracking-tight">
+          {mode === 'management' ? t('settings.users') : t('who.heading')}
+        </h2>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          {mode === 'management' ? t('who.manageLead') : t('who.lead')}
+        </p>
       </div>
 
       {error && <p className="text-sm text-red-300">{error}</p>}
 
       <ul className="grid gap-4 sm:grid-cols-2">
         {profiles.map((profile) => {
-          const canEdit = active != null && (active.isAdmin || active.id === profile.id)
+          const isActive = active?.id === profile.id
+          const canEdit =
+            mode === 'management' ? active?.isAdmin === true : isActive
           return (
             <li key={profile.id} className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-4">
-              <button type="button" className="flex w-full items-center gap-3 text-left" onClick={() => enter(profile.id)}>
-                <Avatar profile={profile} />
-                <span>
-                  <span className="block font-medium">{profile.name}</span>
-                  {profile.isAdmin && <span className="block text-xs text-[var(--muted)]">{t('who.admin')}</span>}
-                </span>
-              </button>
+              {mode === 'picker' ? (
+                <button
+                  type="button"
+                  aria-current={isActive ? 'true' : undefined}
+                  aria-label={isActive
+                    ? t('who.currentProfile', { name: profile.name })
+                    : t('who.switchTo', { name: profile.name })}
+                  className="flex w-full items-center gap-3 rounded-md text-left outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]"
+                  onClick={() => enter(profile.id)}
+                >
+                  <ProfileIdentity profile={profile} isActive={isActive} />
+                </button>
+              ) : (
+                <ProfileIdentity profile={profile} isActive={isActive} />
+              )}
               {canEdit && (
                 <button
                   type="button"
@@ -97,19 +111,33 @@ export function WhoPage() {
         })}
       </ul>
 
-      {canManage && profiles.length < 10 && <CreateProfile onError={() => setError(t('who.saveFailed'))} onCreated={() => setError(null)} />}
+      {canManage && profiles.length < 10 && (
+        <CreateProfile onError={() => setError(t('who.saveFailed'))} onCreated={() => setError(null)} />
+      )}
     </div>
   )
 }
 
-function Avatar({ profile }: { profile: Profile }) {
+function ProfileIdentity({ profile, isActive }: { profile: Profile; isActive: boolean }) {
+  const { t } = useTranslation()
   return (
-    <span
-      aria-hidden
-      className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-semibold text-black"
-      style={{ background: profileSwatch(profile.color) }}
-    >
-      {profileInitial(profile.name)}
+    <span className="flex w-full items-center gap-3">
+      <span
+        aria-hidden
+        className="grid h-12 w-12 shrink-0 place-items-center rounded-full text-lg font-semibold text-black"
+        style={{ background: profileSwatch(profile.color) }}
+      >
+        {profileInitial(profile.name)}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block font-medium">{profile.name}</span>
+        {profile.isAdmin && <span className="block text-xs text-[var(--muted)]">{t('who.admin')}</span>}
+      </span>
+      {isActive && (
+        <span className="shrink-0 rounded-full bg-[var(--accent)]/20 px-2.5 py-1 text-xs text-blue-200">
+          {t('who.current')}
+        </span>
+      )}
     </span>
   )
 }

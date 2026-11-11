@@ -228,63 +228,70 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
-      <h1 className="text-3xl font-semibold tracking-tight">{t('settings.connections')}</h1>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{t('settings.connections')}</h2>
+        <p className="mt-2 text-sm text-[var(--muted)]">{t('settings.connectionsIntro')}</p>
+      </div>
 
-      <ArrSection
-        title={t('settings.sonarr')}
-        form={sonarr}
-        onChange={updateSonarr}
-        apiKeySet={settings.data?.sonarr.apiKey.isSet ?? false}
-        profiles={sonarrProfiles}
-        roots={sonarrRoots}
-        testMessage={sonarrTest}
-        testing={testing === 'sonarr'}
-        onTest={() => void runTest('sonarr')}
-      />
+      <div className="grid gap-6 xl:grid-cols-2">
+        <ArrSection
+          title={t('settings.sonarr')}
+          form={sonarr}
+          onChange={updateSonarr}
+          apiKeySet={settings.data?.sonarr.apiKey.isSet ?? false}
+          profiles={sonarrProfiles}
+          roots={sonarrRoots}
+          testMessage={sonarrTest}
+          testing={testing === 'sonarr'}
+          onTest={() => void runTest('sonarr')}
+        />
 
-      <ArrSection
-        title={t('settings.radarr')}
-        form={radarr}
-        onChange={updateRadarr}
-        apiKeySet={settings.data?.radarr.apiKey.isSet ?? false}
-        profiles={radarrProfiles}
-        roots={radarrRoots}
-        testMessage={radarrTest}
-        testing={testing === 'radarr'}
-        onTest={() => void runTest('radarr')}
-      />
+        <ArrSection
+          title={t('settings.radarr')}
+          form={radarr}
+          onChange={updateRadarr}
+          apiKeySet={settings.data?.radarr.apiKey.isSet ?? false}
+          profiles={radarrProfiles}
+          roots={radarrRoots}
+          testMessage={radarrTest}
+          testing={testing === 'radarr'}
+          onTest={() => void runTest('radarr')}
+        />
+      </div>
 
-      <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
-        <h2 className="text-lg font-medium">{t('settings.watchmode')}</h2>
-        <label className="block space-y-1 text-sm">
-          <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
-          <input
-            type="password"
-            autoComplete="off"
-            value={watchmodeKey}
-            onChange={(e) => setWatchmodeKey(e.target.value)}
-            placeholder={settings.data?.watchmode.apiKey.isSet ? t('settings.apiKeySet') : ''}
-            className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
-          />
-        </label>
-      </section>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
+          <h2 className="text-lg font-medium">{t('settings.watchmode')}</h2>
+          <label className="block space-y-1 text-sm">
+            <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
+            <input
+              type="password"
+              autoComplete="off"
+              value={watchmodeKey}
+              onChange={(e) => setWatchmodeKey(e.target.value)}
+              placeholder={settings.data?.watchmode.apiKey.isSet ? t('settings.apiKeySet') : ''}
+              className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
+            />
+          </label>
+        </section>
 
-      <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
-        <h2 className="text-lg font-medium">{t('settings.tmdb')}</h2>
-        <label className="block space-y-1 text-sm">
-          <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
-          <input
-            type="password"
-            autoComplete="off"
-            value={tmdbApiKey}
-            onChange={(e) => setTmdbApiKey(e.target.value)}
-            placeholder={settings.data?.tmdb.apiKey.isSet ? t('settings.apiKeySet') : ''}
-            className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
-          />
-          <p className="text-xs text-[var(--muted)]">{t('settings.tmdbApiKeyHint')}</p>
-        </label>
-      </section>
+        <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
+          <h2 className="text-lg font-medium">{t('settings.tmdb')}</h2>
+          <label className="block space-y-1 text-sm">
+            <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
+            <input
+              type="password"
+              autoComplete="off"
+              value={tmdbApiKey}
+              onChange={(e) => setTmdbApiKey(e.target.value)}
+              placeholder={settings.data?.tmdb.apiKey.isSet ? t('settings.apiKeySet') : ''}
+              className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2"
+            />
+            <p className="text-xs text-[var(--muted)]">{t('settings.tmdbApiKeyHint')}</p>
+          </label>
+        </section>
+      </div>
 
       <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
         <h2 className="text-lg font-medium">{t('settings.recommendations')}</h2>

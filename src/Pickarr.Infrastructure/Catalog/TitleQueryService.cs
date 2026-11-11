@@ -289,8 +289,16 @@ public sealed class TitleQueryService(
         && request.ArrStates is not { Count: > 0 }
         && request.MinRating is null;
 
+    public Task<IReadOnlyList<CatalogTypeCountDto>> ListEnabledTypesAsync(
+        CancellationToken cancellationToken = default) =>
+        ListTypesAsync(sourceId: null, favoritesOnly: false, cancellationToken);
+
+    public Task<IReadOnlyList<GenreCountDto>> ListEnabledGenresAsync(
+        CancellationToken cancellationToken = default) =>
+        ListGenresAsync(sourceId: null, favoritesOnly: false, cancellationToken);
+
     public async Task<IReadOnlyList<GenreCountDto>> ListGenresAsync(
-        int sourceId,
+        int? sourceId,
         bool favoritesOnly,
         CancellationToken cancellationToken = default,
         int? personalProfileId = null)
@@ -301,14 +309,19 @@ public sealed class TitleQueryService(
             return [];
         }
 
-        var source = await db.CatalogSources.AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == sourceId, cancellationToken);
-        if (source is null && !favoritesOnly)
+        CatalogSource? source = null;
+        if (sourceId is int sid)
         {
-            return [];
+            source = await db.CatalogSources.AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == sid, cancellationToken);
+            if (source is null && !favoritesOnly)
+            {
+                return [];
+            }
         }
 
-        var lang = source?.MetadataLanguage ?? LanguageFallback.English;
+        var lang = source?.MetadataLanguage
+            ?? await ResolveEnabledMetadataLanguageAsync(cancellationToken);
         var genreQuery = db.TitleGenres.AsNoTracking()
             .Where(tg => arrFilter.AllowedMediaTypes.Contains(tg.Title!.MediaType));
         if (favoritesOnly && personalProfileId is int genreProfileId)
@@ -319,10 +332,19 @@ public sealed class TitleQueryService(
         {
             genreQuery = genreQuery.Where(tg => tg.Title!.Favorites.Any());
         }
+        else if (sourceId is int catalogSourceId)
+        {
+            genreQuery = genreQuery.Where(tg =>
+                tg.Title!.Availabilities.Any(a => a.CatalogSourceId == catalogSourceId && a.RemovedAt == null));
+        }
         else
         {
             genreQuery = genreQuery.Where(tg =>
-                tg.Title!.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null));
+                tg.Title!.Availabilities.Any(a =>
+                    a.RemovedAt == null
+                    && a.CatalogSource!.IsEnabled
+                    && a.CatalogSource.Provider != null
+                    && a.CatalogSource.Provider.IsEnabled));
         }
 
         var rows = await genreQuery
@@ -357,7 +379,7 @@ public sealed class TitleQueryService(
     }
 
     public async Task<IReadOnlyList<CatalogTypeCountDto>> ListTypesAsync(
-        int sourceId,
+        int? sourceId,
         bool favoritesOnly,
         CancellationToken cancellationToken = default,
         int? personalProfileId = null)
@@ -366,6 +388,16 @@ public sealed class TitleQueryService(
         if (arrFilter.AllowedMediaTypes.Count == 0)
         {
             return [];
+        }
+
+        if (sourceId is int sid && !favoritesOnly)
+        {
+            var exists = await db.CatalogSources.AsNoTracking()
+                .AnyAsync(s => s.Id == sid, cancellationToken);
+            if (!exists)
+            {
+                return [];
+            }
         }
 
         var query = db.Titles.AsNoTracking()
@@ -378,9 +410,19 @@ public sealed class TitleQueryService(
         {
             query = query.Where(t => t.Favorites.Any());
         }
+        else if (sourceId is int catalogSourceId)
+        {
+            query = query.Where(t =>
+                t.Availabilities.Any(a => a.CatalogSourceId == catalogSourceId && a.RemovedAt == null));
+        }
         else
         {
-            query = query.Where(t => t.Availabilities.Any(a => a.CatalogSourceId == sourceId && a.RemovedAt == null));
+            query = query.Where(t =>
+                t.Availabilities.Any(a =>
+                    a.RemovedAt == null
+                    && a.CatalogSource!.IsEnabled
+                    && a.CatalogSource.Provider != null
+                    && a.CatalogSource.Provider.IsEnabled));
         }
 
         var rows = await query
@@ -393,6 +435,16 @@ public sealed class TitleQueryService(
             .OrderBy(row => TypeSort(row.Type))
             .ThenBy(row => row.Type, StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    private async Task<string> ResolveEnabledMetadataLanguageAsync(CancellationToken cancellationToken)
+    {
+        var lang = await db.CatalogSources.AsNoTracking()
+            .Where(s => s.IsEnabled && s.Provider != null && s.Provider.IsEnabled)
+            .OrderBy(s => s.Id)
+            .Select(s => s.MetadataLanguage)
+            .FirstOrDefaultAsync(cancellationToken);
+        return string.IsNullOrWhiteSpace(lang) ? LanguageFallback.English : lang;
     }
 
     private static int TypeSort(string type) => type switch

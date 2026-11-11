@@ -210,7 +210,7 @@ export function JobsPage() {
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{t('admin.heading')}</h1>
+        <h2 className="text-2xl font-semibold tracking-tight">{t('settings.jobs')}</h2>
         <p className="mt-1 text-sm text-[var(--muted)]">{t('admin.subtitle')}</p>
       </div>
 

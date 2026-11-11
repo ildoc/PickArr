@@ -1,3 +1,4 @@
+using Pickarr.Core.Domain;
 using Pickarr.Core.Metadata;
 using Shouldly;
 
@@ -6,14 +7,30 @@ namespace Pickarr.Core.Tests;
 public sealed class TmdbStandUpTests
 {
     [Theory]
-    [InlineData(9715, "anything", true)]
-    [InlineData(1, "stand-up comedy", true)]
-    [InlineData(1, "Stand Up Comedy", true)]
-    [InlineData(1, "standup", true)]
-    [InlineData(1, "drama", false)]
-    public void Detects_stand_up_keywords(int id, string name, bool expected)
+    [InlineData("stand-up comedy", true)]
+    [InlineData("Stand Up Comedy", true)]
+    [InlineData("standup comedy", true)]
+    [InlineData("stand–up comedy", true)]
+    [InlineData("standup", false)]
+    [InlineData("superhero", false)]
+    [InlineData("drama", false)]
+    [InlineData(null, false)]
+    [InlineData("", false)]
+    [InlineData("   ", false)]
+    public void Detects_stand_up_keyword_names(string? name, bool expected)
     {
-        TmdbStandUp.IsStandUpKeyword(id, name).ShouldBe(expected);
+        TmdbStandUp.IsStandUpKeyword(name).ShouldBe(expected);
+    }
+
+    [Fact]
+    public void ResolveCategory_uses_keyword_names_not_media_type_alone()
+    {
+        TmdbStandUp.ResolveCategory(MediaTypes.Movie, ["superhero", "based on comic"])
+            .ShouldBe(TitleCategories.Movie);
+        TmdbStandUp.ResolveCategory(MediaTypes.Movie, ["stand-up comedy"])
+            .ShouldBe(TitleCategories.StandUp);
+        TmdbStandUp.ResolveCategory(MediaTypes.Series, Array.Empty<string?>())
+            .ShouldBe(TitleCategories.Series);
     }
 
     [Fact]

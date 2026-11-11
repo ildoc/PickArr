@@ -96,7 +96,10 @@ export function CatalogSourcesPage() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="space-y-4">
-        <p className="text-sm text-[var(--muted)]">{t('settings.catalogIntro')}</p>
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">{t('settings.catalogs')}</h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">{t('settings.catalogIntro')}</p>
+        </div>
         {setup.data.providers.map((provider) => {
           const selected = draft.find((item) => item.id === provider.id)
           if (!selected) return null

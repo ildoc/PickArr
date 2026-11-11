@@ -426,7 +426,7 @@ Rules:
 
 - **Language fallback (BR-15):** call with the source language. If `overview` or title are empty, repeat with `en-US` and store **two** localizations.
 - **TVDB id:** from `external_ids.tvdb_id` for series. `imdb_id` from `external_ids` (series) or from the detail (movies).
-- **Stand-up:** look in `keywords` for the term "stand-up comedy" (TMDB id to verify, SP-2) or the genre indicated by Watchmode.
+- **Stand-up:** UI category from TMDB keyword **names** that normalize to `standupcomedy` (e.g. “stand-up comedy”). No hardcoded TMDB keyword ids (ids drift / collide). Watchmode genre preference (D-06) is not wired yet.
 - **Image URLs:** built by the backend (`secure_base_url` + size + `PosterPath`); suggested `w342` for the grid, `w500` for the card, `w780` for the backdrop.
 - **Attribution:** required logo and wording shown in the UI (FR-MET-07).
 
@@ -804,7 +804,13 @@ Favorites are not filtered on the catalog: use `GET /favorites` and the UI route
 }
 ```
 
+**`GET /catalog/sources/{sourceId}/types`** — types present in the source, with counts.
+
 **`GET /catalog/sources/{sourceId}/genres`** — genres present in the source, with counts.
+
+**`GET /catalog/types`** — types present across the union of enabled catalog sources (For you All scope).
+
+**`GET /catalog/genres`** — genres present across the union of enabled catalog sources (For you All scope).
 
 **`GET /catalog/sources/{sourceId}/featured`** (C) — featured title for the hero.
 
@@ -1340,7 +1346,7 @@ Spikes are short activities to do **before** implementation, with a written outp
 | ID | Spike | Questions to answer |
 |---|---|---|
 | **SP-1** | **Watchmode** | Credit cost of `list-titles` (per page) and other calls; exact parameter names (`source_ids`, `regions`, `types`, `sort_by`, `page`, `limit`); max `limit`; response format; available sorts and stability (for full sync); Netflix IT/US title counts to estimate pages; response when quota is exhausted; leaving-dates endpoint and cost (free preview); whether `releases` is available on the free plan. |
-| **SP-2** | **TMDB** | `tvdb_id` coverage for Netflix IT/US series; `language` behavior with missing translations; stand-up classification (keyword id "stand-up comedy", Watchmode genre); `tv_special` cases. |
+| **SP-2** | **TMDB** | `tvdb_id` coverage for Netflix IT/US series; `language` behavior with missing translations; stand-up classification by keyword **name** “stand-up comedy” (no hardcoded keyword ids); `tv_special` cases. |
 | **SP-3** | **Sonarr/Radarr** | Versions in use; real payloads of `POST /series` and `POST /movie`; allowed values for `monitor` and `monitorNewItems`; semantics of `statistics.episodeCount` vs `totalEpisodeCount`; queue format and pagination; delete parameters; webhook payload and authentication; presence of an explicit default for profile/root folder (D-01). |
 | **SP-4** | **Hangfire on SQLite** | Stability of the storage package under concurrency and restarts; if negative, in-memory storage (schedules are recreated) or another storage. |
 | **SP-5** | **SQLite and container** | Search and grid performance with 10k titles and joins with `ArrLibraryItems`; WAL behavior on network/Docker volumes; `/config` volume permissions with non-root user. |

@@ -85,7 +85,8 @@ describe('Header', () => {
     const kofi = screen.getByRole('link', { name: 'Support on Ko-fi' })
     expect(kofi).toHaveAttribute('href', 'https://ko-fi.com/pheeleeppo')
     expect(await screen.findByRole('link', { name: 'Switch profile, Admin' })).toHaveAttribute('href', '/who')
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+    expect(screen.getByText('Admin')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings/system')
   })
 
   it('hides settings for a profile that is not admin', async () => {

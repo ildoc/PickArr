@@ -29,14 +29,14 @@ function profile(id: number, name: string, isAdmin: boolean): Profile {
   }
 }
 
-function renderWho() {
+function renderWho(mode: 'picker' | 'management' = 'picker') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const ui: ReactNode = (
     <QueryClientProvider client={client}>
       <I18nextProvider i18n={i18n}>
         <ProfileProvider>
           <MemoryRouter>
-            <WhoPage />
+            <WhoPage mode={mode} />
           </MemoryRouter>
         </ProfileProvider>
       </I18nextProvider>
@@ -63,17 +63,18 @@ describe('WhoPage', () => {
     vi.clearAllMocks()
   })
 
-  it('lets the admin edit everyone, delete others, and add a profile', async () => {
+  it('lets the admin manage everyone from the Users view', async () => {
     const user = userEvent.setup()
     vi.mocked(fetchProfiles).mockResolvedValue([profile(1, 'Admin', true), profile(2, 'Kid', false)])
     localStorage.setItem('pickarr.profileId', '1')
 
-    renderWho()
+    renderWho('management')
 
     expect(await screen.findByRole('button', { name: 'Add profile' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Edit Kid' })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Delete Kid' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Delete Admin' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Switch to profile, Kid' })).toBeNull()
     expect(screen.queryByRole('button', { name: /transfer/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Edit Kid' }))
@@ -81,13 +82,16 @@ describe('WhoPage', () => {
     expect(screen.getByRole('checkbox', { name: /Hide library titles/i })).toBeTruthy()
   })
 
-  it('lets a non-admin edit only their own profile', async () => {
+  it('marks the active profile and lets a non-admin edit only their own profile', async () => {
     vi.mocked(fetchProfiles).mockResolvedValue([profile(1, 'Admin', true), profile(2, 'Kid', false)])
     localStorage.setItem('pickarr.profileId', '2')
 
     renderWho()
 
     expect(await screen.findByRole('button', { name: 'Edit Kid' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Current profile, Kid' })).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByText('Current profile')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Switch to profile, Admin' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Edit Admin' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Add profile' })).toBeNull()
     expect(screen.queryByRole('button', { name: /Delete/ })).toBeNull()
@@ -100,7 +104,7 @@ describe('WhoPage', () => {
     ])
     localStorage.setItem('pickarr.profileId', '1')
 
-    renderWho()
+    renderWho('management')
 
     expect(await screen.findByRole('button', { name: 'Edit Admin' })).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Add profile' })).toBeNull()

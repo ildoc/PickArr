@@ -30,7 +30,10 @@ export function CatalogForYouRow({ sourceId }: { sourceId: number }) {
 
   if (reco.isLoading) {
     return (
-      <section className="space-y-3" aria-busy="true">
+      <section
+        className="space-y-3 border-b border-white/10 pb-6"
+        aria-busy="true"
+      >
         <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
           {t('reco.catalogRowHeading')}
         </h2>
@@ -44,7 +47,7 @@ export function CatalogForYouRow({ sourceId }: { sourceId: number }) {
   }
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-3 border-b border-white/10 pb-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
           {t('reco.catalogRowHeading')}

@@ -330,7 +330,7 @@ MoSCoW priority: **M** for the feature MVP, **S** should, **C** could.
 
 **Dialog (`TitleDialog`).** Labeled actions *Like* / *Dislike* / *Not interested*, *Hide*, and favorite. Shortcuts `O` / `L` / `D` / `N` / `W`. *Why we recommend this* block if arriving from *For you*. At the bottom, *Similar titles* grid on multiple rows.
 
-**For you (`/for-you`).** Same provider + country selector as the catalog (`FilterBar`), with an **All** option on both (default). All → scope `enabled`; a concrete pair → scope `source` and refetch immediately (no text search on this page). `N_eff / N0` indicator (with *Teach me your tastes* link) only if `N_eff < N0`. Type, genre, include-in-library filters. Infinite-scroll grid. Reason chips.
+**For you (`/for-you`).** Same provider + country selector as the catalog (`FilterBar`), with an **All** option on both (default). All → scope `enabled`; a concrete pair → scope `source` and refetch immediately (no text search on this page). Type and genre options load for All from `GET /catalog/types` and `/catalog/genres` (enabled-source union); with a concrete source they use the per-source endpoints. `N_eff / N0` indicator (with *Teach me your tastes* link) only if `N_eff < N0`. Include-in-library filter. Infinite-scroll grid. Reason chips.
 
 **Onboarding (`/taste`).** Grid of pool titles, large actions, counter, *Show more titles*, *Done*.
 

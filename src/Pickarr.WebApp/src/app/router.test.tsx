@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
@@ -221,6 +221,23 @@ describe('catalog and my list routes', () => {
     expect(await screen.findByRole('heading', { name: "Who's watching?" })).toBeTruthy()
   })
 
+  it('marks the active profile in the picker and confirms the switch in the header', async () => {
+    const user = userEvent.setup()
+    vi.mocked(fetchProfiles).mockResolvedValue([profile(1, 'Admin', true), profile(2, 'Kid', false)])
+    localStorage.setItem('pickarr.profileId', '1')
+
+    renderAt('/who')
+
+    expect(await screen.findByRole('button', { name: 'Current profile, Admin' })).toHaveAttribute(
+      'aria-current',
+      'true',
+    )
+    await user.click(screen.getByRole('button', { name: 'Switch to profile, Kid' }))
+
+    expect(await screen.findByLabelText('Provider')).toBeTruthy()
+    expect(await screen.findByRole('link', { name: 'Switch profile, Kid' })).toBeTruthy()
+  })
+
   it('sends a non-admin profile away from settings', async () => {
     vi.mocked(fetchProfiles).mockResolvedValue([
       profile(1, 'Admin', true),
@@ -228,7 +245,7 @@ describe('catalog and my list routes', () => {
     ])
     localStorage.setItem('pickarr.profileId', '2')
 
-    renderAt('/settings/jobs')
+    renderAt('/settings/users')
 
     expect(await screen.findByLabelText('Provider')).toBeTruthy()
     expect(screen.queryByRole('heading', { name: 'Settings' })).toBeNull()
@@ -239,7 +256,23 @@ describe('catalog and my list routes', () => {
     renderAt('/settings')
 
     expect(await screen.findByRole('heading', { name: 'Connections' })).toBeTruthy()
-    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings')
+    expect(screen.getByRole('link', { name: 'Settings' })).toHaveAttribute('href', '/settings/system')
+  })
+
+  it('orders admin tabs consistently and exposes user management to the admin', async () => {
+    renderAt('/settings/users')
+
+    expect(await screen.findByRole('heading', { name: 'Users' })).toBeTruthy()
+    const navigation = within(screen.getByRole('navigation', { name: 'Settings sections' }))
+    expect(navigation.getAllByRole('link').map((link) => link.textContent)).toEqual([
+      'System',
+      'Users',
+      'Catalogs',
+      'Recommendations',
+      'Connections',
+      'Jobs',
+    ])
+    expect(screen.getByRole('button', { name: 'Add profile' })).toBeTruthy()
   })
 })
 

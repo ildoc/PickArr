@@ -2,7 +2,13 @@ import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-qu
 import { useCallback, useEffect, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { fetchCatalogTypes, fetchGenres, fetchSources } from '../../api/catalog'
+import {
+  fetchCatalogTypes,
+  fetchEnabledCatalogGenres,
+  fetchEnabledCatalogTypes,
+  fetchGenres,
+  fetchSources,
+} from '../../api/catalog'
 import { fetchRecommendations, fetchRecoStatus } from '../../api/recommendations'
 import { fetchSettings } from '../../api/settings'
 import { savePreferredSourceId } from '../../lib/sourcePreference'
@@ -60,15 +66,15 @@ export function ForYouPage() {
   )
 
   const typesQuery = useQuery({
-    queryKey: ['catalog-types', sourceId],
-    enabled: sourceId != null,
-    queryFn: () => fetchCatalogTypes(sourceId!),
+    queryKey: ['catalog-types', sourceId ?? 'enabled'],
+    queryFn: () =>
+      sourceId != null ? fetchCatalogTypes(sourceId) : fetchEnabledCatalogTypes(),
   })
 
   const genresQuery = useQuery({
-    queryKey: ['catalog-genres', sourceId],
-    enabled: sourceId != null,
-    queryFn: () => fetchGenres(sourceId!),
+    queryKey: ['catalog-genres', sourceId ?? 'enabled'],
+    queryFn: () =>
+      sourceId != null ? fetchGenres(sourceId) : fetchEnabledCatalogGenres(),
   })
 
   useEffect(() => {

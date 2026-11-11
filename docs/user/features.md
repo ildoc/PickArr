@@ -40,14 +40,15 @@ Up to **10** profiles share one install. There is no authentication: profiles ar
 | Rule | Behavior |
 | --- | --- |
 | Admin | First profile is admin (`IsAdmin`). Role is not transferred; admin profile is not deleted. |
-| Who | `/who` selects the active profile. Last id is stored in `localStorage` as `pickarr.profileId`. |
+| Who | `/who` selects the active profile. The current profile is marked in the picker and shown beside the header avatar. Last id is stored in `localStorage` as `pickarr.profileId`. |
 | Single profile | One profile skips the picker and enters the catalog. |
 | Header | Profile control always opens `/who`. After choice the SPA sends `X-Pickarr-Profile`. |
-| Settings | Non-admin profiles do not see Settings; `/settings` redirects to the catalog. Settings APIs stay open. |
+| Settings | Non-admin profiles do not see Settings; `/settings/*` redirects to the catalog. Settings APIs stay open. |
+| User management | Admins manage household profiles in Settings → Users. `/who` remains the profile picker; each profile can edit its own name, color, and recommendation preferences there. |
 | Personal data | Favorites, ratings, watched/hide, recommendations, and reco toggles are per profile. |
 | Shared data | Catalog metadata, embeddings, app settings, and Arr library rows stay global. |
 
-Anyone can edit their own name, color, and reco toggles (`useImplicit`, `excludeInLibrary`). Only the admin creates or deletes other profiles.
+Anyone can edit their own name, color, and reco toggles (`useImplicit`, `excludeInLibrary`). Only the admin creates or deletes profiles and can edit every profile from Settings → Users.
 
 ## My list
 
@@ -61,6 +62,7 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 - Default filter: **All** providers and countries (union of enabled sources). Provider and country each offer an All option so the cross-catalog view is explicit.
 - Choosing a concrete provider + country narrows the list to that source immediately (no search box on this page).
+- Type and genre filters work with All selected (options from the enabled-catalog union) or with a concrete source (options from that source).
 - Cold start: while effective ratings are below the personalization threshold (`N0`, default 30), recommendations can blend a **household prior** from other profiles’ Love/Like (capped); at full personalization that term is zero
 - Optional ONNX embedding model under the data path improves similarity when installed
 - Taste data never leaves the container
@@ -77,7 +79,7 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 ## Administration
 
-Admin-only UI sections cover data sources, Sonarr/Radarr, catalogs, recommendations (model status, rebuild/eval/reset), jobs, system stats, and UI language preference. Job views show runs (with kind-specific stats), Watchmode credit usage, and unmapped titles; the Jobs page also configures how many finished runs to keep per job. System lists log files for download and can clear them.
+Admin-only Settings tabs are ordered System, Users, Catalogs, Recommendations, Connections, and Jobs. They cover system stats, profile management, catalog sources, recommendation settings (model status, rebuild/eval/reset), Sonarr/Radarr and Watchmode/TMDB connections, and job control. Job views show runs (with kind-specific stats), Watchmode credit usage, and unmapped titles; the Jobs page also configures how many finished runs to keep per job. System lists log files for download and can clear them.
 
 ## Attribution
 

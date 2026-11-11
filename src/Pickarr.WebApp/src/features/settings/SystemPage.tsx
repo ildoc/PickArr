@@ -53,8 +53,11 @@ export function SystemPage() {
   const data = stats.data
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <p className="text-sm text-[var(--muted)]">{t('settings.systemIntro')}</p>
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-semibold tracking-tight">{t('settings.system')}</h2>
+        <p className="mt-2 text-sm text-[var(--muted)]">{t('settings.systemIntro')}</p>
+      </div>
 
       {(status.data?.version || status.data?.utcNow) && (
         <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">

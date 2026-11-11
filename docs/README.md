@@ -17,6 +17,7 @@ All published documentation is in **English**. Product requirement IDs and deep 
 | --- | --- |
 | [Developer guide](developer/README.md) | Repo layout, local run, tests, contribution expectations |
 | [Architecture](developer/architecture.md) | Runtime topology, layers, jobs, data boundaries |
+| [UI/UX review](ui-ux-review.md) | Code-based assessment and prioritized interface improvement proposals |
 
 ## Product specifications (source of truth)
 

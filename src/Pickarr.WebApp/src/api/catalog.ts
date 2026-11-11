@@ -33,8 +33,16 @@ export function fetchCatalogTypes(sourceId: number) {
   return apiGet<CatalogTypeCount[]>(`/api/v1/catalog/sources/${sourceId}/types`)
 }
 
+export function fetchEnabledCatalogTypes() {
+  return apiGet<CatalogTypeCount[]>('/api/v1/catalog/types')
+}
+
 export function fetchGenres(sourceId: number) {
   return apiGet<GenreCount[]>(`/api/v1/catalog/sources/${sourceId}/genres`)
+}
+
+export function fetchEnabledCatalogGenres() {
+  return apiGet<GenreCount[]>('/api/v1/catalog/genres')
 }
 
 export function fetchTitle(id: number, sourceId?: number) {
