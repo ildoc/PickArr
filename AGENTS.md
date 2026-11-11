@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Pickarr is a single-user, self-hosted catalog browser. It syncs streaming catalogs through Watchmode, enriches them with TMDB, and sends titles to Sonarr and Radarr. There is no authentication.
+Pickarr is a self-hosted catalog browser for a trusted household install. It syncs streaming catalogs through Watchmode, enriches them with TMDB, and sends titles to Sonarr and Radarr. There is no authentication; up to 10 profiles share one install.
 
 Product behavior that is not obvious from the code is specified in `docs/functional-spec.md`, `docs/technical-spec.md`, and `docs/recommendations.md`. Do not invent scope beyond those documents and the code.
 

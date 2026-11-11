@@ -1,8 +1,8 @@
 # Pickarr
 
-Pickarr is a **single-user, self-hosted** web app for browsing streaming catalogs and sending titles to your media stack.
+Pickarr is a **self-hosted** web app for browsing streaming catalogs and sending titles to your media stack. One install can host up to **10 household profiles** (separate favorites, ratings, and recommendations); the catalog and Sonarr/Radarr library stay shared.
 
-It syncs what a service offers in a country (via [Watchmode](https://watchmode.com)), enriches titles with [TMDB](https://www.themoviedb.org/) metadata, and lets you add series to **Sonarr** or movies to **Radarr**. There is **no login**: run it on a trusted network or behind a reverse proxy that authenticates.
+It syncs what a service offers in a country (via [Watchmode](https://watchmode.com)), enriches titles with [TMDB](https://www.themoviedb.org/) metadata, and lets you add series to **Sonarr** or movies to **Radarr**. There is **no login**—profiles are a logical partition, not accounts—so run it on a trusted network or behind a reverse proxy that authenticates.
 
 **Catalog.** Browse by catalog source (provider + country). Search and filter (type, genre, year, library state). Quick views: All, New, Leaving, Recently removed. Seeded sources include Netflix IT and Netflix US; more providers/countries can be enabled from Settings within Watchmode plan limits.
 

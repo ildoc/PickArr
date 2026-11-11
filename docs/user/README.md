@@ -1,8 +1,8 @@
 # User guide
 
-Pickarr is a **single-user, self-hosted** catalog browser for your streaming subscriptions. It keeps a local copy of what a streaming service offers in a country, enriches titles with TMDB metadata, and lets household profiles rate titles and send them to **Sonarr** or **Radarr**.
+Pickarr is a **self-hosted** catalog browser for your streaming subscriptions. It keeps a local copy of what a streaming service offers in a country, enriches titles with TMDB metadata, and lets household profiles rate titles and send them to **Sonarr** or **Radarr**.
 
-There is **no login**. Up to **10 profiles** share one install (favorites, ratings, watched state, and recommendations are per profile). Catalog data, settings, and the Arr library stay shared. Run Pickarr on a trusted network or behind a reverse proxy that authenticates.
+There is **no login**—profiles are a logical partition, not accounts. Up to **10 profiles** share one install (favorites, ratings, watched state, and recommendations are per profile). Catalog data, settings, and the Arr library stay shared. Run Pickarr on a trusted network or behind a reverse proxy that authenticates.
 
 ## What you need
 

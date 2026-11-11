@@ -1108,7 +1108,7 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 | Logs | No secrets in logs; redact `X-Api-Key` and `Authorization` headers, and `apiKey`/`token` parameters in logged URLs. |
 | Webhooks | Random token ≥ 32 bytes, constant-time comparison, rate limit (e.g. 30 req/min), no effect beyond refreshing the item. |
 | Input | Validate all DTOs; instance URLs: only `http`/`https`, no embedded credentials, normalized without trailing slash. |
-| SSRF | The only configurable outbound destinations are the Sonarr/Radarr instance URLs set by the single user; no other endpoint accepts arbitrary URLs. |
+| SSRF | The only configurable outbound destinations are the Sonarr/Radarr instance URLs set in Settings; no other endpoint accepts arbitrary URLs. |
 | Destructive actions | The delete API requires explicit parameters; the UI requires confirmation. Audit log. |
 | Access | v1 **without login** (D-02): document use on a LAN or behind a reverse proxy with authentication. Prepare an optional authentication middleware (single password with cookie, enableable via environment variable) as a future evolution. |
 | Hangfire dashboard | **Disabled** by default (`Hangfire:Dashboard:Enabled=false`); the Admin page uses its own API. If enabled, only with authentication active. |
