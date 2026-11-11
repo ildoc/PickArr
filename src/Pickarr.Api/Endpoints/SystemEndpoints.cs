@@ -16,6 +16,14 @@ public static class SystemEndpoints
             });
         });
 
+        endpoints.MapGet("/api/v1/system/image-updates", async (
+            IImageUpdateService updates,
+            CancellationToken ct) =>
+        {
+            var dto = await updates.CheckAsync(ProductVersion(), ct);
+            return Results.Ok(dto);
+        });
+
         endpoints.MapGet("/api/v1/system/stats", async (ISystemStatsService stats, CancellationToken ct) =>
         {
             var dto = await stats.GetStatsAsync(ct);

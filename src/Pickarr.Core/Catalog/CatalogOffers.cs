@@ -18,6 +18,7 @@ public static class CatalogOffers
         new("hulu", "Hulu", "157", false, ["US"]),
         new("apple-tv-plus", "Apple TV+", "371", false, ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"]),
         new("paramount-plus", "Paramount+", "444", false, ["US", "IT", "GB", "CA", "DE", "FR", "AU"]),
+        new("now-tv", "Now TV", "406", false, ["GB", "IE", "IT"]),
     ];
 
     public static IReadOnlyList<string> CountriesFor(string providerKey) =>
@@ -32,6 +33,7 @@ public static class CatalogOffers
         "FR" => "fr-FR",
         "ES" => "es-ES",
         "GB" => "en-GB",
+        "IE" => "en-IE",
         "CA" => "en-CA",
         "AU" => "en-AU",
         _ => "en-US",

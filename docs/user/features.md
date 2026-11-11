@@ -79,7 +79,7 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 ## Administration
 
-Admin-only Settings tabs are ordered System, Users, Catalogs, Recommendations, Connections, and Jobs. They cover system stats, profile management, catalog sources, recommendation settings (model status, rebuild/eval/reset), Sonarr/Radarr and Watchmode/TMDB connections, and job control. Job views show runs (with kind-specific stats), Watchmode credit usage, and unmapped titles; the Jobs page also configures how many finished runs to keep per job. System lists log files for download and can clear them.
+Admin-only Settings tabs are ordered System, Users, Catalogs, Recommendations, Connections, and Jobs. They cover system stats, profile management, catalog sources, recommendation settings (model status, rebuild/eval/reset), Sonarr/Radarr and Watchmode/TMDB connections, and job control. Job views show runs (with kind-specific stats), Watchmode credit usage, and unmapped titles; the Jobs page also configures how many finished runs to keep per job. System shows the running image version and, when GHCR has numerically newer version tags, lists them (release builds only see newer releases; development builds see any newer versioned tag). System also lists log files for download and can clear them.
 
 ## Attribution
 

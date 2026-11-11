@@ -1009,6 +1009,7 @@ List and title-detail DTOs, with the header, expose the profile’s `isFavorite`
 | `POST` | `/webhooks/sonarr?token=…` | Responds `202` (or `401` with wrong token, constant-time comparison). |
 | `POST` | `/webhooks/radarr?token=…` | same |
 | `GET` | `/system/status` | Server version and time (used by the header). |
+| `GET` | `/system/image-updates` | Compare the running version to GHCR tags (`ghcr.io/ildoc/pickarr`). Returns `currentVersion`, `channel` (`release`\|`development`), `newerTags`, `updateAvailable`, `checkedAt`, `source`. Release builds only list newer `X.Y.Z` tags; development builds list any newer versioned tag. Registry failures yield an empty list (fail-soft). Tag list is cached in memory (~1h). |
 | `GET` | `/system/stats` | Title counts (total, per provider, country, source) and disk space under `DataPath` (catalog DB, jobs, logs, models, keys). |
 | `GET` | `/system/logs` | List `pickarr-*.log` files under `DataPath/logs`. |
 | `GET` | `/system/logs/{fileName}` | Download one log file (path-safe names only). |
@@ -1060,7 +1061,7 @@ src/Pickarr.WebApp/src/
 | `/settings/catalogs` | Catalog sources |
 | `/settings/recommendations` | Recommendation status/actions |
 | `/settings/jobs` | Jobs and credits (`/admin/jobs` redirects here) |
-| `/settings/system` | Diagnostics: titles per provider/country, disk space, log file list/download/clear |
+| `/settings/system` | Diagnostics: runtime version with newer GHCR tag indicator, titles per provider/country, disk space, log file list/download/clear |
 
 Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-Pickarr-Profile`. Catalog source in `pickarr.sourceId.{profileId}` (an admin without their own key may once copy the legacy `pickarr.sourceId`). Used by the catalog (including the *For you* row) and by *For you*.
 
@@ -1131,7 +1132,7 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 - **Health:** `/health` (liveness, always 200 if the process responds) and `/health/ready` (checks DB open and Hangfire storage).
 - **Business metrics:** `SyncRuns` and `ApiUsage` are the source for the Admin page; no external metrics stack is needed.
 - **OpenTelemetry (C):** optional OTLP export via environment variable, off by default.
-- **Diagnostics:** `GET /system/status` reports version and server time; `GET /system/stats` reports title counts and sizes under `DataPath`; `GET/DELETE /system/logs` manage Serilog files (Settings → System tab). Finished `SyncRuns` are pruned per `(Kind, CatalogSourceId)` using `jobs.runHistoryLimit` (default 10, max 100).
+- **Diagnostics:** `GET /system/status` reports version and server time; `GET /system/image-updates` compares that version to GHCR version tags (Settings → System); `GET /system/stats` reports title counts and sizes under `DataPath`; `GET/DELETE /system/logs` manage Serilog files (Settings → System tab). Finished `SyncRuns` are pruned per `(Kind, CatalogSourceId)` using `jobs.runHistoryLimit` (default 10, max 100).
 
 ---
 

@@ -90,6 +90,17 @@ public static class DependencyInjection
         services.AddScoped<IAdminQuotaService, AdminQuotaService>();
         services.AddScoped<ISystemStatsService, SystemStatsService>();
         services.AddScoped<ILogFileService, LogFileService>();
+        services.AddMemoryCache();
+        services.Configure<GhcrOptions>(configuration.GetSection(GhcrOptions.SectionName));
+        services.AddHttpClient<IImageTagSource, GhcrImageTagClient>((sp, client) =>
+            {
+                var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<GhcrOptions>>().Value;
+                var baseUrl = options.BaseUrl.EndsWith('/') ? options.BaseUrl : options.BaseUrl + "/";
+                client.BaseAddress = new Uri(baseUrl);
+                client.Timeout = options.RequestTimeout;
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("Pickarr/0.1");
+            });
+        services.AddScoped<IImageUpdateService, ImageUpdateService>();
         services.AddHttpClient<SonarrClient>();
         services.AddHttpClient<RadarrClient>();
         services.AddScoped<DatabaseInitializer>();

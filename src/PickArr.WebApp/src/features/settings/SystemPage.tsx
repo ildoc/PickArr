@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import {
   clearSystemLogs,
   downloadSystemLog,
+  fetchImageUpdates,
   fetchSystemLogs,
   fetchSystemStats,
   fetchSystemStatus,
@@ -12,6 +13,7 @@ import {
 import { formatBytes, formatDateTime } from '../../lib/format'
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' })
+const GHCR_PACKAGE_URL = 'https://github.com/ildoc/Pickarr/pkgs/container/pickarr'
 
 function countryLabel(code: string): string {
   return regionNames.of(code) ?? code
@@ -26,6 +28,11 @@ export function SystemPage() {
   const queryClient = useQueryClient()
   const [logMessage, setLogMessage] = useState<string | null>(null)
   const status = useQuery({ queryKey: ['system', 'status'], queryFn: fetchSystemStatus })
+  const imageUpdates = useQuery({
+    queryKey: ['system', 'image-updates'],
+    queryFn: fetchImageUpdates,
+    staleTime: 60 * 60 * 1000,
+  })
   const stats = useQuery({ queryKey: ['system', 'stats'], queryFn: fetchSystemStats })
   const logs = useQuery({ queryKey: ['system', 'logs'], queryFn: fetchSystemLogs })
 
@@ -64,11 +71,43 @@ export function SystemPage() {
           <h2 className="text-lg font-medium">{t('settings.systemAbout')}</h2>
           <dl className="grid gap-3 sm:grid-cols-2 text-sm">
             {status.data.version && (
-              <div>
+              <div className="sm:col-span-2">
                 <dt className="text-xs uppercase tracking-wide text-[var(--muted)]">
                   {t('settings.systemVersion')}
                 </dt>
-                <dd className="mt-1 font-medium">{status.data.version}</dd>
+                <dd className="mt-1 flex flex-wrap items-center gap-2 font-medium">
+                  <span className="tabular-nums">{status.data.version}</span>
+                  {imageUpdates.data?.updateAvailable && (
+                    <span className="rounded-md bg-amber-400/15 px-2 py-0.5 text-xs font-medium text-amber-200">
+                      {t('settings.systemUpdateAvailable')}
+                    </span>
+                  )}
+                </dd>
+                {imageUpdates.data?.updateAvailable && imageUpdates.data.newerTags.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
+                      {t('settings.systemNewerTags')}
+                    </p>
+                    <ul className="flex flex-wrap gap-2 font-mono text-xs tabular-nums text-[var(--text)]">
+                      {imageUpdates.data.newerTags.map((tag) => (
+                        <li
+                          key={tag}
+                          className="rounded-md border border-white/10 bg-black/20 px-2 py-1"
+                        >
+                          {tag}
+                        </li>
+                      ))}
+                    </ul>
+                    <a
+                      href={GHCR_PACKAGE_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block text-xs text-[var(--muted)] underline decoration-white/20 hover:text-[var(--text)]"
+                    >
+                      {t('settings.systemNewerTagsLink')}
+                    </a>
+                  </div>
+                )}
               </div>
             )}
             {status.data.utcNow && (

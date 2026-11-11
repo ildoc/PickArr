@@ -42,6 +42,23 @@ public sealed class SettingsAndHealthTests
     }
 
     [Fact]
+    public async Task System_image_updates_returns_check_shape()
+    {
+        var response = await _client.GetAsync("/api/v1/system/image-updates");
+        response.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+        body.GetProperty("currentVersion").GetString().ShouldNotBeNullOrWhiteSpace();
+        var channel = body.GetProperty("channel").GetString();
+        channel.ShouldBeOneOf("release", "development");
+        body.GetProperty("newerTags").ValueKind.ShouldBe(JsonValueKind.Array);
+        var available = body.GetProperty("updateAvailable");
+        (available.ValueKind is JsonValueKind.True or JsonValueKind.False).ShouldBeTrue();
+        body.GetProperty("source").GetString().ShouldBe("ghcr.io/ildoc/pickarr");
+        body.TryGetProperty("checkedAt", out _).ShouldBeTrue();
+    }
+
+    [Fact]
     public async Task System_stats_returns_title_and_storage_shape()
     {
         var response = await _client.GetAsync("/api/v1/system/stats");

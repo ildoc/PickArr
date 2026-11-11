@@ -5,6 +5,15 @@ export type SystemStatus = {
   utcNow: string
 }
 
+export type ImageUpdates = {
+  currentVersion: string
+  channel: 'release' | 'development'
+  newerTags: string[]
+  updateAvailable: boolean
+  checkedAt: string
+  source: string
+}
+
 export type NamedTitleCount = {
   name: string
   titleCount: number
@@ -50,6 +59,10 @@ export type ClearLogsResult = {
 
 export function fetchSystemStatus() {
   return apiGet<SystemStatus>('/api/v1/system/status')
+}
+
+export function fetchImageUpdates() {
+  return apiGet<ImageUpdates>('/api/v1/system/image-updates')
 }
 
 export function fetchSystemStats() {
