@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { I18nextProvider } from 'react-i18next'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchAdminJobs, fetchAdminQuota, fetchAdminRuns, triggerAdminJob } from '../../api/admin'
+import { fetchSettings } from '../../api/settings'
 import i18n from '../../i18n'
 import { JobsPage } from './JobsPage'
 
@@ -13,6 +14,11 @@ vi.mock('../../api/admin', () => ({
   fetchAdminRuns: vi.fn(),
   fetchAdminQuota: vi.fn(),
   triggerAdminJob: vi.fn(),
+}))
+
+vi.mock('../../api/settings', () => ({
+  fetchSettings: vi.fn(),
+  updateSettings: vi.fn(),
 }))
 
 
@@ -42,6 +48,9 @@ describe('JobsPage', () => {
       periodStart: '2026-11-01T00:00:00Z',
       periodEnd: '2026-12-01T00:00:00Z',
     })
+    vi.mocked(fetchSettings).mockResolvedValue({
+      jobs: { runHistoryLimit: 10 },
+    } as Awaited<ReturnType<typeof fetchSettings>>)
   })
 
   it('shows queued, running, and failure logs with plain job names', async () => {
