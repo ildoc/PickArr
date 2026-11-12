@@ -28,14 +28,27 @@ export function Header({ children }: { children?: ReactNode }) {
   const recoEnabled = settings.data?.reco.enabled !== false
   const version = system.data?.version
 
+  const brand = (
+    <>
+      <img
+        src="/logo.png"
+        alt=""
+        width={32}
+        height={32}
+        className="h-8 w-8 shrink-0 rounded-full"
+      />
+      <span>{t('app.title')}</span>
+    </>
+  )
+
   return (
     <header className="sticky top-0 z-40 flex items-center gap-8 border-b border-white/10 bg-[var(--surface)]/95 px-8 py-4 backdrop-blur-sm">
-      <span className="text-xl font-semibold tracking-tight text-[var(--text)]">
+      <span className="inline-flex items-center gap-2 text-xl font-semibold tracking-tight text-[var(--text)]">
         {onSetup ? (
-          t('app.title')
+          brand
         ) : (
-          <NavLink to="/catalog" className="text-[var(--text)]">
-            {t('app.title')}
+          <NavLink to="/catalog" className="inline-flex items-center gap-2 text-[var(--text)]">
+            {brand}
           </NavLink>
         )}
       </span>

@@ -1092,7 +1092,7 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 
 - Dark theme only: fixed `class="dark"` on `<html>`, color tokens in Tailwind (`surface`, `surface-2`, `accent`, `muted`).
 - Minimum width 1280 px: below the threshold a non-blocking warning appears.
-- Sticky `Header` at the top (`sticky top-0`) with semi-transparent background and blur, so the menu stays reachable while scrolling. On the right: version from `GET /api/v1/system/status` (same `VERSION` string as the Docker image / `InformationalVersion`) with a link to `https://github.com/ildoc/Pickarr`, and a Ko-fi icon to `https://ko-fi.com/pheeleeppo`.
+- Sticky `Header` at the top (`sticky top-0`) with semi-transparent background and blur, so the menu stays reachable while scrolling. Brand mark is `docs/assets/logo.png` (served from the SPA `public/` as `/logo.png`) next to the product name. Favicons and PWA icons live under `docs/assets/` and are copied into `src/Pickarr.WebApp/public/` (`favicon.ico` / `.svg` / `-96x96.png`, `apple-touch-icon.png`, maskable web-app manifests, `site.webmanifest`). On the right: version from `GET /api/v1/system/status` (same `VERSION` string as the Docker image / `InformationalVersion`) with a link to `https://github.com/ildoc/Pickarr`, and a Ko-fi icon to `https://ko-fi.com/pheeleeppo`.
 - Grid with columns `repeat(auto-fill, minmax(180px, 1fr))`.
 - Basic accessibility: dialogs with focus trap (Radix), text alternatives on posters, adequate contrast in badges.
 

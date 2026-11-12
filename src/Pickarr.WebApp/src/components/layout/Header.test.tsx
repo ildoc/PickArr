@@ -78,6 +78,10 @@ describe('Header', () => {
 
     wrap(<Header />)
 
+    const brand = await screen.findByRole('link', { name: 'Pickarr' })
+    expect(brand).toHaveAttribute('href', '/catalog')
+    expect(brand.querySelector('img')?.getAttribute('src')).toBe('/logo.png')
+
     const version = await screen.findByRole('link', { name: '1.2.3.4' })
     expect(version).toHaveAttribute('href', 'https://github.com/ildoc/Pickarr')
     expect(fetchSystemStatus).toHaveBeenCalled()

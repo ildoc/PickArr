@@ -1,5 +1,9 @@
 # Pickarr
 
+<p align="center">
+  <img src="docs/assets/logo.png" alt="Pickarr" width="160" height="160" />
+</p>
+
 Pickarr is a **self-hosted** web app for browsing streaming catalogs and sending titles to your media stack. One install can host up to **10 household profiles** (separate favorites, ratings, and recommendations); the catalog and Sonarr/Radarr library stay shared.
 
 It syncs what a service offers in a country (via [Watchmode](https://watchmode.com)), enriches titles with [TMDB](https://www.themoviedb.org/) metadata, and lets you add series to **Sonarr** or movies to **Radarr**. There is **no login**—profiles are a logical partition, not accounts—so run it on a trusted network or behind a reverse proxy that authenticates.
