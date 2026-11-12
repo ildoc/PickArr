@@ -24,7 +24,7 @@ public sealed class CatalogBootstrapTests
     [Fact]
     public async Task StartAsync_requeues_until_the_catalog_has_been_imported()
     {
-        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true);
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true, setupCompleted: true);
         foreach (var source in await fixture.Db.CatalogSources
                      .Where(s => s.CountryCode == "IT" || s.CountryCode == "US")
                      .ToListAsync())
@@ -84,18 +84,31 @@ public sealed class CatalogBootstrapTests
     }
 
     [Fact]
-    public async Task StartAsync_enables_netflix_it_and_us_when_nothing_is_selected()
+    public async Task StartAsync_does_not_enable_catalogs_by_default()
     {
-        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true);
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true, setupCompleted: true);
         var jobId = await fixture.Bootstrap.StartAsync(force: false);
         jobId.ShouldNotBeNull();
 
-        var enabled = await fixture.Db.CatalogSources
-            .Where(s => s.IsEnabled)
-            .Select(s => s.CountryCode)
-            .Order()
-            .ToListAsync();
-        enabled.ShouldBe(["IT", "US"]);
+        (await fixture.Db.CatalogSources.CountAsync(s => s.IsEnabled)).ShouldBe(0);
+        fixture.Jobs.DidNotReceive().Create(
+            Arg.Is<Job>(job => job.Type == typeof(CatalogIncrementalSyncJob)),
+            Arg.Any<IState>());
+    }
+
+    [Fact]
+    public async Task StartAsync_skips_import_until_setup_is_completed()
+    {
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: true, setupCompleted: false);
+        foreach (var source in await fixture.Db.CatalogSources.ToListAsync())
+        {
+            source.IsEnabled = true;
+        }
+
+        await fixture.Db.SaveChangesAsync();
+        var jobId = await fixture.Bootstrap.StartAsync(force: false);
+        jobId.ShouldBeNull();
+        fixture.Jobs.DidNotReceive().Create(Arg.Any<Job>(), Arg.Any<IState>());
     }
 
     [Fact]
@@ -111,14 +124,22 @@ public sealed class CatalogBootstrapTests
     [Fact]
     public async Task StartAsync_sees_a_watchmode_key_declared_by_the_environment_store()
     {
-        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: false);
-        var source = CreateEnvSource(new Dictionary<string, string?>
+        await using var fixture = await Fixture.CreateAsync(auto: true, watchmodeKey: false, setupCompleted: true);
+        foreach (var source in await fixture.Db.CatalogSources
+                     .Where(s => s.CountryCode == "IT" || s.CountryCode == "US")
+                     .ToListAsync())
+        {
+            source.IsEnabled = true;
+        }
+
+        await fixture.Db.SaveChangesAsync();
+        var envSource = CreateEnvSource(new Dictionary<string, string?>
         {
             ["Pickarr:Settings:watchmode:apiKey"] = "from-env",
         });
         var bootstrap = new CatalogBootstrap(
             fixture.Db,
-            new EnvironmentSettingsStore(fixture.Settings, source),
+            new EnvironmentSettingsStore(fixture.Settings, envSource),
             fixture.Jobs,
             fixture.Reconciler,
             Options.Create(new CatalogBootstrapOptions { AutoInitialImport = true }),
@@ -220,7 +241,10 @@ public sealed class CatalogBootstrapTests
 
         private Fixture(SqliteConnection connection) => _connection = connection;
 
-        public static async Task<Fixture> CreateAsync(bool auto, bool watchmodeKey)
+        public static async Task<Fixture> CreateAsync(
+            bool auto,
+            bool watchmodeKey,
+            bool setupCompleted = false)
         {
             var connection = new SqliteConnection("Data Source=:memory:");
             await connection.OpenAsync();
@@ -262,6 +286,11 @@ public sealed class CatalogBootstrapTests
             if (watchmodeKey)
             {
                 await settings.SetAsync(SettingsKeys.WatchmodeApiKey, "\"test-key\"", true);
+            }
+
+            if (setupCompleted)
+            {
+                await settings.SetAsync(SettingsKeys.SetupCompleted, "true", false);
             }
 
             var jobs = Substitute.For<IBackgroundJobClient>();

@@ -77,6 +77,7 @@ try
     });
     app.MapHealthChecks("/health/ready");
     app.MapSettingsEndpoints();
+    app.MapSetupEndpoints();
     app.MapSystemEndpoints();
     app.MapCatalogEndpoints();
     app.MapTitlesEndpoints();

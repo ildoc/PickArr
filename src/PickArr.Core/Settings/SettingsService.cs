@@ -14,11 +14,16 @@ public sealed class SettingsService(ISettingsStore store)
 
     public async Task<SettingsResponse> GetAsync(CancellationToken cancellationToken = default)
     {
+        var environmentKeys = ListedEnvironmentKeys()
+            .Where(store.IsEnvironmentDefined)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+
         return new SettingsResponse
         {
             Watchmode = new WatchmodeSettingsDto
             {
-                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.WatchmodeApiKey, cancellationToken)),
+                ApiKey = await SecretAsync(SettingsKeys.WatchmodeApiKey, cancellationToken),
                 Plan = await GetOrDefaultAsync(SettingsKeys.WatchmodePlan, "free", cancellationToken),
                 Quota = await GetOrDefaultAsync(SettingsKeys.WatchmodeQuota, 2500, cancellationToken),
                 ReservePercent = await GetOrDefaultAsync(SettingsKeys.WatchmodeReservePercent, 10, cancellationToken),
@@ -26,29 +31,29 @@ public sealed class SettingsService(ISettingsStore store)
             },
             Tmdb = new TmdbSettingsDto
             {
-                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.TmdbApiKey, cancellationToken)),
+                ApiKey = await SecretAsync(SettingsKeys.TmdbApiKey, cancellationToken),
             },
             Omdb = new OmdbSettingsDto
             {
-                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.OmdbApiKey, cancellationToken)),
+                ApiKey = await SecretAsync(SettingsKeys.OmdbApiKey, cancellationToken),
             },
             Sonarr = new ArrInstanceSettingsDto
             {
                 Url = await GetNullableAsync(SettingsKeys.SonarrUrl, cancellationToken),
-                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.SonarrApiKey, cancellationToken)),
+                ApiKey = await SecretAsync(SettingsKeys.SonarrApiKey, cancellationToken),
                 SyncIntervalMinutes = await GetOrDefaultAsync(SettingsKeys.SonarrSyncIntervalMinutes, 15, cancellationToken),
                 Defaults = await GetDefaultsAsync(SettingsKeys.SonarrDefaults, cancellationToken),
             },
             Radarr = new ArrInstanceSettingsDto
             {
                 Url = await GetNullableAsync(SettingsKeys.RadarrUrl, cancellationToken),
-                ApiKey = new SecretStatus(await store.IsSetAsync(SettingsKeys.RadarrApiKey, cancellationToken)),
+                ApiKey = await SecretAsync(SettingsKeys.RadarrApiKey, cancellationToken),
                 SyncIntervalMinutes = await GetOrDefaultAsync(SettingsKeys.RadarrSyncIntervalMinutes, 15, cancellationToken),
                 Defaults = await GetDefaultsAsync(SettingsKeys.RadarrDefaults, cancellationToken),
             },
             Webhooks = new WebhookSettingsDto
             {
-                Token = new SecretStatus(await store.IsSetAsync(SettingsKeys.WebhooksToken, cancellationToken)),
+                Token = await SecretAsync(SettingsKeys.WebhooksToken, cancellationToken),
             },
             Ui = new UiSettingsDto
             {
@@ -85,8 +90,46 @@ public sealed class SettingsService(ISettingsStore store)
                 RunHistoryLimit = ClampRunHistoryLimit(
                     await GetOrDefaultAsync(SettingsKeys.JobsRunHistoryLimit, DefaultRunHistoryLimit, cancellationToken)),
             },
+            EnvironmentKeys = environmentKeys,
         };
     }
+
+    public async Task<bool> IsSetupCompletedAsync(CancellationToken cancellationToken = default)
+    {
+        var raw = await store.GetRawAsync(SettingsKeys.SetupCompleted, cancellationToken);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return false;
+        }
+
+        return string.Equals(raw.Trim().Trim('"'), "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public Task MarkSetupCompletedAsync(CancellationToken cancellationToken = default) =>
+        store.SetAsync(SettingsKeys.SetupCompleted, "true", isSecret: false, cancellationToken);
+
+    private async Task<SecretStatus> SecretAsync(string key, CancellationToken cancellationToken) =>
+        new(await store.IsSetAsync(key, cancellationToken), store.IsEnvironmentDefined(key));
+
+    private static IEnumerable<string> ListedEnvironmentKeys() =>
+    [
+        SettingsKeys.WatchmodeApiKey,
+        SettingsKeys.WatchmodePlan,
+        SettingsKeys.WatchmodeQuota,
+        SettingsKeys.WatchmodeReservePercent,
+        SettingsKeys.WatchmodeMaxCreditsPerRun,
+        SettingsKeys.TmdbApiKey,
+        SettingsKeys.OmdbApiKey,
+        SettingsKeys.SonarrUrl,
+        SettingsKeys.SonarrApiKey,
+        SettingsKeys.SonarrDefaults,
+        SettingsKeys.RadarrUrl,
+        SettingsKeys.RadarrApiKey,
+        SettingsKeys.RadarrDefaults,
+        SettingsKeys.RecoEnabled,
+        SettingsKeys.WebhooksToken,
+        SettingsKeys.UiLanguage,
+    ];
 
     public async Task UpdateAsync(UpdateSettingsRequest request, CancellationToken cancellationToken = default)
     {

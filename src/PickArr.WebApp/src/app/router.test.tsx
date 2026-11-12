@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fetchGenres, fetchSources, fetchTitles, fetchCatalogTypes } from '../api/catalog'
 import { fetchMyList, fetchMyListGenres, fetchMyListTypes } from '../api/favorites'
 import { fetchProfiles } from '../api/profiles'
+import { fetchSetupStatus } from '../api/setup'
 import i18n from '../i18n'
 import { AppRouter } from './router'
 
@@ -34,13 +35,26 @@ vi.mock('../api/profiles', () => ({
   deleteProfile: vi.fn(),
 }))
 
+vi.mock('../api/setup', () => ({
+  fetchSetupStatus: vi.fn(async () => ({ completed: true })),
+  completeSetup: vi.fn(),
+}))
+
 vi.mock('../api/settings', () => ({
   fetchSettings: vi.fn(async () => ({
-    watchmode: { apiKey: { isSet: false } },
+    watchmode: {
+      apiKey: { isSet: false },
+      plan: 'free',
+      quota: 2500,
+      reservePercent: 10,
+      maxCreditsPerRun: 80,
+    },
     tmdb: { apiKey: { isSet: false } },
+    omdb: { apiKey: { isSet: false } },
     sonarr: { url: null, apiKey: { isSet: false }, defaults: null },
     radarr: { url: null, apiKey: { isSet: false }, defaults: null },
     reco: { enabled: true },
+    environmentKeys: [],
   })),
 }))
 
@@ -111,6 +125,7 @@ describe('catalog and my list routes', () => {
       },
     })
     vi.clearAllMocks()
+    vi.mocked(fetchSetupStatus).mockResolvedValue({ completed: true })
     vi.mocked(fetchSources).mockResolvedValue([
       {
         id: 1,
@@ -146,7 +161,7 @@ describe('catalog and my list routes', () => {
     const user = userEvent.setup()
     renderAt('/catalog')
 
-    expect(screen.getByRole('link', { name: 'Catalog' })).toHaveAttribute('href', '/catalog')
+    expect(await screen.findByRole('link', { name: 'Catalog' })).toHaveAttribute('href', '/catalog')
     expect(screen.getByRole('link', { name: 'For you' })).toHaveAttribute('href', '/for-you')
     expect(screen.getByRole('link', { name: 'My list' })).toHaveAttribute('href', '/list')
     expect(screen.getByRole('link', { name: 'My ratings' })).toHaveAttribute('href', '/ratings')

@@ -45,7 +45,7 @@ A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
 | `Pickarr__BaseUrl` | (empty) | Public URL used when generating webhook URLs. |
 | `Pickarr__PathBase` | (empty) | Path prefix behind a reverse proxy subpath. |
 | `Pickarr__Models__Path` | `<DataPath>/models` | ONNX model files. |
-| `Pickarr__Catalog__AutoInitialImport` | `true` | Queue first import when a Watchmode key is available. |
+| `Pickarr__Catalog__AutoInitialImport` | `true` | After onboarding completes (`setup.completed`), queue first import for enabled catalogs that have never been imported. |
 | `Pickarr__Watchmode__BaseUrl` | `https://api.watchmode.com/v1/` | |
 | `Pickarr__Watchmode__RequestsPerSecond` | `1` | |
 | `Pickarr__Tmdb__BaseUrl` | `https://api.themoviedb.org/3/` | |

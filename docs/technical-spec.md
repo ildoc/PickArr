@@ -352,7 +352,7 @@ Finished rows are pruned to `jobs.runHistoryLimit` (default 10, clamp 1–100) p
 ### 4.3 Migrations and seed
 
 - EF migrations are applied at startup (`Database.MigrateAsync()`), before jobs start.
-- Idempotent seed: `Providers(netflix)`, `CatalogSources(netflix, IT, it-IT)` and `(netflix, US, en-US)` (disabled until the Watchmode key is present), default settings.
+- Idempotent seed: offered `Providers` and their `CatalogSources` (all **disabled**), default settings. No catalog is enabled until onboarding or Settings chooses one. `setup.completed` is runtime state (not seeded true).
 - Before every destructive migration a backup copy of the file is created (`Pickarr.db.bak-<version>`).
 
 ### 4.4 Search
@@ -920,7 +920,7 @@ Response `201` with the same `arr` object as the card. Errors: `422 ARR_ID_UNMAP
 
 ### 8.5 Settings
 
-**`GET /settings`** — secrets are not returned.
+**`GET /settings`** — secrets are not returned (only `isSet` / `fromEnvironment`). Includes `environmentKeys` for keys declared by process configuration.
 
 ```json
 {
@@ -947,7 +947,11 @@ Response `201` with the same `arr` object as the card. Errors: `422 ARR_ID_UNMAP
 
 **`PUT /settings`** — partial update (JSON merge). A secret is changed only if present in the body with a value; `null` clears it.
 
-**`POST /settings/test/{target}`** with `target` ∈ `watchmode|tmdb|omdb|sonarr|radarr` — verify with saved values, or with those in the body (to test before saving). Response: `{ "ok": true, "version": "4.0.x", "detail": "…" }` or `{ "ok": false, "code": "ARR_UNAUTHORIZED", "detail": "…" }`.
+**`POST /settings/test`** — body `{ service: watchmode|tmdb|omdb, apiKey? }`. Uses the draft key when present, otherwise the saved/env value. Response: `{ "ok": true, "detail": "…" }` or `{ "ok": false, "detail": "…" }`. Arr probes stay on **`POST /arr/test`**.
+
+**`GET /setup`** — `{ completed: bool }` from `setup.completed`.
+
+**`POST /setup/complete`** — requires Watchmode + TMDB keys and ≥1 enabled catalog; sets `setup.completed` and queues initial import.
 
 **`POST /settings/webhook-token/rotate`** — regenerate the token and return it once.
 
@@ -1050,7 +1054,8 @@ src/Pickarr.WebApp/src/
 
 | Path | Content |
 |---|---|
-| `/` | Profile gate: single profile → `/catalog`; valid `pickarr.profileId` → `/catalog`; otherwise `/who` |
+| `/` | Setup gate, then profile gate: single profile → `/catalog`; valid `pickarr.profileId` → `/catalog`; otherwise `/who` |
+| `/setup` | Mandatory first-run wizard until `setup.completed` |
 | `/who` | Profile selector and management |
 | `/catalog` | Grid for the selected source; filters (`q`, `view=all\|new\|leaving\|removed`, `type`, `genre`, …). With reco enabled and `view=all` without `q`, *For you* row (scope `source`, max 25). `view=favorites` redirects to `/list` |
 | `/list` | Profile favorites (cross-provider / cross-country); temporary implicit signal for reco |

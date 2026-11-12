@@ -57,6 +57,9 @@ public static class DependencyInjection
         services.AddScoped<ISettingsStore>(sp => new EnvironmentSettingsStore(
             sp.GetRequiredService<ProtectedSettingsStore>(),
             sp.GetRequiredService<EnvironmentSettingSource>()));
+        services.AddHttpClient(nameof(ConnectionProbeService));
+        services.AddScoped<ConnectionProbeService>();
+        services.AddScoped<SetupService>();
         services.AddScoped<ISyncRunStore, EfSyncRunStore>();
         services.AddScoped<IQuotaUsageReader, WatchmodeQuotaUsageReader>();
         services.AddScoped<ICatalogUpserter, CatalogUpserter>();

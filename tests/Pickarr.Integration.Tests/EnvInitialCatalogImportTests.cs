@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Hosting;
@@ -13,14 +14,13 @@ namespace Pickarr.Integration.Tests;
 public sealed class EnvInitialImportCollection;
 
 /// <summary>
-/// Cold-start import when the Watchmode key is only declared via configuration.
-/// Kept out of <see cref="InitialCatalogImportTests"/> so no other host warms Hangfire first.
+/// Import after onboarding when the Watchmode key is only declared via configuration.
 /// </summary>
 [Collection("env-initial-import")]
 public sealed class EnvInitialCatalogImportTests
 {
     [Fact]
-    public async Task Watchmode_key_from_configuration_imports_at_startup()
+    public async Task Completing_setup_with_watchmode_from_configuration_imports_catalogs()
     {
         var body = await File.ReadAllTextAsync(FindFixture("list-titles-page1.json"));
         using var server = WireMockServer.Start();
@@ -32,9 +32,41 @@ public sealed class EnvInitialCatalogImportTests
                 .WithHeader("X-Account-Quota", "2500")
                 .WithHeader("X-Account-Quota-Used", "1")
                 .WithBody(body));
+        server
+            .Given(Request.Create().WithPath("/v1/sources/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody("[]"));
 
         await using var factory = new Factory(server.Urls[0] + "/v1/");
         var client = factory.CreateClient();
+
+        var tmdbPut = await client.PutAsJsonAsync("/api/v1/settings", new
+        {
+            tmdb = new { apiKey = "tmdb-env-initial-import" },
+        });
+        tmdbPut.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var catalogs = await client.GetFromJsonAsync<JsonElement>("/api/v1/settings/catalogs");
+        var netflix = catalogs.GetProperty("providers").EnumerateArray()
+            .First(provider => provider.GetProperty("name").GetString() == "Netflix");
+        var catalogPut = await client.PutAsJsonAsync("/api/v1/settings/catalogs", new
+        {
+            providers = new[]
+            {
+                new
+                {
+                    id = netflix.GetProperty("id").GetInt32(),
+                    enabled = true,
+                    countries = new[] { "IT", "US" },
+                },
+            },
+        });
+        catalogPut.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var complete = await client.PostAsync("/api/v1/setup/complete", content: null);
+        complete.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         JsonElement sources = default;
         for (var attempt = 0; attempt < 40; attempt++)

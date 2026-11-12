@@ -19,9 +19,9 @@ Optional: OMDb API key for IMDb ratings; ONNX model files under the data path fo
 
 1. [Deploy](deployment.md) the container with a writable `/config` volume.
 2. Open the UI (default `http://localhost:8080`).
-3. Choose or create a profile on **Who** (`/who`). The first profile is the admin.
-4. As admin, open **Settings**: set Watchmode and TMDB keys. Optionally configure Sonarr and/or Radarr URL + API key for library actions. Use **Test connection** and pick quality profile / root folder defaults.
-5. With a Watchmode key present, Pickarr enables seeded catalogs (Netflix IT and Netflix US) and queues the first import unless you disabled auto-import.
+3. On first launch the **Setup** wizard (`/setup`) is required until `setup.completed` is set. It configures the admin profile, Watchmode/TMDB (required) and optional OMDb keys with connection tests, Watchmode plan/budget, recommendations, at least one catalog provider+country, and optional Sonarr/Radarr.
+4. When you finish the wizard, Pickarr queues the first import for the catalogs you enabled (unless `Pickarr__Catalog__AutoInitialImport` is false).
+5. Afterwards, choose a profile on **Who** (`/who`) when more than one exists. Change connections and catalogs later under **Settings**.
 6. Wait for catalog import and metadata enrichment under **Jobs**, then open **Catalog**, pick a source (provider + country), and browse.
 7. Rate titles or use **Teach your taste** from **For you** while personalization is still learning. Use **Hide** or **Not interested** to keep suggestions clean.
 

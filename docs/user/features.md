@@ -2,7 +2,7 @@
 
 ## Catalog
 
-Pickarr syncs **catalog sources**: each source is a streaming **provider + country** pair (for example Netflix IT). Seeded sources include Netflix IT and Netflix US. You can enable or disable sources from Settings within Watchmode plan limits.
+Pickarr syncs **catalog sources**: each source is a streaming **provider + country** pair (for example Netflix IT). Offered provider/country pairs are seeded disabled; you enable them in the first-run **Setup** wizard or later in Settings → Catalogs, within Watchmode plan limits.
 
 On `/catalog`:
 
@@ -77,6 +77,10 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 - Delete with confirmation; destructive delete options default off.
 - Periodic Arr sync (and optional webhooks when configured) refreshes status.
 - An Arr add with `X-Pickarr-Profile` stores the profile on the audit row for that profile’s implicit signal; without the header the add is still valid but not attributed for taste.
+
+## First-run setup
+
+Until `setup.completed` is set, every route redirects to `/setup`. The wizard is blocking and saves each step. It covers: admin name/color; Watchmode and TMDB keys (required, with connection tests), optional OMDb, Watchmode plan/budget, recommendations toggle; at least one catalog provider+country; optional Sonarr/Radarr (test required when filled). Finish sets the flag and queues the first catalog import.
 
 ## Administration
 

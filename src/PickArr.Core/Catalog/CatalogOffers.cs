@@ -11,7 +11,7 @@ public static class CatalogOffers
 
     public static readonly IReadOnlyList<CatalogProviderOffer> Providers =
     [
-        new("netflix", "Netflix", "203", true, ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"]),
+        new("netflix", "Netflix", "203", false, ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"]),
         new("prime-video", "Prime Video", "26", false, ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"]),
         new("disney-plus", "Disney+", "372", false, ["US", "IT", "GB", "CA", "DE", "FR", "ES", "AU"]),
         new("hbo-max", "HBO Max", "387", false, ["US", "IT", "GB", "DE", "FR", "ES", "AU"]),

@@ -158,7 +158,7 @@ export type TitleDetail = {
   }
 }
 
-export type SecretStatus = { isSet: boolean }
+export type SecretStatus = { isSet: boolean; fromEnvironment?: boolean }
 
 export type SettingsResponse = {
   watchmode: {
@@ -206,6 +206,7 @@ export type SettingsResponse = {
   jobs: {
     runHistoryLimit: number
   }
+  environmentKeys?: string[]
 }
 
 export type RecoEvalLevelMetrics = {

@@ -2,6 +2,7 @@ using Pickarr.Core.Abstractions;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Catalog;
 using Pickarr.Infrastructure.Jobs;
+using Pickarr.Infrastructure.Settings;
 
 namespace Pickarr.Api.Endpoints;
 
@@ -30,6 +31,12 @@ public static class SettingsEndpoints
             await bootstrap.StartAsync(force: false, ct);
             return Results.Ok(await settings.GetAsync(ct));
         });
+
+        group.MapPost("/test", async (
+            ConnectionTestRequest request,
+            ConnectionProbeService probe,
+            CancellationToken ct) =>
+            Results.Ok(await probe.TestAsync(request, ct)));
 
         group.MapGet("/catalogs", async (CatalogConfigurationService catalogs, CancellationToken ct) =>
             Results.Ok(await catalogs.GetAsync(ct)));

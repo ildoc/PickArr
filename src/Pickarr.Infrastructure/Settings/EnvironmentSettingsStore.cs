@@ -47,4 +47,6 @@ internal sealed class EnvironmentSettingsStore(ISettingsStore inner, Environment
 
         return inner.DeleteAsync(key, cancellationToken);
     }
+
+    public bool IsEnvironmentDefined(string key) => source.TryGet(key, out _);
 }

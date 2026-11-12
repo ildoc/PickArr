@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchSettings } from '../../api/settings'
 import { fetchSystemStatus } from '../../api/system'
@@ -16,8 +16,10 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function Header({ children }: { children?: ReactNode }) {
   const { t } = useTranslation()
+  const location = useLocation()
+  const onSetup = location.pathname === '/setup'
   const { active } = useProfiles()
-  const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings })
+  const settings = useQuery({ queryKey: ['settings'], queryFn: fetchSettings, enabled: !onSetup })
   const system = useQuery({
     queryKey: ['system-status'],
     queryFn: fetchSystemStatus,
@@ -28,48 +30,58 @@ export function Header({ children }: { children?: ReactNode }) {
 
   return (
     <header className="sticky top-0 z-40 flex items-center gap-8 border-b border-white/10 bg-[var(--surface)]/95 px-8 py-4 backdrop-blur-sm">
-      <NavLink to="/catalog" className="text-xl font-semibold tracking-tight text-[var(--text)]">
-        {t('app.title')}
-      </NavLink>
-      <nav className="flex items-center gap-5">
-        <NavLink to="/catalog" end className={linkClass}>
-          {t('nav.catalog')}
-        </NavLink>
-        {recoEnabled && (
-          <NavLink to="/for-you" className={linkClass}>
-            {t('nav.forYou')}
+      <span className="text-xl font-semibold tracking-tight text-[var(--text)]">
+        {onSetup ? (
+          t('app.title')
+        ) : (
+          <NavLink to="/catalog" className="text-[var(--text)]">
+            {t('app.title')}
           </NavLink>
         )}
-        <NavLink to="/list" className={linkClass}>
-          {t('nav.myList')}
-        </NavLink>
-        {recoEnabled && (
-          <NavLink to="/ratings" className={linkClass}>
-            {t('nav.ratings')}
+      </span>
+      {!onSetup && (
+        <nav className="flex items-center gap-5">
+          <NavLink to="/catalog" end className={linkClass}>
+            {t('nav.catalog')}
           </NavLink>
-        )}
-        {active?.isAdmin && (
-          <NavLink to="/settings/system" className={linkClass}>
-            {t('nav.settings')}
+          {recoEnabled && (
+            <NavLink to="/for-you" className={linkClass}>
+              {t('nav.forYou')}
+            </NavLink>
+          )}
+          <NavLink to="/list" className={linkClass}>
+            {t('nav.myList')}
           </NavLink>
-        )}
-      </nav>
+          {recoEnabled && (
+            <NavLink to="/ratings" className={linkClass}>
+              {t('nav.ratings')}
+            </NavLink>
+          )}
+          {active?.isAdmin && (
+            <NavLink to="/settings/system" className={linkClass}>
+              {t('nav.settings')}
+            </NavLink>
+          )}
+        </nav>
+      )}
       <div className="ml-auto flex items-center gap-4">
-        <NavLink
-          to="/who"
-          aria-label={t('who.open', { name: active?.name ?? t('who.heading') })}
-          title={t('who.open', { name: active?.name ?? t('who.heading') })}
-          className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text)]"
-        >
-          <span
-            aria-hidden
-            className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold text-black"
-            style={{ background: profileSwatch(active?.color ?? 'blue') }}
+        {!onSetup && (
+          <NavLink
+            to="/who"
+            aria-label={t('who.open', { name: active?.name ?? t('who.heading') })}
+            title={t('who.open', { name: active?.name ?? t('who.heading') })}
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text)]"
           >
-            {active ? profileInitial(active.name) : '?'}
-          </span>
-          {active && <span className="max-w-32 truncate">{active.name}</span>}
-        </NavLink>
+            <span
+              aria-hidden
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold text-black"
+              style={{ background: profileSwatch(active?.color ?? 'blue') }}
+            >
+              {active ? profileInitial(active.name) : '?'}
+            </span>
+            {active && <span className="max-w-32 truncate">{active.name}</span>}
+          </NavLink>
+        )}
         {children}
         {version && (
           <a

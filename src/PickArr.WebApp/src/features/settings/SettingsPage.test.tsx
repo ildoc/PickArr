@@ -12,6 +12,7 @@ import { SettingsPage } from './SettingsPage'
 vi.mock('../../api/settings', () => ({
   fetchSettings: vi.fn(),
   updateSettings: vi.fn(),
+  postConnectionTest: vi.fn(),
 }))
 
 vi.mock('../../api/arr', () => ({
@@ -47,6 +48,7 @@ const emptySettings = {
     eventsEnabled: false,
   },
   jobs: { runHistoryLimit: 10 },
+  environmentKeys: [],
 }
 
 function wrap(ui: ReactNode) {

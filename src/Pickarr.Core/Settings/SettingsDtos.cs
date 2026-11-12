@@ -1,6 +1,6 @@
 namespace Pickarr.Core.Settings;
 
-public sealed record SecretStatus(bool IsSet);
+public sealed record SecretStatus(bool IsSet, bool FromEnvironment = false);
 
 public sealed class SettingsResponse
 {
@@ -13,6 +13,26 @@ public sealed class SettingsResponse
     public required UiSettingsDto Ui { get; init; }
     public required RecoSettingsDto Reco { get; init; }
     public required JobsSettingsDto Jobs { get; init; }
+
+    /// <summary>Canonical setting keys whose effective value comes from process configuration.</summary>
+    public required IReadOnlyList<string> EnvironmentKeys { get; init; }
+}
+
+public sealed class SetupStatusDto
+{
+    public required bool Completed { get; init; }
+}
+
+public sealed class ConnectionTestRequest
+{
+    public required string Service { get; init; }
+    public string? ApiKey { get; init; }
+}
+
+public sealed class ConnectionTestResponse
+{
+    public required bool Ok { get; init; }
+    public string? Detail { get; init; }
 }
 
 public sealed class JobsSettingsDto

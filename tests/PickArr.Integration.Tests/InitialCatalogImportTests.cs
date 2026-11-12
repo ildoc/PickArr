@@ -28,6 +28,12 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
                 .WithHeader("X-Account-Quota", "2500")
                 .WithHeader("X-Account-Quota-Used", "1")
                 .WithBody(body));
+        _server
+            .Given(Request.Create().WithPath("/v1/sources/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithBody("[]"));
 
         _factory = new InitialImportApiFactory(_server.Urls[0] + "/v1/");
         _client = _factory.CreateClient();
@@ -43,16 +49,37 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Saving_watchmode_key_imports_the_first_catalog_pages()
+    public async Task Completing_setup_imports_the_first_catalog_pages()
     {
         var client = _client ?? throw new InvalidOperationException("Client was not created.");
         var put = await client.PutAsJsonAsync("/api/v1/settings", new
         {
             watchmode = new { apiKey = "wm-initial-import" },
+            tmdb = new { apiKey = "tmdb-initial-import" },
             sonarr = new { url = "http://sonarr.local", apiKey = "sonarr-key" },
             radarr = new { url = "http://radarr.local", apiKey = "radarr-key" },
         });
         put.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var catalogs = await client.GetFromJsonAsync<JsonElement>("/api/v1/settings/catalogs");
+        var netflix = catalogs.GetProperty("providers").EnumerateArray()
+            .First(provider => provider.GetProperty("name").GetString() == "Netflix");
+        var catalogPut = await client.PutAsJsonAsync("/api/v1/settings/catalogs", new
+        {
+            providers = new[]
+            {
+                new
+                {
+                    id = netflix.GetProperty("id").GetInt32(),
+                    enabled = true,
+                    countries = new[] { "IT", "US" },
+                },
+            },
+        });
+        catalogPut.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var complete = await client.PostAsync("/api/v1/setup/complete", content: null);
+        complete.StatusCode.ShouldBe(HttpStatusCode.OK);
 
         await WaitForInitialImportAsync(client);
     }
@@ -153,5 +180,4 @@ public sealed class InitialCatalogImportTests : IAsyncLifetime
             }
         }
     }
-
 }

@@ -144,7 +144,7 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 
 | ID | Requirement | PRI |
 |---|---|---|
-| FR-CAT-01 | The system maintains a catalog for each ** catalog source ** (service + country) enabled. At the first installation, Netflix IT and Netflix US are preconfigured. | M |
+| FR-CAT-01 | The system maintains a catalog for each ** catalog source ** (service + country) enabled. First install does not enable any catalog by default; the mandatory onboarding wizard requires at least one provider and one country. | M |
 | FR-CAT-02 | User can enable/disabilitare source, choose metadata language and sync frequencies. | M |
 | FR-CAT-03 | * * Movie **, ** series ** and ** stand-up ** types are imported. The other types (anime, kids) are not imported into v1, but the model must be able to accommodate them without destructive migrations. | M |
 | FR-CAT-04 | ** Incremental sync ** scheduled (cron configurable by source): intercepts recently added titles. It is idempotent and can be re-executed at any time. | M |
@@ -260,6 +260,7 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 
 | ID | Requisito | Pri |
 |---|---|---|
+| FR-SET-00 | **Onboarding obbligatorio** al primo avvio (`/setup`) finché manca `setup.completed`. Quattro step con salvataggio per step: profilo admin; chiavi Watchmode/TMDB (test obbligatorio) + OMDb opzionale + piano/budget + reco; almeno un catalogo; Sonarr/Radarr opzionali (test obbligatorio se valorizzati). A Fine si imposta il flag e si accoda l’import. | M |
 | FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, API key TMDB, API key OMDb (opzionale), piano Watchmode (free/a pagamento). | M |
 | FR-SET-02 | Impostazioni **Sonarr** e **Radarr**: URL e API key di una istanza ciascuna, con pulsante **Test connessione** che mostra la versione rilevata. | M |
 | FR-SET-03 | Valori di **default** per Sonarr/Radarr: profilo qualità e root folder, scelti tra quelli esposti dall'istanza. | M |
