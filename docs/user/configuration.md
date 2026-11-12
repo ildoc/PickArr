@@ -65,7 +65,6 @@ A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
 | `watchmode.maxCreditsPerRun` | `80` | Cap for one catalog run. |
 | `watchmode.billingDayOfMonth` | `1` | Day the monthly quota resets. |
 | `tmdb.apiKey` | | TMDB v3 key or v4 read token. Secret. |
-| `omdb.apiKey` | | Optional. Secret. |
 | `sonarr.url` | | e.g. `http://sonarr:8989` |
 | `sonarr.apiKey` | | Secret. |
 | `sonarr.syncIntervalMinutes` | `15` | |

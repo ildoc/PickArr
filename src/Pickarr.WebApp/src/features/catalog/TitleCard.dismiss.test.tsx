@@ -23,7 +23,6 @@ function item(rating: TitleListItem['rating'] = null): TitleListItem {
     posterUrl: null,
     genres: [],
     ratingTmdb: null,
-    ratingImdb: null,
     isFavorite: false,
     rating,
     availability: null,

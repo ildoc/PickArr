@@ -6,7 +6,6 @@ public sealed class SettingsResponse
 {
     public required WatchmodeSettingsDto Watchmode { get; init; }
     public required TmdbSettingsDto Tmdb { get; init; }
-    public required OmdbSettingsDto Omdb { get; init; }
     public required ArrInstanceSettingsDto Sonarr { get; init; }
     public required ArrInstanceSettingsDto Radarr { get; init; }
     public required WebhookSettingsDto Webhooks { get; init; }
@@ -51,11 +50,6 @@ public sealed class WatchmodeSettingsDto
 }
 
 public sealed class TmdbSettingsDto
-{
-    public required SecretStatus ApiKey { get; init; }
-}
-
-public sealed class OmdbSettingsDto
 {
     public required SecretStatus ApiKey { get; init; }
 }
@@ -109,7 +103,6 @@ public sealed class UpdateSettingsRequest
 {
     public WatchmodeUpdateDto? Watchmode { get; init; }
     public TmdbUpdateDto? Tmdb { get; init; }
-    public OmdbUpdateDto? Omdb { get; init; }
     public ArrInstanceUpdateDto? Sonarr { get; init; }
     public ArrInstanceUpdateDto? Radarr { get; init; }
     public UiSettingsDto? Ui { get; init; }
@@ -153,11 +146,6 @@ public sealed class WatchmodeUpdateDto
 }
 
 public sealed class TmdbUpdateDto
-{
-    public string? ApiKey { get; init; }
-}
-
-public sealed class OmdbUpdateDto
 {
     public string? ApiKey { get; init; }
 }

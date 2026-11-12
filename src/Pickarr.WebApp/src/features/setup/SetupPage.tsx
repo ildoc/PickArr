@@ -52,7 +52,6 @@ export function SetupPage() {
 
   const [watchmodeKey, setWatchmodeKey] = useState('')
   const [tmdbKey, setTmdbKey] = useState('')
-  const [omdbKey, setOmdbKey] = useState('')
   const [plan, setPlan] = useState('free')
   const [quota, setQuota] = useState(2500)
   const [reservePercent, setReservePercent] = useState(10)
@@ -60,7 +59,6 @@ export function SetupPage() {
   const [recoEnabled, setRecoEnabled] = useState(true)
   const [watchmodeTest, setWatchmodeTest] = useState<string | null>(null)
   const [tmdbTest, setTmdbTest] = useState<string | null>(null)
-  const [omdbTest, setOmdbTest] = useState<string | null>(null)
 
   const [sonarr, setSonarr] = useState<ArrForm>(emptyArr())
   const [radarr, setRadarr] = useState<ArrForm>(emptyArr())
@@ -113,7 +111,6 @@ export function SetupPage() {
   const env = settings.data?.environmentKeys
   const watchmodeLocked = envLocked(env, 'watchmode.apiKey')
   const tmdbLocked = envLocked(env, 'tmdb.apiKey')
-  const omdbLocked = envLocked(env, 'omdb.apiKey')
   const planLocked = envLocked(env, 'watchmode.plan')
   const quotaLocked = envLocked(env, 'watchmode.quota')
   const reserveLocked = envLocked(env, 'watchmode.reservePercent')
@@ -134,10 +131,9 @@ export function SetupPage() {
     },
   })
 
-  const runKeyTest = async (service: 'watchmode' | 'tmdb' | 'omdb') => {
+  const runKeyTest = async (service: 'watchmode' | 'tmdb') => {
     setError(null)
-    const draft =
-      service === 'watchmode' ? watchmodeKey : service === 'tmdb' ? tmdbKey : omdbKey
+    const draft = service === 'watchmode' ? watchmodeKey : tmdbKey
     try {
       const result = await postConnectionTest({
         service,
@@ -147,16 +143,14 @@ export function SetupPage() {
         ? t('setup.testOk', { detail: result.detail ?? '' })
         : t('setup.testFail', { error: result.detail ?? 'error' })
       if (service === 'watchmode') setWatchmodeTest(message)
-      else if (service === 'tmdb') setTmdbTest(message)
-      else setOmdbTest(message)
+      else setTmdbTest(message)
       return result.ok
     } catch (err) {
       const message = t('setup.testFail', {
         error: err instanceof Error ? err.message : 'error',
       })
       if (service === 'watchmode') setWatchmodeTest(message)
-      else if (service === 'tmdb') setTmdbTest(message)
-      else setOmdbTest(message)
+      else setTmdbTest(message)
       return false
     }
   }
@@ -238,13 +232,6 @@ export function SetupPage() {
       throw new Error(t('setup.keysMustPass'))
     }
 
-    if (omdbKey || settings.data?.omdb.apiKey.isSet) {
-      const omOk = await runKeyTest('omdb')
-      if (!omOk) {
-        throw new Error(t('setup.omdbMustPass'))
-      }
-    }
-
     await updateSettings({
       watchmode: {
         apiKey: watchmodeKey || undefined,
@@ -254,12 +241,10 @@ export function SetupPage() {
         maxCreditsPerRun: maxCreditsLocked ? undefined : maxCreditsPerRun,
       },
       tmdb: tmdbKey ? { apiKey: tmdbKey } : undefined,
-      omdb: omdbKey ? { apiKey: omdbKey } : undefined,
       reco: recoLocked ? undefined : { enabled: recoEnabled },
     })
     setWatchmodeKey('')
     setTmdbKey('')
-    setOmdbKey('')
     await queryClient.invalidateQueries({ queryKey: ['settings'] })
   }
 
@@ -512,37 +497,6 @@ export function SetupPage() {
                 {t('settings.testConnection')}
               </button>
               {tmdbTest && <span className="text-sm text-[var(--muted)]">{tmdbTest}</span>}
-            </div>
-          </section>
-
-          <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">
-            <h2 className="text-lg font-medium">{t('settings.omdb')}</h2>
-            <p className="text-sm text-[var(--muted)]">{t('setup.omdbWhy')}</p>
-            <label className="block space-y-1 text-sm">
-              <span className="text-[var(--muted)]">{t('settings.apiKey')}</span>
-              <input
-                type="password"
-                autoComplete="off"
-                disabled={omdbLocked}
-                value={omdbKey}
-                onChange={(e) => {
-                  setOmdbKey(e.target.value)
-                  setOmdbTest(null)
-                }}
-                placeholder={settings.data?.omdb.apiKey.isSet ? t('settings.apiKeySet') : ''}
-                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-              />
-              {omdbLocked && <p className="text-xs text-[var(--muted)]">{t('setup.envLocked')}</p>}
-            </label>
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={() => void runKeyTest('omdb')}
-                className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15"
-              >
-                {t('settings.testConnection')}
-              </button>
-              {omdbTest && <span className="text-sm text-[var(--muted)]">{omdbTest}</span>}
             </div>
           </section>
 

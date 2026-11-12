@@ -23,7 +23,6 @@ function listItem(id: number, isFavorite: boolean): TitleListItem {
     posterUrl: null,
     genres: [],
     ratingTmdb: null,
-    ratingImdb: null,
     isFavorite,
     rating: null,
     availability: null,

@@ -58,7 +58,6 @@ describe('CatalogForYouRow', () => {
           posterUrl: null,
           genres: [],
           ratingTmdb: null,
-          ratingImdb: null,
           isFavorite: false,
           rating: null,
           availability: null,

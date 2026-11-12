@@ -165,7 +165,7 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 | FR-MET-01 | For each title the system obtains from TMDB: localized and original title, plot, year, duration (film) or number of seasons/episodi (series), genres, posters, backdrop, TMDB rating, IMDB id and TVDB id (series). | M |
 | FR-MET-02 | The metadata language is configurable by source (e.g. `it-IT` for Netflix IT, `en-US` for Netflix US). If the title or plot is missing in the chosen language, * * English ** is used as the fallback. | M |
 | FR-MET-03 | The tab shows external links to **TMDB** and **IMDB** (if the id is known). Link to TVDB for series is optional. | M |
-| FR-MET-04 | IMDB rating shown next to TMDB rating. Requires an optional additional integration (OMDb, with its own API key, see D-03). Without it, only the TMDB rating is shown. | S |
+| FR-MET-04 | ~~Removed.~~ IMDb user rating via OMDb is out of scope; only the TMDB rating is shown. IMDb remains as an external link when `ImdbId` is known. | — |
 | FR-MET-05 | Metadata is updated periodically (default: every 30 days for active titles) and upon request. | M |
 | FR-MET-06 | Images are served directly from TMDB URLs (hotlinks). No local copy. | M |
 | FR-MET-07 | The interface shows the **attributions** required: Watchmode.com (with link) and TMDB (logo and wording "This product uses the TMDB API but is not endorsed or certified by TMDB"). | M |
@@ -260,8 +260,8 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-SET-00 | **Onboarding obbligatorio** al primo avvio (`/setup`) finché manca `setup.completed`. Quattro step con salvataggio per step: profilo admin; chiavi Watchmode/TMDB (test obbligatorio) + OMDb opzionale + piano/budget + reco; almeno un catalogo; Sonarr/Radarr opzionali (test obbligatorio se valorizzati). A Fine si imposta il flag e si accoda l’import. | M |
-| FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, API key TMDB, API key OMDb (opzionale), piano Watchmode (free/a pagamento). | M |
+| FR-SET-00 | **Onboarding obbligatorio** al primo avvio (`/setup`) finché manca `setup.completed`. Quattro step con salvataggio per step: profilo admin; chiavi Watchmode/TMDB (test obbligatorio) + piano/budget + reco; almeno un catalogo; Sonarr/Radarr opzionali (test obbligatorio se valorizzati). A Fine si imposta il flag e si accoda l’import. | M |
+| FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, API key TMDB, piano Watchmode (free/a pagamento). | M |
 | FR-SET-02 | Impostazioni **Sonarr** e **Radarr**: URL e API key di una istanza ciascuna, con pulsante **Test connessione** che mostra la versione rilevata. | M |
 | FR-SET-03 | Valori di **default** per Sonarr/Radarr: profilo qualità e root folder, scelti tra quelli esposti dall'istanza. | M |
 | FR-SET-04 | **Budget crediti**: quota mensile, riserva percentuale, massimo crediti per esecuzione. | M |
@@ -643,7 +643,7 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 |---|---|---|
 | D-01 | **Default di profilo qualità e root folder.** Non è verificato che le API di Sonarr/Radarr espongano un "profilo predefinito" esplicito. | L'utente imposta i default nelle impostazioni (scelti dalle liste dell'istanza). Se non impostati, si preseleziona il primo elemento restituito dall'istanza. |
 | D-02 | **Autenticazione.** Più profili senza login; l'app contiene chiavi sensibili e può eliminare file. | Nessun login. Profili come partizione logica (header dichiarato). Da usare in LAN o dietro reverse proxy. Password opzionale come evoluzione (FR-SET-10). |
-| D-03 | **Voto IMDb.** TMDB non fornisce il voto IMDb. | Integrazione opzionale con OMDb (API key personale). Senza chiave, solo voto TMDB. |
+| D-03 | **Voto IMDb.** TMDB non fornisce il voto IMDb. | Non integrare OMDb. Solo voto TMDB in UI; link IMDb quando l’id è noto. |
 | D-04 | **Default delle opzioni di eliminazione.** | Entrambe disattivate, per sicurezza. L'utente può attivarle a ogni eliminazione. |
 | D-05 | **Costo reale per chiamata** Watchmode (e parametri esatti dell'elenco titoli). | Da misurare nello spike SP-1; il design usa un budget parametrico. |
 | D-06 | **Classificazione stand-up.** | Keyword TMDB per **nome** (“stand-up comedy” → `standupcomedy`). Niente id keyword cablati. Preferenza genere Watchmode ancora non implementata. All’avvio, `TitleIdentityMaintenance` ricalcola `Category` dai keyword già persistiti. |
@@ -676,6 +676,6 @@ Dove una decisione è aperta, il documento adotta una proposta predefinita da va
 | **R2** | Keyword/crediti/en-US, segnali impliciti, sparse L1, simili, reasons. |
 | **R3** | Modello ONNX, embedding, kNN L2, MMR/explore, `/taste`, settings/admin reco. |
 | **R4** | Valutazione offline, livello 3 gated, registro eventi (default off), taratura SP-R4. |
-| **v1.1** | Webhook Sonarr/Radarr, stato per stagione completo, voto IMDb (OMDb), date di scadenza, traduzione italiana, filtri in URL, log di audit. |
+| **v1.1** | Webhook Sonarr/Radarr, stato per stagione completo, date di scadenza, traduzione italiana, filtri in URL, log di audit. |
 | **v1.2** | Aggiornamenti in tempo reale, hero banner, aggiunta in blocco dai preferiti, ricordo delle ultime opzioni. |
 | **v2** | Nuovi servizi (Amazon Prime, Disney+), feed delle modifiche per piani a pagamento, autenticazione opzionale. |

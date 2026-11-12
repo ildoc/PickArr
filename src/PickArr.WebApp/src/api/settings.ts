@@ -14,6 +14,6 @@ export function updateSettings(body: Record<string, unknown>) {
   return apiPut<SettingsResponse>('/api/v1/settings', body)
 }
 
-export function postConnectionTest(body: { service: 'watchmode' | 'tmdb' | 'omdb'; apiKey?: string }) {
+export function postConnectionTest(body: { service: 'watchmode' | 'tmdb'; apiKey?: string }) {
   return apiPost<ConnectionTestResponse>('/api/v1/settings/test', body) as Promise<ConnectionTestResponse>
 }

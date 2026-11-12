@@ -23,7 +23,6 @@ vi.mock('../../api/arr', () => ({
 const emptySettings = {
   watchmode: { apiKey: { isSet: false }, plan: 'free', quota: 2500, reservePercent: 10, maxCreditsPerRun: 80 },
   tmdb: { apiKey: { isSet: false } },
-  omdb: { apiKey: { isSet: false } },
   sonarr: { url: null, apiKey: { isSet: false }, syncIntervalMinutes: 15, defaults: null },
   radarr: { url: null, apiKey: { isSet: false }, syncIntervalMinutes: 15, defaults: null },
   webhooks: { token: { isSet: false } },

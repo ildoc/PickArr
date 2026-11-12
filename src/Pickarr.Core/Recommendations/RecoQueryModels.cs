@@ -32,7 +32,6 @@ public sealed record RecommendationItemDto(
     string? PosterUrl,
     IReadOnlyList<GenreRefDto> Genres,
     double? RatingTmdb,
-    double? RatingImdb,
     bool IsFavorite,
     bool IsWatched,
     string? Rating,

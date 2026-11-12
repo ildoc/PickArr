@@ -17,7 +17,6 @@ public static class SettingsKeys
     public const string CatalogInitialImportStarted = "catalog.initialImportStarted";
     public const string SetupCompleted = "setup.completed";
     public const string TmdbApiKey = "tmdb.apiKey";
-    public const string OmdbApiKey = "omdb.apiKey";
     public const string SonarrUrl = "sonarr.url";
     public const string SonarrApiKey = "sonarr.apiKey";
     public const string SonarrDefaults = "sonarr.defaults";

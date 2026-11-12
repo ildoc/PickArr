@@ -220,7 +220,6 @@ Unique index `(ProviderId, CountryCode)`.
 | SeasonCount, EpisodeCount | int null | series |
 | VoteTmdb | real null | |
 | VoteTmdbCount | int null | |
-| ImdbRating | real null | optional (OMDb) |
 | Popularity | real null | |
 | OriginalLanguage | text null | |
 | PosterPath, BackdropPath | text null | neutral TMDB paths |
@@ -341,7 +340,7 @@ Unique index `(Kind, ArrId)`; indexes on `TmdbId`, `TvdbId`, `TitleId`.
 
 Finished rows are pruned to `jobs.runHistoryLimit` (default 10, clamp 1–100) per `(Kind, CatalogSourceId)` after each terminal status; `Running` rows are kept. Related `ApiUsage` rows for deleted run ids are removed.
 
-**`ApiUsage`**: `Id`, `Service` (`watchmode`/`tmdb`/`omdb`), `Endpoint`, `Timestamp`, `Credits` (int), `QuotaUsed` (int null), `QuotaLimit` (int null), `StatusCode`, `SyncRunId` null. Index on `(Service, Timestamp)`.
+**`ApiUsage`**: `Id`, `Service` (`watchmode`/`tmdb`), `Endpoint`, `Timestamp`, `Credits` (int), `QuotaUsed` (int null), `QuotaLimit` (int null), `StatusCode`, `SyncRunId` null. Index on `(Service, Timestamp)`.
 
 **`Settings`**: `Key` PK, `ValueJson`, `IsSecret` (value encrypted with Data Protection), `UpdatedAt`.
 
@@ -430,11 +429,7 @@ Rules:
 - **Image URLs:** built by the backend (`secure_base_url` + size + `PosterPath`); suggested `w342` for the grid, `w500` for the card, `w780` for the backdrop.
 - **Attribution:** required logo and wording shown in the UI (FR-MET-07).
 
-### 5.3 OMDb (optional, FR-MET-04)
-
-`GET https://www.omdbapi.com/?i={imdb_id}&apikey={key}` → `imdbRating`. Run only if the key is set, with a configurable daily limit (OMDb’s free plan has a daily cap), at low priority, and only for titles with `ImdbId`.
-
-### 5.4 Sonarr (API v3, header `X-Api-Key`) — verify with `/swagger`
+### 5.3 Sonarr (API v3, header `X-Api-Key`) — verify with `/swagger`
 
 Base: `{url}/api/v3`.
 
@@ -473,7 +468,7 @@ Body of `POST /series`: start from the object returned by lookup (contains `titl
 
 Values of `addOptions.monitor` **(to verify)**: `all`, `future`, `missing`, `existing`, `firstSeason`, `lastSeason`, `latestSeason`, `pilot`, `recent`, `none`. Values of `seriesType`: `standard`, `daily`, `anime`.
 
-### 5.5 Radarr (API v3, header `X-Api-Key`) — verify with `/swagger`
+### 5.4 Radarr (API v3, header `X-Api-Key`) — verify with `/swagger`
 
 | Use | Call |
 |---|---|
@@ -504,7 +499,7 @@ Body of `POST /movie`:
 
 `minimumAvailability`: `announced`, `inCinemas`, `released`.
 
-### 5.6 `IArrClient` interface
+### 5.5 `IArrClient` interface
 
 A single abstraction with two implementations (`SonarrClient`, `RadarrClient`) avoids duplication in services:
 
@@ -525,7 +520,7 @@ public interface IArrClient
 
 `ArrAddRequest` is a discriminated union: `SonarrAddRequest` and `RadarrAddRequest` with the specific fields.
 
-### 5.7 Inbound webhooks
+### 5.6 Inbound webhooks
 
 Configured in Sonarr/Radarr (*Settings → Connect → Webhook*), method `POST`.
 
@@ -794,7 +789,6 @@ Favorites are not filtered on the catalog: use `GET /favorites` and the UI route
       "posterUrl": "https://image.tmdb.org/t/p/w342/abc.jpg",
       "genres": [{ "id": 18, "name": "Drama" }],
       "ratingTmdb": 7.8,
-      "ratingImdb": null,
       "isFavorite": true,
       "rating": "like",
       "availability": { "addedAt": "2026-10-28T04:00:10Z", "removedAt": null, "leavingDate": null, "isNew": true },
@@ -827,7 +821,7 @@ Favorites are not filtered on the catalog: use `GET /favorites` and the UI route
   "genres": [{ "id": 18, "name": "Drama" }],
   "posterUrl": "https://image.tmdb.org/t/p/w500/abc.jpg",
   "backdropUrl": "https://image.tmdb.org/t/p/w780/def.jpg",
-  "ratings": { "tmdb": 7.8, "tmdbVotes": 1520, "imdb": null },
+  "ratings": { "tmdb": 7.8, "tmdbVotes": 1520 },
   "links": { "tmdb": "https://www.themoviedb.org/tv/987654", "imdb": "https://www.imdb.com/title/tt1234567/", "tvdb": null },
   "isFavorite": true,
   "rating": "like",
@@ -927,7 +921,6 @@ Response `201` with the same `arr` object as the card. Errors: `422 ARR_ID_UNMAP
   "watchmode": { "apiKey": { "isSet": true }, "plan": "free",
                  "quota": 2500, "reservePercent": 10, "maxCreditsPerRun": 80 },
   "tmdb":      { "apiKey": { "isSet": true } },
-  "omdb":      { "apiKey": { "isSet": false } },
   "sonarr":    { "url": "http://sonarr:8989", "apiKey": { "isSet": true },
                  "defaults": { "qualityProfileId": 4, "rootFolderPath": "/tv" },
                  "syncIntervalMinutes": 15 },
@@ -947,7 +940,7 @@ Response `201` with the same `arr` object as the card. Errors: `422 ARR_ID_UNMAP
 
 **`PUT /settings`** — partial update (JSON merge). A secret is changed only if present in the body with a value; `null` clears it.
 
-**`POST /settings/test`** — body `{ service: watchmode|tmdb|omdb, apiKey? }`. Uses the draft key when present, otherwise the saved/env value. Response: `{ "ok": true, "detail": "…" }` or `{ "ok": false, "detail": "…" }`. Arr probes stay on **`POST /arr/test`**.
+**`POST /settings/test`** — body `{ service: watchmode|tmdb, apiKey? }`. Uses the draft key when present, otherwise the saved/env value. Response: `{ "ok": true, "detail": "…" }` or `{ "ok": false, "detail": "…" }`. Arr probes stay on **`POST /arr/test`**.
 
 **`GET /setup`** — `{ completed: bool }` from `setup.completed`.
 
@@ -1115,7 +1108,7 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 
 | Topic | Measure |
 |---|---|
-| Secrets at rest | Watchmode/TMDB/OMDb keys, Sonarr/Radarr tokens, and the webhook token are encrypted with **Data Protection** (key ring in `/config/keys`; if lost, secrets must be re-entered). |
+| Secrets at rest | Watchmode/TMDB keys, Sonarr/Radarr tokens, and the webhook token are encrypted with **Data Protection** (key ring in `/config/keys`; if lost, secrets must be re-entered). |
 | Secrets in transit to the UI | Never returned: only `isSet`. Webhook token rotation shows the value once. |
 | Logs | No secrets in logs; redact `X-Api-Key` and `Authorization` headers, and `apiKey`/`token` parameters in logged URLs. |
 | Webhooks | Random token ≥ 32 bytes, constant-time comparison, rate limit (e.g. 30 req/min), no effect beyond refreshing the item. |
@@ -1165,7 +1158,7 @@ If the variable is set and non-empty, that value is effective for the whole run:
 
 ### 12.2 Application settings (`Settings` table)
 
-Keys with their defaults: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `omdb.apiKey`, `omdb.dailyLimit=900`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (like Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, plus reco keys: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*` (including `reco.weights.watched=0.35`), `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (full list in `recommendations.md` §16).
+Keys with their defaults: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (like Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, plus reco keys: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*` (including `reco.weights.watched=0.35`), `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (full list in `recommendations.md` §16).
 
 When settings relevant to schedules change, `SettingsService` emits an event that triggers `ScheduleReconciler`.
 
@@ -1385,7 +1378,7 @@ Relevant residual risks:
 6. **Actions:** add dialog, delete with confirmation, audit.
 7. **Administration:** jobs page, manual run, credits, unmapped titles.
 8. **Recommendations R1–R4:** rating + prior + *For you*; keyword/credits enrichment; sparse/similar; ONNX/kNN/MMR; eval + gated L3 + event log (see `recommendations.md`).
-9. **Polish:** webhooks, leaving dates, OMDb, filters in URL, SSE, Italian translation, E2E.
+9. **Polish:** webhooks, leaving dates, filters in URL, SSE, Italian translation, E2E.
 10. **New services:** service/country management UI and validation with Amazon Prime/Disney+.
 
 Each step ends with automated tests and a green pipeline.
@@ -1399,7 +1392,7 @@ Each step ends with automated tests and a green pipeline.
 | Requirements | Main components |
 |---|---|
 | FR-CAT-* | `CatalogSyncService`, `CatalogUpserter`, `ICatalogProvider`, `ICreditBudget`, `ScheduleReconciler`, `SyncRuns`, `Availabilities` |
-| FR-MET-* | `EnrichmentService`, `TmdbClient`, `OmdbClient`, `TitleLocalizations` |
+| FR-MET-* | `EnrichmentService`, `TmdbClient`, `TitleLocalizations` |
 | FR-UI/SRC/DET/FAV-* | `TitleQueryService`, `titles`/`favorites` endpoints, frontend features `catalog`, `title`, `favorites` |
 | FR-ADD/ST/DEL-* | `IArrClient`, `ArrAddService`, `ArrDeleteService`, `ArrLibrarySyncService`, `ArrStatusCalculator`, `ArrMatcher`, webhook |
 | FR-SET/ADM-* | `SettingsService`, `settings`/`admin` endpoints, frontend features `settings`, `admin` |

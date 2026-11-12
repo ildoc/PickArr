@@ -480,7 +480,7 @@ public sealed class TitleQueryService(
             genres,
             TmdbImageUrls.Build(title.PosterPath, "w500"),
             TmdbImageUrls.Build(title.BackdropPath, "w780"),
-            new TitleRatingsDto(title.VoteTmdb, title.VoteTmdbCount, Imdb: null),
+            new TitleRatingsDto(title.VoteTmdb, title.VoteTmdbCount),
             new TitleLinksDto(
                 title.TmdbId is { } tmdbId && title.TmdbType is { } tmdbType
                     ? $"https://www.themoviedb.org/{tmdbType}/{tmdbId}"
@@ -610,7 +610,6 @@ public sealed class TitleQueryService(
             TmdbImageUrls.Build(title.PosterPath, "w342"),
             MapGenres(title, language),
             title.VoteTmdb,
-            RatingImdb: null,
             personal.IsFavorite,
             personal.IsWatched,
             personal.Rating,

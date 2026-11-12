@@ -12,20 +12,28 @@ namespace Pickarr.Infrastructure.Tests;
 public sealed class EnvironmentSettingSourceTests
 {
     [Fact]
-    public void Catalog_covers_every_settings_key_except_import_state()
+    public void Catalog_covers_every_settings_key_except_runtime_flags()
     {
         var keys = typeof(SettingsKeys)
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Select(field => (string)field.GetRawConstantValue()!)
             .ToList();
 
+        var runtimeFlags = new HashSet<string>(StringComparer.Ordinal)
+        {
+            SettingsKeys.CatalogInitialImportStarted,
+            SettingsKeys.SetupCompleted,
+        };
+
         keys.ShouldContain(SettingsKeys.CatalogInitialImportStarted);
-        foreach (var key in keys.Where(key => key != SettingsKeys.CatalogInitialImportStarted))
+        keys.ShouldContain(SettingsKeys.SetupCompleted);
+        foreach (var key in keys.Where(key => !runtimeFlags.Contains(key)))
         {
             SettingEnvironmentCatalog.CanonicalKeys.ShouldContain(key);
         }
 
         SettingEnvironmentCatalog.CanonicalKeys.ShouldNotContain(SettingsKeys.CatalogInitialImportStarted);
+        SettingEnvironmentCatalog.CanonicalKeys.ShouldNotContain(SettingsKeys.SetupCompleted);
     }
 
     [Fact]

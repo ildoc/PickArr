@@ -13,7 +13,6 @@ function listItem(id: number, rating: TitleListItem['rating'] = null): TitleList
     posterUrl: null,
     genres: [],
     ratingTmdb: null,
-    ratingImdb: null,
     isFavorite: false,
     rating,
     availability: null,

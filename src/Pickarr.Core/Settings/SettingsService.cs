@@ -33,10 +33,6 @@ public sealed class SettingsService(ISettingsStore store)
             {
                 ApiKey = await SecretAsync(SettingsKeys.TmdbApiKey, cancellationToken),
             },
-            Omdb = new OmdbSettingsDto
-            {
-                ApiKey = await SecretAsync(SettingsKeys.OmdbApiKey, cancellationToken),
-            },
             Sonarr = new ArrInstanceSettingsDto
             {
                 Url = await GetNullableAsync(SettingsKeys.SonarrUrl, cancellationToken),
@@ -119,7 +115,6 @@ public sealed class SettingsService(ISettingsStore store)
         SettingsKeys.WatchmodeReservePercent,
         SettingsKeys.WatchmodeMaxCreditsPerRun,
         SettingsKeys.TmdbApiKey,
-        SettingsKeys.OmdbApiKey,
         SettingsKeys.SonarrUrl,
         SettingsKeys.SonarrApiKey,
         SettingsKeys.SonarrDefaults,
@@ -160,11 +155,6 @@ public sealed class SettingsService(ISettingsStore store)
         if (request.Tmdb is { } tmdb)
         {
             await ApplySecretAsync(SettingsKeys.TmdbApiKey, tmdb.ApiKey, cancellationToken);
-        }
-
-        if (request.Omdb is { } omdb)
-        {
-            await ApplySecretAsync(SettingsKeys.OmdbApiKey, omdb.ApiKey, cancellationToken);
         }
 
         if (request.Sonarr is { } sonarr)

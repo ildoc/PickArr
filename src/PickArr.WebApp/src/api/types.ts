@@ -55,7 +55,6 @@ export type TitleListItem = {
   posterUrl: string | null
   genres: GenreRef[]
   ratingTmdb: number | null
-  ratingImdb: number | null
   isFavorite: boolean
   isWatched?: boolean
   rating?: RatingValue | null
@@ -119,7 +118,7 @@ export type TitleDetail = {
   genres: GenreRef[]
   posterUrl: string | null
   backdropUrl: string | null
-  ratings: { tmdb: number | null; tmdbVotes: number | null; imdb: number | null }
+  ratings: { tmdb: number | null; tmdbVotes: number | null }
   links: { tmdb: string | null; imdb: string | null; tvdb: string | null }
   isFavorite: boolean
   isWatched?: boolean
@@ -169,7 +168,6 @@ export type SettingsResponse = {
     maxCreditsPerRun: number
   }
   tmdb: { apiKey: SecretStatus }
-  omdb: { apiKey: SecretStatus }
   sonarr: {
     url: string | null
     apiKey: SecretStatus

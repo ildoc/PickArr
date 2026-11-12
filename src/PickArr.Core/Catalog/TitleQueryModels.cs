@@ -40,7 +40,6 @@ public sealed record TitleListItemDto(
     string? PosterUrl,
     IReadOnlyList<GenreRefDto> Genres,
     double? RatingTmdb,
-    double? RatingImdb,
     bool IsFavorite,
     bool IsWatched,
     string? Rating,
@@ -101,7 +100,7 @@ public sealed record TitleDetailDto(
     ArrDetailDto Arr,
     IReadOnlyList<string> Cast);
 
-public sealed record TitleRatingsDto(double? Tmdb, int? TmdbVotes, double? Imdb);
+public sealed record TitleRatingsDto(double? Tmdb, int? TmdbVotes);
 
 public sealed record TitleLinksDto(string? Tmdb, string? Imdb, string? Tvdb);
 

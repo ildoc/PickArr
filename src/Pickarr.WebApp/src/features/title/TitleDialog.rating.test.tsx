@@ -79,7 +79,7 @@ describe('TitleDialog ratings', () => {
       genres: [],
       posterUrl: null,
       backdropUrl: null,
-      ratings: { tmdb: null, tmdbVotes: null, imdb: null },
+      ratings: { tmdb: null, tmdbVotes: null },
       links: { tmdb: null, imdb: null, tvdb: null },
       isFavorite: false,
       isWatched: false,

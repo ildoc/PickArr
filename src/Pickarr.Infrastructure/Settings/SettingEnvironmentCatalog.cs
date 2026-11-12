@@ -37,7 +37,6 @@ internal static class SettingEnvironmentCatalog
         [SettingsKeys.CatalogRemovedWindowDays] = SettingValueKind.Int32,
         [SettingsKeys.CatalogStaleWarningDays] = SettingValueKind.Int32,
         [SettingsKeys.TmdbApiKey] = SettingValueKind.String,
-        [SettingsKeys.OmdbApiKey] = SettingValueKind.String,
         [SettingsKeys.SonarrUrl] = SettingValueKind.Url,
         [SettingsKeys.SonarrApiKey] = SettingValueKind.String,
         [SettingsKeys.SonarrDefaults] = SettingValueKind.Defaults,

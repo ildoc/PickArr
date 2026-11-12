@@ -50,7 +50,6 @@ vi.mock('../api/settings', () => ({
       maxCreditsPerRun: 80,
     },
     tmdb: { apiKey: { isSet: false } },
-    omdb: { apiKey: { isSet: false } },
     sonarr: { url: null, apiKey: { isSet: false }, defaults: null },
     radarr: { url: null, apiKey: { isSet: false }, defaults: null },
     reco: { enabled: true },

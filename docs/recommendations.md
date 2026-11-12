@@ -808,7 +808,6 @@ Response: page like `PagedTitles`, plus `version`, `stage`, and on each item the
       "posterUrl": "https://image.tmdb.org/t/p/w342/xyz.jpg",
       "genres": [{ "id": 80, "name": "Crime" }],
       "ratingTmdb": 8.1,
-      "ratingImdb": null,
       "rating": null,
       "isFavorite": false,
       "availability": {
