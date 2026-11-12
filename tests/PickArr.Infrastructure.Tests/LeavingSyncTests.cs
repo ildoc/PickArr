@@ -155,6 +155,71 @@ public sealed class LeavingSyncTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task RunAsync_creates_missing_title_and_availability_from_leaving_entry()
+    {
+        var fixtureRoot = FindFixtureRoot();
+        var body = await File.ReadAllTextAsync(Path.Combine(fixtureRoot, "title-leaving-dates-preview.json"));
+        _server
+            .Given(Request.Create().WithPath("/v1/title-leaving-dates/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithHeader("X-Account-Quota", "2500")
+                .WithHeader("X-Account-Quota-Used", "12")
+                .WithBody(body));
+
+        await BuildServicesAsync(plan: "free", seedMatchingTitles: false);
+        var sync = _services!.GetRequiredService<ILeavingSync>();
+
+        var result = await sync.RunAsync(_sourceId, isManual: true);
+        result.Status.ShouldBe(SyncRunStatuses.Succeeded);
+        result.TitlesAdded.ShouldBe(1);
+        result.TitlesUpdated.ShouldBe(1);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
+        var alpha = await db.Availabilities
+            .Include(a => a.Title)
+            .SingleAsync(a => a.Title!.WatchmodeId == 1000001);
+        alpha.LeavingDate.ShouldBe(new DateOnly(2026, 11, 15));
+        alpha.Title!.OriginalTitle.ShouldBe("Example Movie Alpha");
+        alpha.IsBaseline.ShouldBeFalse();
+        (await db.AvailabilityEvents.CountAsync(e => e.Type == AvailabilityEventTypes.LeavingAnnounced))
+            .ShouldBe(1);
+    }
+
+    [Fact]
+    public async Task RunAsync_creates_availability_when_title_exists_without_source_row()
+    {
+        var fixtureRoot = FindFixtureRoot();
+        var body = await File.ReadAllTextAsync(Path.Combine(fixtureRoot, "title-leaving-dates-preview.json"));
+        _server
+            .Given(Request.Create().WithPath("/v1/title-leaving-dates/").UsingGet())
+            .RespondWith(Response.Create()
+                .WithStatusCode(200)
+                .WithHeader("Content-Type", "application/json")
+                .WithHeader("X-Account-Quota", "2500")
+                .WithHeader("X-Account-Quota-Used", "12")
+                .WithBody(body));
+
+        await BuildServicesAsync(plan: "free", seedMatchingTitles: true, seedAvailabilities: false);
+        var sync = _services!.GetRequiredService<ILeavingSync>();
+
+        var result = await sync.RunAsync(_sourceId, isManual: true);
+        result.Status.ShouldBe(SyncRunStatuses.Succeeded);
+        result.TitlesAdded.ShouldBe(0);
+        result.TitlesUpdated.ShouldBe(1);
+
+        await using var scope = _services!.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<PickarrDbContext>();
+        var alpha = await db.Availabilities
+            .Include(a => a.Title)
+            .SingleAsync(a => a.Title!.WatchmodeId == 1000001 && a.CatalogSourceId == _sourceId);
+        alpha.LeavingDate.ShouldBe(new DateOnly(2026, 11, 15));
+        (await db.Titles.CountAsync(t => t.WatchmodeId == 1000001)).ShouldBe(1);
+    }
+
+    [Fact]
     public async Task RunForCountryAsync_fetches_watchmode_once_for_two_sources()
     {
         var fixtureRoot = FindFixtureRoot();
@@ -200,7 +265,9 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         string plan,
         bool seedExtraLeaving = false,
         int maxCreditsPerRun = 80,
-        bool secondProviderSameCountry = false)
+        bool secondProviderSameCountry = false,
+        bool seedMatchingTitles = true,
+        bool seedAvailabilities = true)
     {
         _connection = new SqliteConnection("Data Source=:memory:");
         await _connection.OpenAsync();
@@ -292,26 +359,30 @@ public sealed class LeavingSyncTests : IAsyncLifetime
         }
 
         var now = new DateTime(2026, 11, 4, 12, 0, 0, DateTimeKind.Utc);
-        db.Titles.Add(new Title
+        if (seedMatchingTitles)
         {
-            WatchmodeId = 1000001,
-            MediaType = MediaTypes.Movie,
-            Category = TitleCategories.Movie,
-            OriginalTitle = "Example Movie Alpha",
-            MetadataStatus = MetadataStatuses.Pending,
-            CreatedAt = now,
-            UpdatedAt = now,
-        });
-        db.Titles.Add(new Title
-        {
-            WatchmodeId = 1000002,
-            MediaType = MediaTypes.Series,
-            Category = TitleCategories.Series,
-            OriginalTitle = "Example Series Beta",
-            MetadataStatus = MetadataStatuses.Pending,
-            CreatedAt = now,
-            UpdatedAt = now,
-        });
+            db.Titles.Add(new Title
+            {
+                WatchmodeId = 1000001,
+                MediaType = MediaTypes.Movie,
+                Category = TitleCategories.Movie,
+                OriginalTitle = "Example Movie Alpha",
+                MetadataStatus = MetadataStatuses.Pending,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+            db.Titles.Add(new Title
+            {
+                WatchmodeId = 1000002,
+                MediaType = MediaTypes.Series,
+                Category = TitleCategories.Series,
+                OriginalTitle = "Example Series Beta",
+                MetadataStatus = MetadataStatuses.Pending,
+                CreatedAt = now,
+                UpdatedAt = now,
+            });
+        }
+
         if (seedExtraLeaving)
         {
             db.Titles.Add(new Title
@@ -328,35 +399,38 @@ public sealed class LeavingSyncTests : IAsyncLifetime
 
         await db.SaveChangesAsync();
 
-        foreach (var title in db.Titles.Local)
+        if (seedAvailabilities)
         {
-            db.Availabilities.Add(new Availability
+            foreach (var title in db.Titles.Local)
             {
-                TitleId = title.Id,
-                CatalogSourceId = _sourceId,
-                FirstSeenAt = now,
-                LastSeenAt = now,
-                AddedAt = now,
-                IsBaseline = true,
-                LeavingDate = title.WatchmodeId == 1999999 ? new DateOnly(2026, 12, 1) : null,
-            });
-
-            if (secondSource is not null && title.WatchmodeId == 1000001)
-            {
-                // Same title available on a second US provider — leaving fan-out must update both.
                 db.Availabilities.Add(new Availability
                 {
                     TitleId = title.Id,
-                    CatalogSourceId = secondSource.Id,
+                    CatalogSourceId = _sourceId,
                     FirstSeenAt = now,
                     LastSeenAt = now,
                     AddedAt = now,
                     IsBaseline = true,
+                    LeavingDate = title.WatchmodeId == 1999999 ? new DateOnly(2026, 12, 1) : null,
                 });
-            }
-        }
 
-        await db.SaveChangesAsync();
+                if (secondSource is not null && title.WatchmodeId == 1000001)
+                {
+                    // Same title available on a second US provider — leaving fan-out must update both.
+                    db.Availabilities.Add(new Availability
+                    {
+                        TitleId = title.Id,
+                        CatalogSourceId = secondSource.Id,
+                        FirstSeenAt = now,
+                        LastSeenAt = now,
+                        AddedAt = now,
+                        IsBaseline = true,
+                    });
+                }
+            }
+
+            await db.SaveChangesAsync();
+        }
 
         var store = scope.ServiceProvider.GetRequiredService<ISettingsStore>();
         await store.SetAsync(SettingsKeys.WatchmodeApiKey, JsonSerializer.Serialize("test-key"), true);

@@ -384,7 +384,7 @@ Endpoints used:
 | Service list | `GET /sources/` (filters `regions`, `types`) | Find the service id (Netflix = 203). Result stored in `Providers`. |
 | Country list | `GET /regions/` | Validate countries and data quality level. |
 | Title list | `GET /list-titles/` | Heart of sync. Parameters **(to verify)**: `source_ids`, `regions`, `types` (e.g. `movie,tv_series,tv_miniseries,tv_special`), `sort_by`, `page`, `limit` (max 250). |
-| Expiries | “leaving dates” endpoint (`getTitleLeavingDates`) | Free: preview of the next 10 per country. Path and parameters to verify. |
+| Expiries | “leaving dates” endpoint (`getTitleLeavingDates`) | Free: preview of the next ~10 departures across free-plan countries (not 10 per country). |
 | Quota | `GET /status/` | Read only if costs allow; otherwise use headers. |
 | Change feed (paid plan) | `GET /changes/titles_sources_changed`, `/changes/new_titles` | Used only with `WatchmodePlan = Paid` (FR-CAT-13). 1 credit per page. |
 
@@ -683,7 +683,7 @@ delete from cache items no longer present in the snapshot
 
 ### 6.8 Leaving-dates sync (`LeavingSyncJob`, FR-CAT-11)
 
-One call to the leaving-dates endpoint per country (free: max 10 items), then fan-out to all enabled sources for that country filtering by `provider_id`. For each entry resolve the title via Watchmode id, set `LeavingDate`, and record `LeavingAnnounced`; for titles that had a date and no longer appear, record `LeavingCleared`. On the free plan the job is low-cost and optional (setting).
+One call to the leaving-dates endpoint per country, then fan-out to all enabled sources for that country filtering by `provider_id`. On the free Developer plan Watchmode returns a global preview of the next ~10 departures across free-plan countries (the `regions` filter does not expand the preview); paid plans can page the full calendar. For each matching entry upsert the title (by Watchmode id) and the source availability when missing, set `LeavingDate`, and record `LeavingAnnounced`; for titles that had a date and no longer appear, record `LeavingCleared` (paid: absent from the feed; free: only when the date is past). On the free plan the job is low-cost and optional (setting).
 
 ---
 
@@ -1009,7 +1009,7 @@ List and title-detail DTOs, with the header, expose the profile’s `isFavorite`
 | `POST` | `/webhooks/sonarr?token=…` | Responds `202` (or `401` with wrong token, constant-time comparison). |
 | `POST` | `/webhooks/radarr?token=…` | same |
 | `GET` | `/system/status` | Server version and time (used by the header). |
-| `GET` | `/system/image-updates` | Compare the running version to GHCR tags (`ghcr.io/ildoc/pickarr`). Returns `currentVersion`, `channel` (`release`\|`development`), `newerTags`, `updateAvailable`, `checkedAt`, `source`. Release builds only list newer `X.Y.Z` tags; development builds list any newer versioned tag. Registry failures yield an empty list (fail-soft). Tag list is cached in memory (~1h). |
+| `GET` | `/system/image-updates` | Compare the running version to GHCR tags (`ghcr.io/ildoc/pickarr`). Returns `currentVersion`, `channel` (`release`\|`development`), `newerTags`, `updateAvailable`, `checkSucceeded`, `checkedAt`, `source`. Release builds only list newer `X.Y.Z` tags; development builds list any newer versioned tag. Registry failures set `checkSucceeded=false` and an empty list (fail-soft, not cached). Successful tag lists are cached in memory (~10m). |
 | `GET` | `/system/stats` | Title counts (total, per provider, country, source) and disk space under `DataPath` (catalog DB, jobs, logs, models, keys). |
 | `GET` | `/system/logs` | List `pickarr-*.log` files under `DataPath/logs`. |
 | `GET` | `/system/logs/{fileName}` | Download one log file (path-safe names only). |

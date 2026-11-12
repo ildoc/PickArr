@@ -54,6 +54,8 @@ public sealed class SettingsAndHealthTests
         body.GetProperty("newerTags").ValueKind.ShouldBe(JsonValueKind.Array);
         var available = body.GetProperty("updateAvailable");
         (available.ValueKind is JsonValueKind.True or JsonValueKind.False).ShouldBeTrue();
+        var checkSucceeded = body.GetProperty("checkSucceeded");
+        (checkSucceeded.ValueKind is JsonValueKind.True or JsonValueKind.False).ShouldBeTrue();
         body.GetProperty("source").GetString().ShouldBe("ghcr.io/ildoc/pickarr");
         body.TryGetProperty("checkedAt", out _).ShouldBeTrue();
     }

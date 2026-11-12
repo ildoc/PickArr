@@ -358,6 +358,7 @@
     "systemAbout": "Runtime",
     "systemVersion": "Version",
     "systemUpdateAvailable": "Update available",
+    "systemUpdateCheckFailed": "Could not check GHCR for newer tags.",
     "systemNewerTags": "Newer image tags",
     "systemNewerTagsLink": "View on GHCR",
     "systemServerTime": "Server time (UTC)",

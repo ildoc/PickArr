@@ -13,7 +13,8 @@ public sealed class GhcrOptions
     /// <summary>Human-readable source string returned to the UI.</summary>
     public string DisplaySource { get; set; } = "ghcr.io/ildoc/pickarr";
 
-    public TimeSpan CacheDuration { get; set; } = TimeSpan.FromHours(1);
+    /// <summary>How long a successful tag list is reused. Keep short so new pushes show up promptly.</summary>
+    public TimeSpan CacheDuration { get; set; } = TimeSpan.FromMinutes(10);
 
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromSeconds(8);
 }

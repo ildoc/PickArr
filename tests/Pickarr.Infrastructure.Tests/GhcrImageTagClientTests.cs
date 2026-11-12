@@ -42,9 +42,10 @@ public sealed class GhcrImageTagClientTests : IAsyncLifetime
                 .WithBody("""{"name":"ildoc/pickarr","tags":["edge","1.2.3","1.2.3.4","latest"]}"""));
 
         var client = CreateClient();
-        var tags = await client.ListTagsAsync();
+        var result = await client.ListTagsAsync();
 
-        tags.ShouldBe(["edge", "1.2.3", "1.2.3.4", "latest"]);
+        result.Succeeded.ShouldBeTrue();
+        result.Tags.ShouldBe(["edge", "1.2.3", "1.2.3.4", "latest"]);
     }
 
     [Fact]
@@ -56,9 +57,10 @@ public sealed class GhcrImageTagClientTests : IAsyncLifetime
             .RespondWith(Response.Create().WithStatusCode(503));
 
         var client = CreateClient();
-        var tags = await client.ListTagsAsync();
+        var result = await client.ListTagsAsync();
 
-        tags.ShouldBeEmpty();
+        result.Succeeded.ShouldBeFalse();
+        result.Tags.ShouldBeEmpty();
     }
 
     [Fact]
@@ -76,9 +78,10 @@ public sealed class GhcrImageTagClientTests : IAsyncLifetime
             .RespondWith(Response.Create().WithStatusCode(500));
 
         var client = CreateClient();
-        var tags = await client.ListTagsAsync();
+        var result = await client.ListTagsAsync();
 
-        tags.ShouldBeEmpty();
+        result.Succeeded.ShouldBeFalse();
+        result.Tags.ShouldBeEmpty();
     }
 
     private GhcrImageTagClient CreateClient()

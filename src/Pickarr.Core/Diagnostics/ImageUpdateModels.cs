@@ -5,5 +5,6 @@ public sealed record ImageUpdateDto(
     string Channel,
     IReadOnlyList<string> NewerTags,
     bool UpdateAvailable,
+    bool CheckSucceeded,
     DateTimeOffset CheckedAt,
     string Source);

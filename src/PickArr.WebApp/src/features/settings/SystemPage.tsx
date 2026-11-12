@@ -83,6 +83,11 @@ export function SystemPage() {
                     </span>
                   )}
                 </dd>
+                {imageUpdates.data && imageUpdates.data.checkSucceeded === false && (
+                  <p className="mt-2 text-xs text-[var(--muted)]">
+                    {t('settings.systemUpdateCheckFailed')}
+                  </p>
+                )}
                 {imageUpdates.data?.updateAvailable && imageUpdates.data.newerTags.length > 0 && (
                   <div className="mt-3 space-y-2">
                     <p className="text-xs uppercase tracking-wide text-[var(--muted)]">

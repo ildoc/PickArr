@@ -23,30 +23,46 @@ public sealed class ImageUpdateService(
         var checkedAt = new DateTimeOffset(DateTime.SpecifyKind(clock.UtcNow, DateTimeKind.Utc));
         var channel = ImageVersionComparer.ResolveChannel(currentVersion);
 
-        IReadOnlyList<string> tags;
-        try
-        {
-            tags = await cache.GetOrCreateAsync(
-                CacheKey,
-                async entry =>
-                {
-                    entry.AbsoluteExpirationRelativeToNow = opts.CacheDuration;
-                    return await tagSource.ListTagsAsync(cancellationToken);
-                }) ?? [];
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Failed to list GHCR image tags");
-            tags = [];
-        }
+        var fetch = await GetTagsAsync(opts, cancellationToken);
+        var newer = fetch.Succeeded
+            ? ImageVersionComparer.FindNewerTags(currentVersion, fetch.Tags)
+            : [];
 
-        var newer = ImageVersionComparer.FindNewerTags(currentVersion, tags);
         return new ImageUpdateDto(
             CurrentVersion: currentVersion,
             Channel: channel,
             NewerTags: newer,
             UpdateAvailable: newer.Count > 0,
+            CheckSucceeded: fetch.Succeeded,
             CheckedAt: checkedAt,
             Source: opts.DisplaySource);
+    }
+
+    private async Task<ImageTagListResult> GetTagsAsync(GhcrOptions opts, CancellationToken cancellationToken)
+    {
+        if (cache.TryGetValue(CacheKey, out ImageTagListResult? cached) && cached is { Succeeded: true })
+        {
+            return cached;
+        }
+
+        try
+        {
+            var fresh = await tagSource.ListTagsAsync(cancellationToken);
+            if (fresh.Succeeded)
+            {
+                cache.Set(CacheKey, fresh, opts.CacheDuration);
+            }
+            else
+            {
+                logger.LogWarning("GHCR image tag check failed; not caching the miss");
+            }
+
+            return fresh;
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Failed to list GHCR image tags");
+            return ImageTagListResult.Failed();
+        }
     }
 }

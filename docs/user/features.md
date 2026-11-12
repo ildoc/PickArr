@@ -17,7 +17,7 @@ Type and genre options come from titles in the current scope. The grid stays emp
 ### Sync behavior (operator view)
 
 - Scheduled incremental and full sync jobs keep the local catalog current.
-- On the Watchmode **free** plan, change feeds and a full leaving calendar are not available: incremental sync uses recent list pages; removals are confirmed across full syncs; leaving dates are a short preview. Older catalog titles (for example a series whose last “new” release is a new season) usually appear only after a **full sync** completes and sets the source baseline.
+- On the Watchmode **free** plan, change feeds and a full leaving calendar are not available: incremental sync uses recent list pages; removals are confirmed across full syncs; leaving dates are a short global preview (about 10 titles across your free-plan countries, not per catalog). The leaving sync upserts those titles onto matching enabled sources so they can appear under **Leaving** even before a full catalog baseline. Older catalog titles (for example a series whose last “new” release is a new season) usually appear under **All** only after a **full sync** completes and sets the source baseline.
 - Catalog search is scoped to the selected provider + country. A title present on Netflix IT does not appear under Netflix US until that source has an active availability row.
 - Free plan limits: about 2 500 credits/month and at most **3** distinct countries (several providers in one country count once).
 - Cached catalog data should be refreshed within Watchmode’s free-plan cache window; the UI warns when a source looks stale.

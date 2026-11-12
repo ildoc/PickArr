@@ -44,6 +44,7 @@ describe('SystemPage', () => {
       channel: 'release',
       newerTags: [],
       updateAvailable: false,
+      checkSucceeded: true,
       checkedAt: '2026-11-11T12:00:00Z',
       source: 'ghcr.io/ildoc/pickarr',
     })
@@ -92,6 +93,7 @@ describe('SystemPage', () => {
       channel: 'release',
       newerTags: ['1.3.0', '1.2.4'],
       updateAvailable: true,
+      checkSucceeded: true,
       checkedAt: '2026-11-11T12:00:00Z',
       source: 'ghcr.io/ildoc/pickarr',
     })
@@ -105,5 +107,28 @@ describe('SystemPage', () => {
       'href',
       'https://github.com/ildoc/Pickarr/pkgs/container/pickarr',
     )
+  })
+
+  it('shows a soft message when the GHCR check fails', async () => {
+    vi.mocked(fetchSystemStats).mockResolvedValue({
+      totalTitles: 0,
+      byProvider: [],
+      byCountry: [],
+      bySource: [],
+      storage: { totalBytes: 0, entries: [] },
+    })
+    vi.mocked(fetchImageUpdates).mockResolvedValue({
+      currentVersion: '1.2.3',
+      channel: 'release',
+      newerTags: [],
+      updateAvailable: false,
+      checkSucceeded: false,
+      checkedAt: '2026-11-11T12:00:00Z',
+      source: 'ghcr.io/ildoc/pickarr',
+    })
+
+    wrap(<SystemPage />)
+
+    expect(await screen.findByText('Could not check GHCR for newer tags.')).toBeTruthy()
   })
 })

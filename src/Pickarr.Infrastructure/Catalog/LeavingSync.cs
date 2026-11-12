@@ -6,6 +6,7 @@ using Pickarr.Core.Abstractions;
 using Pickarr.Core.Catalog;
 using Pickarr.Core.Domain;
 using Pickarr.Core.Domain.Entities;
+using Pickarr.Core.Metadata;
 using Pickarr.Core.Settings;
 using Pickarr.Infrastructure.Persistence;
 
@@ -15,6 +16,8 @@ namespace Pickarr.Infrastructure.Catalog;
 /// Sync leaving dates from the catalog provider (spec §6.8 / FR-CAT-11).
 /// Free plan: preview only — never clears dates merely because they are absent from the preview.
 /// One Watchmode call per country; results fan out to every enabled source in that country.
+/// Missing titles / availabilities for matching enabled sources are upserted so the Leaving
+/// view works even when the catalog is still incomplete (no full baseline yet).
 /// </summary>
 public sealed class LeavingSync(
     PickarrDbContext db,
@@ -124,6 +127,7 @@ public sealed class LeavingSync(
 
             var announced = 0;
             var cleared = 0;
+            var created = 0;
 
             foreach (var source in sources)
             {
@@ -136,8 +140,9 @@ public sealed class LeavingSync(
                             StringComparison.OrdinalIgnoreCase))
                     .ToList();
 
-                var (sourceAnnounced, sourceCleared) = await ApplyToSourceAsync(
+                var (sourceAnnounced, sourceCleared, sourceCreated) = await ApplyToSourceAsync(
                     source.Id,
+                    source.BaselineCompletedAt is not null,
                     forSource,
                     run.Id,
                     now,
@@ -146,6 +151,7 @@ public sealed class LeavingSync(
                     cancellationToken);
                 announced += sourceAnnounced;
                 cleared += sourceCleared;
+                created += sourceCreated;
             }
 
             await db.SaveChangesAsync(cancellationToken);
@@ -154,17 +160,19 @@ public sealed class LeavingSync(
             if (tracked is not null)
             {
                 tracked.PagesFetched = 1;
+                tracked.TitlesAdded = created;
                 tracked.TitlesUpdated = announced + cleared;
                 await syncRunStore.UpdateAsync(tracked, cancellationToken);
             }
 
             await syncRunStore.SucceedAsync(run.Id, cancellationToken);
             logger.LogInformation(
-                "Leaving sync for country {Country} ({SourceCount} sources): announced={Announced}, cleared={Cleared}, paid={Paid}",
+                "Leaving sync for country {Country} ({SourceCount} sources): announced={Announced}, cleared={Cleared}, created={Created}, paid={Paid}",
                 normalizedCountry,
                 sources.Count,
                 announced,
                 cleared,
+                created,
                 isPaid);
             return ToResult((await syncRunStore.GetAsync(run.Id, cancellationToken))!);
         }
@@ -180,8 +188,9 @@ public sealed class LeavingSync(
         }
     }
 
-    private async Task<(int Announced, int Cleared)> ApplyToSourceAsync(
+    private async Task<(int Announced, int Cleared, int Created)> ApplyToSourceAsync(
         int catalogSourceId,
+        bool baselineCompleted,
         IReadOnlyList<LeavingEntry> leaving,
         Guid runId,
         DateTime now,
@@ -200,12 +209,14 @@ public sealed class LeavingSync(
             .Where(t => t.WatchmodeId != null && watchmodeIds.Contains(t.WatchmodeId.Value))
             .ToDictionaryAsync(t => t.WatchmodeId!.Value, cancellationToken);
 
+        // Include removed rows so a leaving hit can revive availability on this source.
         var availabilities = await db.Availabilities
-            .Where(a => a.CatalogSourceId == catalogSourceId && a.RemovedAt == null)
+            .Where(a => a.CatalogSourceId == catalogSourceId)
             .ToListAsync(cancellationToken);
         var byTitleId = availabilities.ToDictionary(a => a.TitleId);
 
         var announced = 0;
+        var created = 0;
         var seenAvailabilityIds = new HashSet<int>();
 
         foreach (var entry in leaving)
@@ -215,14 +226,43 @@ public sealed class LeavingSync(
                 continue;
             }
 
-            if (!titles.TryGetValue(wmId, out var title))
+            // Free preview can include same-day rows; ignore already-elapsed dates.
+            if (entry.LeavingDate < today)
             {
                 continue;
             }
 
+            if (!titles.TryGetValue(wmId, out var title))
+            {
+                title = CreateTitleFromLeaving(entry, wmId, now);
+                // Need a real Title.Id before attaching Availability / looking up byTitleId.
+                await db.SaveChangesAsync(cancellationToken);
+                titles[wmId] = title;
+                created++;
+            }
+
             if (!byTitleId.TryGetValue(title.Id, out var availability))
             {
-                continue;
+                availability = CreateAvailability(title, catalogSourceId, baselineCompleted, now);
+                // Persist so AvailabilityEvent can reference a real Id within this run.
+                await db.SaveChangesAsync(cancellationToken);
+                byTitleId[title.Id] = availability;
+                availabilities.Add(availability);
+            }
+            else if (availability.RemovedAt is not null)
+            {
+                availability.RemovedAt = null;
+                availability.AddedAt = baselineCompleted ? now : availability.AddedAt;
+                availability.IsBaseline = !baselineCompleted;
+                availability.MissedFullScans = 0;
+                availability.LastSeenAt = now;
+                db.AvailabilityEvents.Add(new AvailabilityEvent
+                {
+                    AvailabilityId = availability.Id,
+                    Type = AvailabilityEventTypes.Readded,
+                    OccurredAt = now,
+                    SyncRunId = runId,
+                });
             }
 
             seenAvailabilityIds.Add(availability.Id);
@@ -233,6 +273,7 @@ public sealed class LeavingSync(
             }
 
             availability.LeavingDate = entry.LeavingDate;
+            availability.LastSeenAt = now;
             db.AvailabilityEvents.Add(new AvailabilityEvent
             {
                 AvailabilityId = availability.Id,
@@ -247,7 +288,7 @@ public sealed class LeavingSync(
         }
 
         var cleared = 0;
-        foreach (var availability in availabilities.Where(a => a.LeavingDate is not null))
+        foreach (var availability in availabilities.Where(a => a.RemovedAt == null && a.LeavingDate is not null))
         {
             var shouldClear = availability.LeavingDate < today
                 || (isPaid && !seenAvailabilityIds.Contains(availability.Id));
@@ -270,7 +311,44 @@ public sealed class LeavingSync(
             cleared++;
         }
 
-        return (announced, cleared);
+        return (announced, cleared, created);
+    }
+
+    private Title CreateTitleFromLeaving(LeavingEntry entry, int watchmodeId, DateTime now)
+    {
+        var title = new Title
+        {
+            WatchmodeId = watchmodeId,
+            MediaType = CatalogMediaMapping.ToMediaType(entry.Type),
+            Category = CatalogMediaMapping.ToCategory(entry.Type),
+            OriginalTitle = entry.Title,
+            OriginalTitleNormalized = TextNormalizer.NormalizeName(entry.Title),
+            MetadataStatus = CatalogMediaMapping.InitialMetadataStatus(tmdbId: null),
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+        db.Titles.Add(title);
+        return title;
+    }
+
+    private Availability CreateAvailability(
+        Title title,
+        int catalogSourceId,
+        bool baselineCompleted,
+        DateTime now)
+    {
+        var availability = new Availability
+        {
+            TitleId = title.Id,
+            CatalogSourceId = catalogSourceId,
+            FirstSeenAt = now,
+            LastSeenAt = now,
+            IsBaseline = !baselineCompleted,
+            AddedAt = baselineCompleted ? now : null,
+            MissedFullScans = 0,
+        };
+        db.Availabilities.Add(availability);
+        return availability;
     }
 
     private async Task<string> GetPlanAsync(CancellationToken cancellationToken)

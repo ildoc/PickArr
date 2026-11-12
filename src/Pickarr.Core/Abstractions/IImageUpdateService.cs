@@ -9,5 +9,12 @@ public interface IImageUpdateService
 
 public interface IImageTagSource
 {
-    Task<IReadOnlyList<string>> ListTagsAsync(CancellationToken cancellationToken = default);
+    Task<ImageTagListResult> ListTagsAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed record ImageTagListResult(bool Succeeded, IReadOnlyList<string> Tags)
+{
+    public static ImageTagListResult Ok(IReadOnlyList<string> tags) => new(true, tags);
+
+    public static ImageTagListResult Failed() => new(false, []);
 }

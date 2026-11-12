@@ -10,6 +10,7 @@ export type ImageUpdates = {
   channel: 'release' | 'development'
   newerTags: string[]
   updateAvailable: boolean
+  checkSucceeded: boolean
   checkedAt: string
   source: string
 }

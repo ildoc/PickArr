@@ -81,4 +81,11 @@ public sealed class ImageVersionComparerTests
         ImageVersionComparer.FindNewerTags("edge", ["1.2.3", "2.0.0"])
             .ShouldBeEmpty();
     }
+
+    [Fact]
+    public void Zero_prefix_development_builds_compare_numerically()
+    {
+        ImageVersionComparer.FindNewerTags("0.0.0.32", ["edge", "0.0.0.32", "0.0.0.33"])
+            .ShouldBe(["0.0.0.33"]);
+    }
 }
