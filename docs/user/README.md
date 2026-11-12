@@ -10,7 +10,7 @@ There is **no login**—profiles are a logical partition, not accounts. Up to **
 | --- | --- |
 | [Watchmode](https://api.watchmode.com/) API key | Catalog sync. Free plan: about 2 500 credits/month, up to 3 countries; leaving dates are a short preview. |
 | [TMDB](https://developer.themoviedb.org/) API key | Posters, overviews, genres, external ids. |
-| Sonarr and/or Radarr | Add, status, and delete in your library. Series need Sonarr; movies need Radarr. |
+| Sonarr and/or Radarr (optional) | Add, status, and delete in your library. Series need Sonarr; movies need Radarr. Without Arr you can still browse catalogs and use recommendations. |
 | Docker host (**linux/amd64**) | One container; data under `/config` on **local disk** (not SMB/NFS — SQLite WAL). |
 
 Optional: OMDb API key for IMDb ratings; ONNX model files under the data path for richer local recommendations.
@@ -20,7 +20,7 @@ Optional: OMDb API key for IMDb ratings; ONNX model files under the data path fo
 1. [Deploy](deployment.md) the container with a writable `/config` volume.
 2. Open the UI (default `http://localhost:8080`).
 3. Choose or create a profile on **Who** (`/who`). The first profile is the admin.
-4. As admin, open **Settings**: set Watchmode and TMDB keys, then Sonarr and/or Radarr URL + API key. Use **Test connection** and pick quality profile / root folder defaults.
+4. As admin, open **Settings**: set Watchmode and TMDB keys. Optionally configure Sonarr and/or Radarr URL + API key for library actions. Use **Test connection** and pick quality profile / root folder defaults.
 5. With a Watchmode key present, Pickarr enables seeded catalogs (Netflix IT and Netflix US) and queues the first import unless you disabled auto-import.
 6. Wait for catalog import and metadata enrichment under **Jobs**, then open **Catalog**, pick a source (provider + country), and browse.
 7. Rate titles or use **Teach your taste** from **For you** while personalization is still learning. Use **Hide** or **Not interested** to keep suggestions clean.

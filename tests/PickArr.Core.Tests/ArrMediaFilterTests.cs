@@ -17,18 +17,9 @@ public sealed class ArrMediaFilterTests
     }
 
     [Fact]
-    public void AllowedMediaTypes_follows_V08()
+    public void AllowedMediaTypes_always_includes_series_and_movies()
     {
-        ArrMediaFilter.AllowedMediaTypes(sonarrConfigured: false, radarrConfigured: false)
-            .ShouldBeEmpty();
-
-        ArrMediaFilter.AllowedMediaTypes(sonarrConfigured: true, radarrConfigured: false)
-            .ShouldBe([MediaTypes.Series]);
-
-        ArrMediaFilter.AllowedMediaTypes(sonarrConfigured: false, radarrConfigured: true)
-            .ShouldBe([MediaTypes.Movie]);
-
-        ArrMediaFilter.AllowedMediaTypes(sonarrConfigured: true, radarrConfigured: true)
+        ArrMediaFilter.AllowedMediaTypes()
             .ShouldBe([MediaTypes.Series, MediaTypes.Movie]);
     }
 }

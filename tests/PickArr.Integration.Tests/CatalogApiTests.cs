@@ -29,61 +29,82 @@ public sealed class CatalogApiTests
     }
 
     [Fact]
-    public async Task Titles_empty_until_Arr_configured_then_filters_by_media_type()
+    public async Task Titles_browse_without_Arr_and_add_only_when_matching_instance_configured()
     {
         await ClearArrSettingsAsync();
         var sourceId = await SeedSourceWithTitlesAsync();
 
-        var before = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles");
+        var before = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles?sort=title&dir=asc");
         before.StatusCode.ShouldBe(HttpStatusCode.OK);
         var beforeBody = await before.Content.ReadFromJsonAsync<JsonElement>();
-        beforeBody.GetProperty("total").GetInt32().ShouldBe(0);
-        beforeBody.GetProperty("emptyReason").GetString().ShouldBe("arrNotConfigured");
+        beforeBody.GetProperty("total").GetInt32().ShouldBeGreaterThanOrEqualTo(2);
+        if (beforeBody.TryGetProperty("emptyReason", out var beforeReason))
+        {
+            beforeReason.ValueKind.ShouldBe(JsonValueKind.Null);
+        }
 
-        var put = await _client.PutAsJsonAsync("/api/v1/settings", new
+        var caffe = beforeBody.GetProperty("items").EnumerateArray()
+            .Single(item => item.GetProperty("name").GetString() == "Caffè Film");
+        var movieId = caffe.GetProperty("id").GetInt32();
+        var seriesId = beforeBody.GetProperty("items").EnumerateArray()
+            .Single(item => item.GetProperty("name").GetString() == "Serie Test")
+            .GetProperty("id").GetInt32();
+
+        var movieWithoutArr = await _client.GetAsync($"/api/v1/titles/{movieId}?sourceId={sourceId}");
+        var movieWithoutArrBody = await movieWithoutArr.Content.ReadFromJsonAsync<JsonElement>();
+        movieWithoutArrBody.GetProperty("arr").GetProperty("canAdd").GetBoolean().ShouldBeFalse();
+        movieWithoutArrBody.GetProperty("arr").GetProperty("addBlockedReason").GetString().ShouldBe("notConfigured");
+
+        var sonarrOnly = await _client.PutAsJsonAsync("/api/v1/settings", new
+        {
+            sonarr = new { url = "http://sonarr.local", apiKey = "sonarr-key" },
+        });
+        sonarrOnly.StatusCode.ShouldBe(HttpStatusCode.OK);
+
+        var afterSonarr = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles?sort=title&dir=asc");
+        var afterSonarrBody = await afterSonarr.Content.ReadFromJsonAsync<JsonElement>();
+        afterSonarrBody.GetProperty("total").GetInt32().ShouldBeGreaterThanOrEqualTo(2);
+
+        var movieWithSonarr = await _client.GetAsync($"/api/v1/titles/{movieId}?sourceId={sourceId}");
+        var movieWithSonarrBody = await movieWithSonarr.Content.ReadFromJsonAsync<JsonElement>();
+        movieWithSonarrBody.GetProperty("arr").GetProperty("canAdd").GetBoolean().ShouldBeFalse();
+        movieWithSonarrBody.GetProperty("arr").GetProperty("addBlockedReason").GetString().ShouldBe("notConfigured");
+
+        var seriesWithSonarr = await _client.GetAsync($"/api/v1/titles/{seriesId}?sourceId={sourceId}");
+        var seriesWithSonarrBody = await seriesWithSonarr.Content.ReadFromJsonAsync<JsonElement>();
+        seriesWithSonarrBody.GetProperty("arr").GetProperty("canAdd").GetBoolean().ShouldBeTrue();
+
+        var both = await _client.PutAsJsonAsync("/api/v1/settings", new
         {
             sonarr = new { url = "http://sonarr.local", apiKey = "sonarr-key" },
             radarr = new { url = "http://radarr.local", apiKey = "radarr-key" },
         });
-        put.StatusCode.ShouldBe(HttpStatusCode.OK);
+        both.StatusCode.ShouldBe(HttpStatusCode.OK);
 
-        var after = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles?sort=title&dir=asc");
-        after.StatusCode.ShouldBe(HttpStatusCode.OK);
-        var afterBody = await after.Content.ReadFromJsonAsync<JsonElement>();
-        // Sibling tests in this collection may attach more titles to the shared IT source.
-        afterBody.GetProperty("total").GetInt32().ShouldBeGreaterThanOrEqualTo(2);
-        if (afterBody.TryGetProperty("emptyReason", out var reason))
-        {
-            reason.ValueKind.ShouldBe(JsonValueKind.Null);
-        }
-
-        var caffe = afterBody.GetProperty("items").EnumerateArray()
-            .Single(item => item.GetProperty("name").GetString() == "Caffè Film");
-        var firstId = caffe.GetProperty("id").GetInt32();
         var favPut = await _client.PutAsync(
-            $"/api/v1/favorites/{firstId}",
+            $"/api/v1/favorites/{movieId}",
             new StringContent(string.Empty));
         favPut.StatusCode.ShouldBe(HttpStatusCode.NoContent);
 
         var catalogWithFavoriteFlag = await _client.GetAsync(
             $"/api/v1/catalog/sources/{sourceId}/titles?favorite=true&sort=title&dir=asc");
         var catalogWithFavoriteBody = await catalogWithFavoriteFlag.Content.ReadFromJsonAsync<JsonElement>();
-        catalogWithFavoriteBody.GetProperty("total").GetInt32().ShouldBe(afterBody.GetProperty("total").GetInt32());
+        catalogWithFavoriteBody.GetProperty("total").GetInt32()
+            .ShouldBe(afterSonarrBody.GetProperty("total").GetInt32());
 
         var favList = await _client.GetAsync("/api/v1/favorites");
         favList.StatusCode.ShouldBe(HttpStatusCode.OK);
         var favBody = await favList.Content.ReadFromJsonAsync<JsonElement>();
         favBody.GetProperty("items").EnumerateArray()
-            .Any(item => item.GetProperty("id").GetInt32() == firstId)
+            .Any(item => item.GetProperty("id").GetInt32() == movieId)
             .ShouldBeTrue();
 
-        var detail = await _client.GetAsync($"/api/v1/titles/{firstId}?sourceId={sourceId}");
+        var detail = await _client.GetAsync($"/api/v1/titles/{movieId}?sourceId={sourceId}");
         detail.StatusCode.ShouldBe(HttpStatusCode.OK);
         var detailBody = await detail.Content.ReadFromJsonAsync<JsonElement>();
         detailBody.GetProperty("isFavorite").GetBoolean().ShouldBeTrue();
         detailBody.GetProperty("arr").GetProperty("canAdd").GetBoolean().ShouldBeTrue();
 
-        // Accent-insensitive: ASCII query matches stored "Caffè" via NameNormalized
         var search = await _client.GetAsync($"/api/v1/catalog/sources/{sourceId}/titles?q=caffe");
         var searchBody = await search.Content.ReadFromJsonAsync<JsonElement>();
         searchBody.GetProperty("total").GetInt32().ShouldBeGreaterThanOrEqualTo(1);

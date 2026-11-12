@@ -163,15 +163,6 @@ export function CatalogPage() {
         <p className="text-[var(--muted)]">{t('catalog.loading')}</p>
       )}
 
-      {emptyReason === 'arrNotConfigured' && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 p-6 text-amber-100">
-          <p>{t('catalog.emptyArr')}</p>
-          <Link to="/settings" className="mt-3 inline-block underline">
-            {t('nav.settings')}
-          </Link>
-        </div>
-      )}
-
       {emptyReason === 'catalogNotImported' && (
         <div className="rounded-xl border border-white/10 bg-[var(--surface-2)] p-6">
           <p className="text-[var(--muted)]">{t('catalog.emptyNotImported')}</p>

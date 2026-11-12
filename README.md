@@ -6,7 +6,7 @@ It syncs what a service offers in a country (via [Watchmode](https://watchmode.c
 
 **Catalog.** Browse by catalog source (provider + country). Search and filter (type, genre, year, library state). Quick views: All, New, Leaving, Recently removed. Seeded sources include Netflix IT and Netflix US; more providers/countries can be enabled from Settings within Watchmode plan limits.
 
-**Library.** Title cards and the detail dialog show Arr status. Add or remove titles in Sonarr/Radarr. The grid stays empty until at least one of Sonarr or Radarr is configured (series need Sonarr; movies need Radarr).
+**Library.** Sonarr and Radarr are optional. Without them Pickarr is a catalog browser and recommendation engine. When configured, title cards and the detail dialog show Arr status and add/remove actions (series need Sonarr; movies need Radarr).
 
 **My list & ratings.** Cross-provider favorites on `/list`. Explicit votes (love / like / dislike / not interested), hide, and a local **For you** page (`/for-you`) with similar titles in the detail dialog. Votes never leave your install; an optional ONNX embedding model improves similarity when installed.
 
@@ -31,7 +31,7 @@ Product specifications (source of truth): [functional-spec](docs/functional-spec
 | --- | --- |
 | [Watchmode](https://api.watchmode.com/) API key | Catalog sync. Free plan: ~2 500 credits/month, up to 3 countries; leaving dates are a short preview. |
 | [TMDB](https://developer.themoviedb.org/) API key | Posters, overviews, genres, external ids. |
-| Sonarr and/or Radarr | Library add / status / delete. |
+| Sonarr and/or Radarr (optional) | Library add / status / delete. Series need Sonarr; movies need Radarr. |
 | A host for Docker (**linux/amd64**) | One container; data in `/config` on **local disk** (not SMB/NFS — SQLite WAL). |
 
 Optional: OMDb API key; ONNX model files under the data path for richer recommendations.
@@ -42,7 +42,7 @@ Optional: OMDb API key; ONNX model files under the data path for richer recommen
 
 1. Deploy the container (see [Deploy](#deploy)) with a writable `/config` volume.
 2. Open `http://localhost:8080` (or your reverse-proxy URL).
-3. Under **Settings**, set Watchmode and TMDB keys, then Sonarr/Radarr URL + API key. Use **Test connection** for Arr instances and choose quality profile / root folder defaults.
+3. Under **Settings**, set Watchmode and TMDB keys. Optionally add Sonarr and/or Radarr URL + API key for library actions. Use **Test connection** for Arr instances and choose quality profile / root folder defaults.
 4. With a Watchmode key present, Pickarr enables seeded catalogs and queues the first import (disable with `Pickarr__Catalog__AutoInitialImport=false`).
 5. Wait for catalog import and metadata enrichment (see **Jobs**). Then open **Catalog**, pick a source, and browse.
 6. Rate titles or use **Teach your taste** from **For you** while learning is below the personalization threshold. Use **Hide** or **Not interested** to keep suggestions clean.

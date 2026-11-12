@@ -52,7 +52,7 @@ Pickarr is a **self-hosted * * application without authentication. An installati
 - Arricchimento metadati da TMDB (e id incrociati IMDb/TVDB).
 - UI web desktop, tema scuro, interfaccia internazionalizzata (inglese di default).
 - Server-side search with filters, favorites, detail tab.
-- Integration with a Sonarr instance and a Radarr instance: addition, status, deletion.
+- Optional integration with a Sonarr instance and/or a Radarr instance: addition, status, deletion. Catalog browse and recommendations work without Arr.
 - Profiles (up to 10) with ⟦0 selector⟧, profile memory in the browser, personal data for profile and cold house prior (detail in `recommendations.md`).
 - Administration: settings, job control, Watchmode credit consumption (admin profile in UI only).
 - Local recommendations (R1–R4): title rating per profile, *For you* page, similar, optional ONNX embedding, offline rating, gated supervised level (detail in `recommendations.md`).
@@ -220,12 +220,12 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 
 | ID | Requirement | PRI |
 |---|---|---|
-| FR-ADD-01 | For each title not in the bookstore, the * * Add * * action appears. The destination is determined by the type: Sonarr → series, Radarr → film. The stand-ups follow the TMDB type of the title (Radarr → film, Sonarr → series). | M |
+| FR-ADD-01 | When the matching Arr instance is configured and the title is not in the library, the **Add** action appears. The destination is determined by the type: Sonarr → series, Radarr → film. The stand-ups follow the TMDB type of the title (Radarr → film, Sonarr → series). | M |
 | FR-ADD-02 | The action opens a ** confirmation dialog with the ** options, preset with the default values. Nothing is sent until the user confirms. | M |
 | FR-ADD-03 | ** Sonarr ** options: quality profile, root folder, monitoring mode (all episodes, only future, missing, existing, first season, last season, most recent season, only pilots, recent, none), monitoring of new seasons, series type (standard/daily/anime), folder per season, tags, **search for missing episodes immediately **. | M |
 | FR-ADD-04 | * *Radarr** options: quality profile, root folder, monitored yes/no, minimum availability (announced / at the cinema / out), tags, **look for the movie right away **. | M |
 | FR-ADD-05 | Quality profile and root folder are preselected with default values (see D-01). All other options are chosen by the user. | M |
-| FR-ADD-06 | If the instance is not configured, unreachable, or rejects credentials, the action is blocked with a clear message and a link to the settings. | M |
+| FR-ADD-06 | If the matching Arr instance is not configured, Add/library actions are omitted from the title dialog (browse-only for that media type). If the instance is configured but unreachable or rejects credentials, the action is blocked with a clear message and a link to the settings. | M |
 | FR-ADD-07 | If the title is already present in the instance, the Add action is not offered: it shows the status. | M |
 | FR-ADD-08 | Se per il titolo manca l'id necessario (TVDB per le serie, TMDB per i film), l'azione è disabilitata con una spiegazione. | M |
 | FR-ADD-09 | Dopo l'aggiunta l'interfaccia mostra subito il nuovo stato e un messaggio di esito. Eventuali errori restituiti da Sonarr/Radarr sono mostrati in forma leggibile. | M |

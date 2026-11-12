@@ -105,6 +105,14 @@ describe('TitleDialog ratings', () => {
     } as TitleDetail)
   })
 
+  it('hides the library section when Arr is not configured', async () => {
+    renderDialog()
+
+    expect(await screen.findByRole('heading', { name: 'Dialog Movie' })).toBeTruthy()
+    expect(screen.queryByRole('heading', { name: 'Library' })).toBeNull()
+    expect(screen.queryByText(/Arr instance not configured/i)).toBeNull()
+  })
+
   it('lets the user like a title from the detail dialog', async () => {
     const user = userEvent.setup()
     renderDialog()

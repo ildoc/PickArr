@@ -44,19 +44,21 @@ public sealed class TitleQueryServiceTests
     }
 
     [Fact]
-    public async Task Query_without_Arr_returns_empty_with_reason()
+    public async Task Query_without_Arr_still_returns_titles_for_browse()
     {
         await using var db = await CreateDbAsync();
         var source = await SeedCatalogAsync(db);
+        await SeedTitlesAsync(db, source.Id);
         var settings = new MemorySettingsStore();
         var sut = new TitleQueryService(db, settings, new FixedClock(DateTime.UtcNow));
 
         var result = await sut.QueryTitlesAsync(source.Id, new TitleQueryRequest());
 
-        result.Total.ShouldBe(0);
-        result.Items.ShouldBeEmpty();
-        result.EmptyReason.ShouldBe(ArrMediaFilter.EmptyReasonArrNotConfigured);
-        result.ArrFilter!.AllowedMediaTypes.ShouldBeEmpty();
+        result.EmptyReason.ShouldBeNull();
+        result.Total.ShouldBe(3);
+        result.ArrFilter!.SonarrConfigured.ShouldBeFalse();
+        result.ArrFilter.RadarrConfigured.ShouldBeFalse();
+        result.ArrFilter.AllowedMediaTypes.ShouldBe([MediaTypes.Series, MediaTypes.Movie]);
     }
 
     [Fact]
@@ -142,19 +144,29 @@ public sealed class TitleQueryServiceTests
     }
 
     [Fact]
-    public async Task Query_with_Sonarr_only_returns_series_including_standup()
+    public async Task Query_with_Sonarr_only_still_lists_movies_and_blocks_movie_add()
     {
         await using var db = await CreateDbAsync();
         var source = await SeedCatalogAsync(db);
-        await SeedTitlesAsync(db, source.Id);
+        var titles = await SeedTitlesAsync(db, source.Id);
         var settings = await ConfigureArrAsync(sonarr: true, radarr: false);
         var sut = new TitleQueryService(db, settings, new FixedClock(new DateTime(2026, 11, 5, 12, 0, 0, DateTimeKind.Utc)));
 
         var result = await sut.QueryTitlesAsync(source.Id, new TitleQueryRequest());
 
         result.EmptyReason.ShouldBeNull();
-        result.Total.ShouldBe(2);
-        result.Items.Select(i => i.Category).OrderBy(x => x).ShouldBe(["series", "standup"]);
+        result.Total.ShouldBe(3);
+        result.Items.Select(i => i.Category).OrderBy(x => x).ShouldBe(["movie", "series", "standup"]);
+        result.ArrFilter!.SonarrConfigured.ShouldBeTrue();
+        result.ArrFilter.RadarrConfigured.ShouldBeFalse();
+
+        var movieDetail = await sut.GetTitleAsync(titles.Movie.Id, source.Id);
+        movieDetail!.Arr.CanAdd.ShouldBeFalse();
+        movieDetail.Arr.AddBlockedReason.ShouldBe("notConfigured");
+
+        var seriesDetail = await sut.GetTitleAsync(titles.Series.Id, source.Id);
+        seriesDetail!.Arr.CanAdd.ShouldBeTrue();
+        seriesDetail.Arr.AddBlockedReason.ShouldBeNull();
     }
 
     [Fact]
@@ -542,6 +554,8 @@ public sealed class TitleQueryServiceTests
             OriginalTitleNormalized = TextNormalizer.NormalizeName("The Matrix"),
             ReleaseYear = 1999,
             VoteTmdb = 8.1,
+            TmdbId = 603,
+            TmdbType = "movie",
             MetadataStatus = MetadataStatuses.Ready,
             CreatedAt = now,
             UpdatedAt = now,
@@ -553,6 +567,9 @@ public sealed class TitleQueryServiceTests
             OriginalTitle = "Example Series",
             OriginalTitleNormalized = "example series",
             ReleaseYear = 2020,
+            TvdbId = 121361,
+            TmdbId = 1396,
+            TmdbType = "tv",
             MetadataStatus = MetadataStatuses.Ready,
             CreatedAt = now,
             UpdatedAt = now,

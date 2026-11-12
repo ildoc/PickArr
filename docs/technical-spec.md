@@ -850,7 +850,7 @@ Favorites are not filtered on the catalog: use `GET /favorites` and the UI route
 }
 ```
 
-For a title not in the library `arr` is `{ "kind": "radarr", "state": "notInLibrary", "canAdd": true, "canDelete": false, "addBlockedReason": null }`; without a configured instance `canAdd` is `false` and `addBlockedReason` is `notConfigured`.
+For a title not in the library `arr` is `{ "kind": "radarr", "state": "notInLibrary", "canAdd": true, "canDelete": false, "addBlockedReason": null }`; without a configured instance `canAdd` is `false` and `addBlockedReason` is `notConfigured`. Catalog list/query endpoints always return Series and Movie regardless of Arr configuration; the SPA hides the title-dialog Library section when `addBlockedReason` is `notConfigured`.
 
 ### 8.3 Favorites and profile
 

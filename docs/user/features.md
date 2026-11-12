@@ -12,7 +12,7 @@ On `/catalog`:
 - Infinite poster grid with library badges, favorite heart, and rating controls.
 - The preferred source is remembered per profile (`pickarr.sourceId.{profileId}`).
 
-Type and genre options come from titles in the current scope. The grid stays empty until Sonarr and/or Radarr are configured (series require Sonarr; movies require Radarr).
+Type and genre options come from titles in the current scope. Sonarr and Radarr are optional: the catalog stays browsable without them. Library actions appear only when the matching instance is configured (series → Sonarr; movies → Radarr).
 
 ### Sync behavior (operator view)
 
@@ -71,8 +71,9 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 ## Sonarr / Radarr
 
-- Add series to Sonarr and movies to Radarr from the title dialog.
-- See shared library status on cards and in detail.
+- Optional. Configure later or never; without Arr, Pickarr remains a catalog browser and recommendation engine.
+- When configured, add series to Sonarr and movies to Radarr from the title dialog. The library section is omitted for a media type whose instance is not configured.
+- See shared library status on cards and in detail when the matching Arr is configured.
 - Delete with confirmation; destructive delete options default off.
 - Periodic Arr sync (and optional webhooks when configured) refreshes status.
 - An Arr add with `X-Pickarr-Profile` stores the profile on the audit row for that profile’s implicit signal; without the header the add is still valid but not attributed for taste.

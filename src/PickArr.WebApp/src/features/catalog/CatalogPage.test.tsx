@@ -112,21 +112,8 @@ describe('CatalogPage', () => {
     })
   })
 
-  it('shows the Arr empty state and never sends favorite on title queries', async () => {
-    vi.mocked(fetchTitles).mockResolvedValue({
-      page: 1,
-      pageSize: 48,
-      total: 0,
-      items: [],
-      emptyReason: 'arrNotConfigured',
-    })
-
+  it('never sends favorite on catalog title queries', async () => {
     renderAt('/catalog?source=1')
-
-    expect(
-      await screen.findByText(/Configure Sonarr and\/or Radarr in Settings/i),
-    ).toBeTruthy()
-    expect(screen.getAllByRole('link', { name: 'Settings' }).length).toBeGreaterThan(0)
 
     await waitFor(() => expect(fetchTitles).toHaveBeenCalled())
     const args = vi.mocked(fetchTitles).mock.calls.at(-1)

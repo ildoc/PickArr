@@ -60,18 +60,6 @@ public sealed class TitleQueryService(
         var ratingFilter = NormalizeRatingFilter(request.RatingValue);
         var ratingsOnly = ratingFilter is not null;
 
-        // Ratings are global (FR-REC-RT-05); do not require Sonarr/Radarr to list them.
-        if (!ratingsOnly && arrFilter.AllowedMediaTypes.Count == 0)
-        {
-            return new PagedTitlesResult(
-                page,
-                pageSize,
-                Total: 0,
-                Items: [],
-                EmptyReason: ArrMediaFilter.EmptyReasonArrNotConfigured,
-                ArrFilter: arrFilter);
-        }
-
         var source = await db.CatalogSources.AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == sourceId, cancellationToken);
         if (source is null && !favoriteOnly && !ratingsOnly)
@@ -91,10 +79,6 @@ public sealed class TitleQueryService(
         var includeRemoved = request.IncludeRemoved || view == "removed" || favoriteOnly || ratingsOnly;
 
         var query = db.Titles.AsNoTracking();
-        if (!ratingsOnly)
-        {
-            query = query.Where(t => arrFilter.AllowedMediaTypes.Contains(t.MediaType));
-        }
 
         if (favoriteOnly)
         {
@@ -303,12 +287,6 @@ public sealed class TitleQueryService(
         CancellationToken cancellationToken = default,
         int? personalProfileId = null)
     {
-        var arrFilter = await ResolveArrFilterAsync(cancellationToken);
-        if (arrFilter.AllowedMediaTypes.Count == 0)
-        {
-            return [];
-        }
-
         CatalogSource? source = null;
         if (sourceId is int sid)
         {
@@ -322,8 +300,7 @@ public sealed class TitleQueryService(
 
         var lang = source?.MetadataLanguage
             ?? await ResolveEnabledMetadataLanguageAsync(cancellationToken);
-        var genreQuery = db.TitleGenres.AsNoTracking()
-            .Where(tg => arrFilter.AllowedMediaTypes.Contains(tg.Title!.MediaType));
+        var genreQuery = db.TitleGenres.AsNoTracking();
         if (favoritesOnly && personalProfileId is int genreProfileId)
         {
             genreQuery = genreQuery.Where(tg => tg.Title!.Favorites.Any(f => f.ProfileId == genreProfileId));
@@ -384,12 +361,6 @@ public sealed class TitleQueryService(
         CancellationToken cancellationToken = default,
         int? personalProfileId = null)
     {
-        var arrFilter = await ResolveArrFilterAsync(cancellationToken);
-        if (arrFilter.AllowedMediaTypes.Count == 0)
-        {
-            return [];
-        }
-
         if (sourceId is int sid && !favoritesOnly)
         {
             var exists = await db.CatalogSources.AsNoTracking()
@@ -400,8 +371,7 @@ public sealed class TitleQueryService(
             }
         }
 
-        var query = db.Titles.AsNoTracking()
-            .Where(t => arrFilter.AllowedMediaTypes.Contains(t.MediaType));
+        var query = db.Titles.AsNoTracking();
         if (favoritesOnly && personalProfileId is int typeProfileId)
         {
             query = query.Where(t => t.Favorites.Any(f => f.ProfileId == typeProfileId));
@@ -895,7 +865,7 @@ public sealed class TitleQueryService(
         return new ArrFilterInfoDto(
             sonarr,
             radarr,
-            ArrMediaFilter.AllowedMediaTypes(sonarr, radarr));
+            ArrMediaFilter.AllowedMediaTypes());
     }
 
     private async Task<bool> IsSonarrConfiguredAsync(CancellationToken cancellationToken) =>

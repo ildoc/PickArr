@@ -146,7 +146,6 @@
     "genreAll": "All genres",
     "crossCatalog": "My list includes every provider and country.",
     "noSources": "No country catalogs are enabled yet. Add a Watchmode API key in Settings to import Netflix for Italy and the United States.",
-    "emptyArr": "Configure Sonarr and/or Radarr in Settings to browse the catalog. Series require Sonarr; movies require Radarr.",
     "emptyNotImported": "The catalog has not been imported yet. Saving a Watchmode API key queues the first import. Open Admin to watch it or run it again.",
     "emptyImporting": "The first catalog import is running. Titles show up here when it finishes.",
     "emptyResults": "No titles match these filters.",

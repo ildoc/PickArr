@@ -70,7 +70,7 @@ SQLite uses WAL. Do not put the data directory on a network share.
 - Type and genre options come from the titles in the current scope (catalog source, or the whole list).
 - Series seasons are newest first. Episodes inside a season are oldest first. Adding a series to Sonarr sends only the selected seasons.
 - A catalog source needs at least one country. On the Watchmode free plan the limit is `CatalogOffers.FreeCountryLimit` distinct countries (several providers in one country count once) and `CatalogOffers.FreeMonthlyQuota` credits per month. Leaving dates are a short preview, not a full calendar.
-- The grid is empty until Sonarr and/or Radarr are configured. Series require Sonarr; movies require Radarr.
+- Sonarr and Radarr are optional. Without them the catalog and recommendations still work (browse-only). Library actions in the title dialog appear only when the matching instance is configured (series → Sonarr; movies → Radarr).
 - UI copy is English and lives in `src/Pickarr.WebApp/src/i18n/locales/en.json`. Add keys there instead of hard-coding strings.
 
 ## Tests

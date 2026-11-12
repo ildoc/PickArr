@@ -1,6 +1,6 @@
 import { keepPreviousData, useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useCallback, useEffect } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { fetchMyList, fetchMyListGenres, fetchMyListTypes } from '../../api/favorites'
 import { useDebouncedValue } from '../../lib/useDebouncedValue'
@@ -122,15 +122,6 @@ export function MyListPage() {
       />
 
       {titlesQuery.isLoading && <p className="text-[var(--muted)]">{t('catalog.loading')}</p>}
-
-      {emptyReason === 'arrNotConfigured' && (
-        <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 p-6 text-amber-100">
-          <p>{t('catalog.emptyArr')}</p>
-          <Link to="/settings" className="mt-3 inline-block underline">
-            {t('nav.settings')}
-          </Link>
-        </div>
-      )}
 
       {!emptyReason && !titlesQuery.isLoading && items.length === 0 && (
         <p className="text-[var(--muted)]">{t('catalog.emptyResults')}</p>

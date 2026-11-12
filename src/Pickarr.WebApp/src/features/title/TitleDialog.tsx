@@ -265,83 +265,84 @@ export function TitleDialog({
                 </ul>
               </section>
 
-              <section className="space-y-3 rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
-                    {t('title.library')}
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => refresh.mutate()}
-                    disabled={refresh.isPending || detail.data.arr.addBlockedReason === 'notConfigured'}
-                    className="rounded-md bg-white/10 px-2.5 py-1 text-xs hover:bg-white/15 disabled:opacity-50"
-                  >
-                    {t('title.refreshStatus')}
-                  </button>
-                </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <ArrStatusBadge state={detail.data.arr.state} progress={detail.data.arr.progress} />
-                  {detail.data.arr.monitored != null && (
-                    <span className="text-sm text-[var(--muted)]">
-                      {detail.data.arr.monitored ? t('title.monitored') : '—'}
-                    </span>
-                  )}
-                  {detail.data.arr.syncedAt && (
-                    <span className="text-xs text-[var(--muted)]">
-                      {t('title.syncedAt', {
-                        date: formatDate(detail.data.arr.syncedAt, i18n.language),
-                      })}
-                    </span>
-                  )}
-                </div>
-                {detail.data.arr.seasons && detail.data.arr.seasons.length > 0 && (
-                  <SeasonTable seasons={detail.data.arr.seasons} />
-                )}
-                <div className="flex flex-wrap gap-2">
-                  {detail.data.arr.canAdd && (
-                    <button
-                      type="button"
-                      onClick={() => setAddOpen(true)}
-                      className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
-                    >
-                      {t('arr.canAdd', {
-                        kind: detail.data.arr.kind === 'radarr' ? 'Radarr' : 'Sonarr',
-                      })}
-                    </button>
-                  )}
-                  {detail.data.arr.canDelete && (
-                    <button
-                      type="button"
-                      onClick={() => setDeleteOpen(true)}
-                      className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15"
-                    >
-                      {t('arr.canDelete')}
-                    </button>
-                  )}
-                  {detail.data.arr.addBlockedReason === 'notConfigured' && (
-                    <span className="text-sm text-[var(--muted)]">{t('arr.notConfigured')}</span>
-                  )}
-                  {detail.data.arr.addBlockedReason === 'missingTvdbId' && (
-                    <span className="text-sm text-[var(--muted)]">{t('arr.missingTvdbId')}</span>
-                  )}
-                  {detail.data.arr.addBlockedReason === 'missingTmdbId' && (
-                    <span className="text-sm text-[var(--muted)]">{t('arr.missingTmdbId')}</span>
-                  )}
-                </div>
-              </section>
+              {detail.data.arr.addBlockedReason !== 'notConfigured' && (
+                <>
+                  <section className="space-y-3 rounded-lg border border-white/10 bg-[var(--surface-2)] p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h3 className="text-sm font-medium uppercase tracking-wide text-[var(--muted)]">
+                        {t('title.library')}
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => refresh.mutate()}
+                        disabled={refresh.isPending}
+                        className="rounded-md bg-white/10 px-2.5 py-1 text-xs hover:bg-white/15 disabled:opacity-50"
+                      >
+                        {t('title.refreshStatus')}
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <ArrStatusBadge state={detail.data.arr.state} progress={detail.data.arr.progress} />
+                      {detail.data.arr.monitored != null && (
+                        <span className="text-sm text-[var(--muted)]">
+                          {detail.data.arr.monitored ? t('title.monitored') : '—'}
+                        </span>
+                      )}
+                      {detail.data.arr.syncedAt && (
+                        <span className="text-xs text-[var(--muted)]">
+                          {t('title.syncedAt', {
+                            date: formatDate(detail.data.arr.syncedAt, i18n.language),
+                          })}
+                        </span>
+                      )}
+                    </div>
+                    {detail.data.arr.seasons && detail.data.arr.seasons.length > 0 && (
+                      <SeasonTable seasons={detail.data.arr.seasons} />
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      {detail.data.arr.canAdd && (
+                        <button
+                          type="button"
+                          onClick={() => setAddOpen(true)}
+                          className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-500"
+                        >
+                          {t('arr.canAdd', {
+                            kind: detail.data.arr.kind === 'radarr' ? 'Radarr' : 'Sonarr',
+                          })}
+                        </button>
+                      )}
+                      {detail.data.arr.canDelete && (
+                        <button
+                          type="button"
+                          onClick={() => setDeleteOpen(true)}
+                          className="rounded-md bg-white/10 px-3 py-1.5 text-sm hover:bg-white/15"
+                        >
+                          {t('arr.canDelete')}
+                        </button>
+                      )}
+                      {detail.data.arr.addBlockedReason === 'missingTvdbId' && (
+                        <span className="text-sm text-[var(--muted)]">{t('arr.missingTvdbId')}</span>
+                      )}
+                      {detail.data.arr.addBlockedReason === 'missingTmdbId' && (
+                        <span className="text-sm text-[var(--muted)]">{t('arr.missingTmdbId')}</span>
+                      )}
+                    </div>
+                  </section>
 
-              <AddToArrDialog
-                title={detail.data}
-                open={addOpen}
-                onClose={() => setAddOpen(false)}
-                onAdded={() => void invalidateTitle()}
-              />
-              <DeleteFromArrDialog
-                title={detail.data}
-                open={deleteOpen}
-                onClose={() => setDeleteOpen(false)}
-                onDeleted={() => void invalidateTitle()}
-              />
+                  <AddToArrDialog
+                    title={detail.data}
+                    open={addOpen}
+                    onClose={() => setAddOpen(false)}
+                    onAdded={() => void invalidateTitle()}
+                  />
+                  <DeleteFromArrDialog
+                    title={detail.data}
+                    open={deleteOpen}
+                    onClose={() => setDeleteOpen(false)}
+                    onDeleted={() => void invalidateTitle()}
+                  />
+                </>
+              )}
 
               <section className="flex flex-wrap gap-3 text-sm">
                 {detail.data.links.tmdb && (

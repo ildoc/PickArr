@@ -3,29 +3,17 @@ using Pickarr.Core.Domain;
 namespace Pickarr.Core.Catalog;
 
 /// <summary>
-/// V-08 / D-011: catalog media types allowed by configured Arr instances.
-/// Sonarr → Series; Radarr → Movie; neither → empty. Stand-up follows MediaType.
+/// Arr instance configuration helpers. Catalog browse always includes Series and Movie;
+/// Sonarr/Radarr gate only add/status/delete actions per media type.
 /// </summary>
 public static class ArrMediaFilter
 {
-    public const string EmptyReasonArrNotConfigured = "arrNotConfigured";
-
     public static bool IsConfigured(string? url, bool apiKeySet) =>
         !string.IsNullOrWhiteSpace(url) && apiKeySet;
 
-    public static IReadOnlyList<string> AllowedMediaTypes(bool sonarrConfigured, bool radarrConfigured)
-    {
-        var allowed = new List<string>(2);
-        if (sonarrConfigured)
-        {
-            allowed.Add(MediaTypes.Series);
-        }
-
-        if (radarrConfigured)
-        {
-            allowed.Add(MediaTypes.Movie);
-        }
-
-        return allowed;
-    }
+    /// <summary>
+    /// Media types shown in catalog browse. Always Series and Movie; Arr config does not filter the grid.
+    /// </summary>
+    public static IReadOnlyList<string> AllowedMediaTypes() =>
+        [MediaTypes.Series, MediaTypes.Movie];
 }
