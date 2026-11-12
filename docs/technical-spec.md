@@ -1009,7 +1009,7 @@ List and title-detail DTOs, with the header, expose the profile’s `isFavorite`
 | `POST` | `/webhooks/sonarr?token=…` | Responds `202` (or `401` with wrong token, constant-time comparison). |
 | `POST` | `/webhooks/radarr?token=…` | same |
 | `GET` | `/system/status` | Server version and time (used by the header). |
-| `GET` | `/system/image-updates` | Compare the running version to GHCR tags (`ghcr.io/ildoc/pickarr`). Returns `currentVersion`, `channel` (`release`\|`development`), `newerTags`, `updateAvailable`, `checkSucceeded`, `checkedAt`, `source`. Release builds only list newer `X.Y.Z` tags; development builds list any newer versioned tag. Registry failures set `checkSucceeded=false` and an empty list (fail-soft, not cached). Successful tag lists are cached in memory (~10m). |
+| `GET` | `/system/image-updates` | Compare the running version to GHCR tags (`ghcr.io/ildoc/pickarr`). Returns `currentVersion`, `channel` (`release`\|`development`), `newestTag`, `updateAvailable`, `checkSucceeded`, `checkedAt`, `source`. `newestTag` is the single highest versioned tag newer than the running build (release builds only consider release tags). Registry failures set `checkSucceeded=false` and `newestTag=null` (fail-soft, not cached). Successful tag lists are cached in memory (~10m). |
 | `GET` | `/system/stats` | Title counts (total, per provider, country, source) and disk space under `DataPath` (catalog DB, jobs, logs, models, keys). |
 | `GET` | `/system/logs` | List `pickarr-*.log` files under `DataPath/logs`. |
 | `GET` | `/system/logs/{fileName}` | Download one log file (path-safe names only). |

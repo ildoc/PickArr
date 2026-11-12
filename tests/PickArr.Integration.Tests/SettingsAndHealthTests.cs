@@ -51,7 +51,7 @@ public sealed class SettingsAndHealthTests
         body.GetProperty("currentVersion").GetString().ShouldNotBeNullOrWhiteSpace();
         var channel = body.GetProperty("channel").GetString();
         channel.ShouldBeOneOf("release", "development");
-        body.GetProperty("newerTags").ValueKind.ShouldBe(JsonValueKind.Array);
+        body.TryGetProperty("newestTag", out _).ShouldBeTrue();
         var available = body.GetProperty("updateAvailable");
         (available.ValueKind is JsonValueKind.True or JsonValueKind.False).ShouldBeTrue();
         var checkSucceeded = body.GetProperty("checkSucceeded");

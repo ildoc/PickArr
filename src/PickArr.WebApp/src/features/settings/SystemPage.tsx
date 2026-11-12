@@ -88,28 +88,23 @@ export function SystemPage() {
                     {t('settings.systemUpdateCheckFailed')}
                   </p>
                 )}
-                {imageUpdates.data?.updateAvailable && imageUpdates.data.newerTags.length > 0 && (
+                {imageUpdates.data?.updateAvailable && imageUpdates.data.newestTag && (
                   <div className="mt-3 space-y-2">
                     <p className="text-xs uppercase tracking-wide text-[var(--muted)]">
-                      {t('settings.systemNewerTags')}
+                      {t('settings.systemNewestTag')}
                     </p>
-                    <ul className="flex flex-wrap gap-2 font-mono text-xs tabular-nums text-[var(--text)]">
-                      {imageUpdates.data.newerTags.map((tag) => (
-                        <li
-                          key={tag}
-                          className="rounded-md border border-white/10 bg-black/20 px-2 py-1"
-                        >
-                          {tag}
-                        </li>
-                      ))}
-                    </ul>
+                    <p className="font-mono text-xs tabular-nums text-[var(--text)]">
+                      <span className="rounded-md border border-white/10 bg-black/20 px-2 py-1">
+                        {imageUpdates.data.newestTag}
+                      </span>
+                    </p>
                     <a
                       href={GHCR_PACKAGE_URL}
                       target="_blank"
                       rel="noreferrer"
                       className="inline-block text-xs text-[var(--muted)] underline decoration-white/20 hover:text-[var(--text)]"
                     >
-                      {t('settings.systemNewerTagsLink')}
+                      {t('settings.systemNewestTagLink')}
                     </a>
                   </div>
                 )}

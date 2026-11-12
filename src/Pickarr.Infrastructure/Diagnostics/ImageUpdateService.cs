@@ -24,15 +24,15 @@ public sealed class ImageUpdateService(
         var channel = ImageVersionComparer.ResolveChannel(currentVersion);
 
         var fetch = await GetTagsAsync(opts, cancellationToken);
-        var newer = fetch.Succeeded
-            ? ImageVersionComparer.FindNewerTags(currentVersion, fetch.Tags)
-            : [];
+        var newest = fetch.Succeeded
+            ? ImageVersionComparer.FindNewestTag(currentVersion, fetch.Tags)
+            : null;
 
         return new ImageUpdateDto(
             CurrentVersion: currentVersion,
             Channel: channel,
-            NewerTags: newer,
-            UpdateAvailable: newer.Count > 0,
+            NewestTag: newest,
+            UpdateAvailable: newest is not null,
             CheckSucceeded: fetch.Succeeded,
             CheckedAt: checkedAt,
             Source: opts.DisplaySource);

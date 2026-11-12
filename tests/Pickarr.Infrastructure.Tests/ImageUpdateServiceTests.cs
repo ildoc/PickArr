@@ -12,7 +12,7 @@ namespace Pickarr.Infrastructure.Tests;
 public sealed class ImageUpdateServiceTests
 {
     [Fact]
-    public async Task CheckAsync_filters_release_channel_to_release_tags_only()
+    public async Task CheckAsync_filters_release_channel_to_newest_release_tag_only()
     {
         var source = Substitute.For<IImageTagSource>();
         source.ListTagsAsync(Arg.Any<CancellationToken>())
@@ -24,13 +24,13 @@ public sealed class ImageUpdateServiceTests
         dto.Channel.ShouldBe(ImageVersionComparer.ChannelRelease);
         dto.UpdateAvailable.ShouldBeTrue();
         dto.CheckSucceeded.ShouldBeTrue();
-        dto.NewerTags.ShouldBe(["1.3.0", "1.2.4"]);
+        dto.NewestTag.ShouldBe("1.3.0");
         dto.Source.ShouldBe("ghcr.io/ildoc/pickarr");
         dto.CurrentVersion.ShouldBe("1.2.3");
     }
 
     [Fact]
-    public async Task CheckAsync_development_includes_versioned_tags()
+    public async Task CheckAsync_development_returns_only_newest_versioned_tag()
     {
         var source = Substitute.For<IImageTagSource>();
         source.ListTagsAsync(Arg.Any<CancellationToken>())
@@ -40,7 +40,7 @@ public sealed class ImageUpdateServiceTests
         var dto = await sut.CheckAsync("1.2.3.4");
 
         dto.Channel.ShouldBe(ImageVersionComparer.ChannelDevelopment);
-        dto.NewerTags.ShouldBe(["1.2.4", "1.2.3.5"]);
+        dto.NewestTag.ShouldBe("1.2.4");
         dto.UpdateAvailable.ShouldBeTrue();
         dto.CheckSucceeded.ShouldBeTrue();
     }
@@ -56,7 +56,7 @@ public sealed class ImageUpdateServiceTests
         var dto = await sut.CheckAsync("0.0.0.32");
 
         dto.UpdateAvailable.ShouldBeTrue();
-        dto.NewerTags.ShouldBe(["0.0.0.33"]);
+        dto.NewestTag.ShouldBe("0.0.0.33");
     }
 
     [Fact]
@@ -70,7 +70,7 @@ public sealed class ImageUpdateServiceTests
 
         dto.UpdateAvailable.ShouldBeFalse();
         dto.CheckSucceeded.ShouldBeFalse();
-        dto.NewerTags.ShouldBeEmpty();
+        dto.NewestTag.ShouldBeNull();
     }
 
     [Fact]
@@ -89,7 +89,6 @@ public sealed class ImageUpdateServiceTests
         (await sut.CheckAsync("1.0.0")).UpdateAvailable.ShouldBeTrue();
         (await sut.CheckAsync("1.0.0")).UpdateAvailable.ShouldBeTrue();
 
-        // Failed fetch is not cached; successful fetch is reused once.
         await source.Received(2).ListTagsAsync(Arg.Any<CancellationToken>());
     }
 

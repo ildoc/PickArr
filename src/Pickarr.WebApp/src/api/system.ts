@@ -8,7 +8,7 @@ export type SystemStatus = {
 export type ImageUpdates = {
   currentVersion: string
   channel: 'release' | 'development'
-  newerTags: string[]
+  newestTag: string | null
   updateAvailable: boolean
   checkSucceeded: boolean
   checkedAt: string

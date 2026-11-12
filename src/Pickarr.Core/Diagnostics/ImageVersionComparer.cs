@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Pickarr.Core.Diagnostics;
@@ -39,19 +38,20 @@ public static partial class ImageVersionComparer
             : ChannelRelease;
 
     /// <summary>
-    /// Returns version tags strictly newer than <paramref name="currentVersion"/>,
-    /// sorted descending (newest first). Original tag strings are preserved.
+    /// Returns the newest version tag strictly greater than <paramref name="currentVersion"/>,
+    /// or <c>null</c> when none exist. Original tag string is preserved.
     /// </summary>
-    public static IReadOnlyList<string> FindNewerTags(string currentVersion, IEnumerable<string> tags)
+    public static string? FindNewestTag(string currentVersion, IEnumerable<string> tags)
     {
         if (!TryParseVersionTag(currentVersion, out var current))
         {
-            return [];
+            return null;
         }
 
         var releaseOnly = IsRelease(current);
         var currentKey = ToComparable(current);
-        var newer = new List<(Version Key, string Tag)>();
+        Version? bestKey = null;
+        string? bestTag = null;
 
         foreach (var tag in tags)
         {
@@ -71,14 +71,17 @@ public static partial class ImageVersionComparer
                 continue;
             }
 
-            newer.Add((candidateKey, tag));
+            if (bestKey is null
+                || candidateKey > bestKey
+                || (candidateKey == bestKey
+                    && string.Compare(tag, bestTag, StringComparison.Ordinal) > 0))
+            {
+                bestKey = candidateKey;
+                bestTag = tag;
+            }
         }
 
-        return newer
-            .OrderByDescending(x => x.Key)
-            .ThenByDescending(x => x.Tag, StringComparer.Ordinal)
-            .Select(x => x.Tag)
-            .ToArray();
+        return bestTag;
     }
 
     /// <summary>
@@ -91,9 +94,4 @@ public static partial class ImageVersionComparer
             version.Minor,
             version.Build < 0 ? 0 : version.Build,
             version.Revision < 0 ? 0 : version.Revision);
-
-    public static string FormatVersion(Version version) =>
-        IsRelease(version)
-            ? string.Create(CultureInfo.InvariantCulture, $"{version.Major}.{version.Minor}.{version.Build}")
-            : version.ToString();
 }

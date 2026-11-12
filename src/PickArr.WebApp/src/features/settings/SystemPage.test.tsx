@@ -42,7 +42,7 @@ describe('SystemPage', () => {
     vi.mocked(fetchImageUpdates).mockResolvedValue({
       currentVersion: '1.2.3',
       channel: 'release',
-      newerTags: [],
+      newestTag: null,
       updateAvailable: false,
       checkSucceeded: true,
       checkedAt: '2026-11-11T12:00:00Z',
@@ -91,7 +91,7 @@ describe('SystemPage', () => {
     vi.mocked(fetchImageUpdates).mockResolvedValue({
       currentVersion: '1.2.3',
       channel: 'release',
-      newerTags: ['1.3.0', '1.2.4'],
+      newestTag: '1.3.0',
       updateAvailable: true,
       checkSucceeded: true,
       checkedAt: '2026-11-11T12:00:00Z',
@@ -102,7 +102,7 @@ describe('SystemPage', () => {
 
     expect(await screen.findByText('Update available')).toBeTruthy()
     expect(screen.getByText('1.3.0')).toBeTruthy()
-    expect(screen.getByText('1.2.4')).toBeTruthy()
+    expect(screen.queryByText('1.2.4')).toBeNull()
     expect(screen.getByRole('link', { name: 'View on GHCR' })).toHaveAttribute(
       'href',
       'https://github.com/ildoc/Pickarr/pkgs/container/pickarr',
@@ -120,7 +120,7 @@ describe('SystemPage', () => {
     vi.mocked(fetchImageUpdates).mockResolvedValue({
       currentVersion: '1.2.3',
       channel: 'release',
-      newerTags: [],
+      newestTag: null,
       updateAvailable: false,
       checkSucceeded: false,
       checkedAt: '2026-11-11T12:00:00Z',

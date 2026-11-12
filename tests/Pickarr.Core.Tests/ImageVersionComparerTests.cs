@@ -28,7 +28,7 @@ public sealed class ImageVersionComparerTests
     }
 
     [Fact]
-    public void Release_current_only_surfaces_newer_release_tags()
+    public void Release_current_only_surfaces_newest_release_tag()
     {
         var tags = new[]
         {
@@ -42,12 +42,11 @@ public sealed class ImageVersionComparerTests
             "1.0.0",
         };
 
-        ImageVersionComparer.FindNewerTags("1.2.3", tags)
-            .ShouldBe(["2.0.0", "1.3.0", "1.2.4"]);
+        ImageVersionComparer.FindNewestTag("1.2.3", tags).ShouldBe("2.0.0");
     }
 
     [Fact]
-    public void Development_current_surfaces_any_numerically_greater_versioned_tag()
+    public void Development_current_surfaces_newest_versioned_tag()
     {
         var tags = new[]
         {
@@ -61,31 +60,30 @@ public sealed class ImageVersionComparerTests
             "1.2.3.5",
         };
 
-        ImageVersionComparer.FindNewerTags("1.2.3.4", tags)
-            .ShouldBe(["1.3.0", "1.2.4", "1.2.3.10", "1.2.3.5"]);
+        ImageVersionComparer.FindNewestTag("1.2.3.4", tags).ShouldBe("1.3.0");
     }
 
     [Fact]
     public void Equal_or_older_tags_are_excluded()
     {
-        ImageVersionComparer.FindNewerTags("1.2.3", ["1.2.3", "1.2.2", "1.1.9"])
-            .ShouldBeEmpty();
+        ImageVersionComparer.FindNewestTag("1.2.3", ["1.2.3", "1.2.2", "1.1.9"])
+            .ShouldBeNull();
 
-        ImageVersionComparer.FindNewerTags("1.2.3.10", ["1.2.3.10", "1.2.3.9", "1.2.3"])
-            .ShouldBeEmpty();
+        ImageVersionComparer.FindNewestTag("1.2.3.10", ["1.2.3.10", "1.2.3.9", "1.2.3"])
+            .ShouldBeNull();
     }
 
     [Fact]
     public void Invalid_current_version_yields_no_updates()
     {
-        ImageVersionComparer.FindNewerTags("edge", ["1.2.3", "2.0.0"])
-            .ShouldBeEmpty();
+        ImageVersionComparer.FindNewestTag("edge", ["1.2.3", "2.0.0"])
+            .ShouldBeNull();
     }
 
     [Fact]
     public void Zero_prefix_development_builds_compare_numerically()
     {
-        ImageVersionComparer.FindNewerTags("0.0.0.32", ["edge", "0.0.0.32", "0.0.0.33"])
-            .ShouldBe(["0.0.0.33"]);
+        ImageVersionComparer.FindNewestTag("0.0.0.32", ["edge", "0.0.0.32", "0.0.0.33"])
+            .ShouldBe("0.0.0.33");
     }
 }
