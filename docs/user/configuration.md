@@ -59,10 +59,9 @@ A trailing `/` on `sonarr.url` and `radarr.url` is stripped.
 | Key | Default | Notes |
 | --- | --- | --- |
 | `watchmode.apiKey` | | Secret. |
-| `watchmode.plan` | `free` | `free` or `paid`. |
-| `watchmode.quota` | `2500` | Monthly credit quota. |
-| `watchmode.reservePercent` | `10` | Quota held back from jobs. |
-| `watchmode.maxCreditsPerRun` | `80` | Cap for one catalog run. |
+| `watchmode.plan` | `free` | `free` or `paid`. Monthly credit quota is derived from the plan (free = 2500; paid = Watchmode `X-Account-Quota` when known), not a separate setting. |
+| `watchmode.reservePercent` | `10` | Advanced: quota held back from scheduled jobs. |
+| `watchmode.maxCreditsPerRun` | `80` | Advanced: cap for one catalog run. |
 | `watchmode.billingDayOfMonth` | `1` | Day the monthly quota resets. |
 | `tmdb.apiKey` | | TMDB v3 key or v4 read token. Secret. |
 | `sonarr.url` | | e.g. `http://sonarr:8989` |

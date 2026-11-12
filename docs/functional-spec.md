@@ -150,7 +150,7 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 | FR-CAT-04 | ** Incremental sync ** scheduled (cron configurable by source): intercepts recently added titles. It is idempotent and can be re-executed at any time. | M |
 | FR-CAT-05 | ** full sync ** periodic (weekly default, configurable): realigns the entire catalog and detects **removals** (BR-05). | M |
 | FR-CAT-06 | The system keeps the ** availability history **: first sighting, last confirmation, date of addition, date of removal, possible expiration date, plus an event log (added / removed / re-added /announced expiration). | M |
-| FR-CAT-07 | **Watchmode credit budget**: the system never exceeds the configured monthly budget (default: plan quota minus a reserve), limits credits per single execution and **resumes** executions interrupted in the following days. Consumption is always visible. | M |
+| FR-CAT-07 | **Watchmode credit budget**: the system never exceeds the plan monthly quota minus reserve (free = 2500; paid = live account quota), limits credits per single execution and **resumes** executions interrupted in the following days. Consumption is always visible. | M |
 | FR-CAT-08 | **Baseline**: Upon completion of the first complete sync of a source, all titles present are marked as baseline and do not appear as "novelty". | M |
 | FR-CAT-09 | Each sync run is tracked (type, start, end, outcome, pages read, credits used, titles added/aggiornati/rimossi, errors) and can be consulted by the administration. | M |
 | FR-CAT-10 | ** Abnormal Removal Protection **: If a full sync would indicate removal of an excessive percentage of the catalog, the removals are not applied and the run is marked "to be verified". | M |
@@ -260,11 +260,11 @@ Priority (MoSCoW): **M** = Must (MVP), **S** = Should, **C** = Could, **W** = Wo
 
 | ID | Requisito | Pri |
 |---|---|---|
-| FR-SET-00 | **Onboarding obbligatorio** al primo avvio (`/setup`) finché manca `setup.completed`. Quattro step con salvataggio per step: profilo admin; chiavi Watchmode/TMDB (test obbligatorio) + piano/budget + reco; almeno un catalogo; Sonarr/Radarr opzionali (test obbligatorio se valorizzati). A Fine si imposta il flag e si accoda l’import. | M |
+| FR-SET-00 | **Onboarding obbligatorio** al primo avvio (`/setup`) finché manca `setup.completed`. Quattro step con salvataggio per step: profilo admin; chiavi Watchmode/TMDB (test obbligatorio) + piano Watchmode + reco; almeno un catalogo; Sonarr/Radarr opzionali (test obbligatorio se valorizzati). A Fine si imposta il flag e si accoda l’import. | M |
 | FR-SET-01 | Impostazioni **fonti dati**: API key Watchmode, API key TMDB, piano Watchmode (free/a pagamento). | M |
 | FR-SET-02 | Impostazioni **Sonarr** e **Radarr**: URL e API key di una istanza ciascuna, con pulsante **Test connessione** che mostra la versione rilevata. | M |
 | FR-SET-03 | Valori di **default** per Sonarr/Radarr: profilo qualità e root folder, scelti tra quelli esposti dall'istanza. | M |
-| FR-SET-04 | **Budget crediti**: quota mensile, riserva percentuale, massimo crediti per esecuzione. | M |
+| FR-SET-04 | **Budget crediti** (Watchmode, Connections → Advanced): riserva percentuale e massimo crediti per esecuzione (default sensati). La **quota mensile** non è un parametro utente: free = 2500; paid = header `X-Account-Quota` quando noto. | M |
 | FR-SET-05 | Per sorgente: stato, lingua metadati, cron incrementale, cron completa, numero di pagine dell'incrementale. | M |
 | FR-SET-06 | Intervallo della sync Sonarr/Radarr e **configurazione dei webhook** (URL generato e token da copiare nelle impostazioni Connect di Sonarr/Radarr). | M |
 | FR-SET-07 | Finestre per le sezioni *Novità*, *In scadenza* e *Rimossi di recente* (giorni). | S |

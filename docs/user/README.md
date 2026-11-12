@@ -19,7 +19,7 @@ Optional: ONNX model files under the data path for richer local recommendations.
 
 1. [Deploy](deployment.md) the container with a writable `/config` volume.
 2. Open the UI (default `http://localhost:8080`).
-3. On first launch the **Setup** wizard (`/setup`) is required until `setup.completed` is set. It configures the admin profile, Watchmode/TMDB keys with connection tests, Watchmode plan/budget, recommendations, at least one catalog provider+country, and optional Sonarr/Radarr.
+3. On first launch the **Setup** wizard (`/setup`) is required until `setup.completed` is set. It configures the admin profile, Watchmode/TMDB keys with connection tests, Watchmode plan, recommendations, at least one catalog provider+country, and optional Sonarr/Radarr.
 4. When you finish the wizard, Pickarr queues the first import for the catalogs you enabled (unless `Pickarr__Catalog__AutoInitialImport` is false).
 5. Afterwards, choose a profile on **Who** (`/who`) when more than one exists. Change connections and catalogs later under **Settings**.
 6. Wait for catalog import and metadata enrichment under **Jobs**, then open **Catalog**, pick a source (provider + country), and browse.

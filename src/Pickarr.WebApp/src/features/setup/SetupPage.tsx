@@ -53,9 +53,6 @@ export function SetupPage() {
   const [watchmodeKey, setWatchmodeKey] = useState('')
   const [tmdbKey, setTmdbKey] = useState('')
   const [plan, setPlan] = useState('free')
-  const [quota, setQuota] = useState(2500)
-  const [reservePercent, setReservePercent] = useState(10)
-  const [maxCreditsPerRun, setMaxCreditsPerRun] = useState(80)
   const [recoEnabled, setRecoEnabled] = useState(true)
   const [watchmodeTest, setWatchmodeTest] = useState<string | null>(null)
   const [tmdbTest, setTmdbTest] = useState<string | null>(null)
@@ -90,9 +87,6 @@ export function SetupPage() {
   useEffect(() => {
     if (!settings.data) return
     setPlan(settings.data.watchmode.plan || 'free')
-    setQuota(settings.data.watchmode.quota)
-    setReservePercent(settings.data.watchmode.reservePercent)
-    setMaxCreditsPerRun(settings.data.watchmode.maxCreditsPerRun)
     setRecoEnabled(settings.data.reco.enabled !== false)
     setSonarr({
       url: settings.data.sonarr.url ?? '',
@@ -112,9 +106,6 @@ export function SetupPage() {
   const watchmodeLocked = envLocked(env, 'watchmode.apiKey')
   const tmdbLocked = envLocked(env, 'tmdb.apiKey')
   const planLocked = envLocked(env, 'watchmode.plan')
-  const quotaLocked = envLocked(env, 'watchmode.quota')
-  const reserveLocked = envLocked(env, 'watchmode.reservePercent')
-  const maxCreditsLocked = envLocked(env, 'watchmode.maxCreditsPerRun')
   const recoLocked = envLocked(env, 'reco.enabled')
   const sonarrUrlLocked = envLocked(env, 'sonarr.url')
   const sonarrKeyLocked = envLocked(env, 'sonarr.apiKey')
@@ -236,9 +227,6 @@ export function SetupPage() {
       watchmode: {
         apiKey: watchmodeKey || undefined,
         plan: planLocked ? undefined : plan,
-        quota: quotaLocked ? undefined : quota,
-        reservePercent: reserveLocked ? undefined : reservePercent,
-        maxCreditsPerRun: maxCreditsLocked ? undefined : maxCreditsPerRun,
       },
       tmdb: tmdbKey ? { apiKey: tmdbKey } : undefined,
       reco: recoLocked ? undefined : { enabled: recoEnabled },
@@ -415,50 +403,19 @@ export function SetupPage() {
               </button>
               {watchmodeTest && <span className="text-sm text-[var(--muted)]">{watchmodeTest}</span>}
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block space-y-1 text-sm">
-                <span className="text-[var(--muted)]">{t('setup.watchmodePlan')}</span>
-                <select
-                  disabled={planLocked}
-                  value={plan}
-                  onChange={(e) => setPlan(e.target.value)}
-                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-                >
-                  <option value="free">{t('setup.planFree')}</option>
-                  <option value="paid">{t('setup.planPaid')}</option>
-                </select>
-              </label>
-              <label className="block space-y-1 text-sm">
-                <span className="text-[var(--muted)]">{t('setup.watchmodeQuota')}</span>
-                <input
-                  type="number"
-                  disabled={quotaLocked}
-                  value={quota}
-                  onChange={(e) => setQuota(Number(e.target.value))}
-                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-                />
-              </label>
-              <label className="block space-y-1 text-sm">
-                <span className="text-[var(--muted)]">{t('setup.watchmodeReserve')}</span>
-                <input
-                  type="number"
-                  disabled={reserveLocked}
-                  value={reservePercent}
-                  onChange={(e) => setReservePercent(Number(e.target.value))}
-                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-                />
-              </label>
-              <label className="block space-y-1 text-sm">
-                <span className="text-[var(--muted)]">{t('setup.watchmodeMaxCredits')}</span>
-                <input
-                  type="number"
-                  disabled={maxCreditsLocked}
-                  value={maxCreditsPerRun}
-                  onChange={(e) => setMaxCreditsPerRun(Number(e.target.value))}
-                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-                />
-              </label>
-            </div>
+            <label className="block space-y-1 text-sm">
+              <span className="text-[var(--muted)]">{t('setup.watchmodePlan')}</span>
+              <select
+                disabled={planLocked}
+                value={plan}
+                onChange={(e) => setPlan(e.target.value)}
+                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
+              >
+                <option value="free">{t('setup.planFree')}</option>
+                <option value="paid">{t('setup.planPaid')}</option>
+              </select>
+              <p className="text-xs text-[var(--muted)]">{t('setup.watchmodeQuotaHint')}</p>
+            </label>
           </section>
 
           <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">

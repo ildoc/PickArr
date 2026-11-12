@@ -562,11 +562,11 @@ Registration:
 
 ### 6.2 Credit budget (`ICreditBudget`)
 
-Parameters (settings): `MonthlyQuota` (default 2500), `ReservePercent` (default 10), `MaxCreditsPerRun` (default 80), `WatchmodePlan` (`Free`/`Paid`).
+Parameters: `WatchmodePlan` (`free`/`paid`), `ReservePercent` (default 10), `MaxCreditsPerRun` (default 80). Monthly quota is **plan-derived**, not a UI/env setting: free plan = 2500; paid plan = live `X-Account-Quota` when known, otherwise 2500 as a temporary floor. Reserve and max-per-run live under Connections → Watchmode → Advanced.
 
 ```
 used        = last known X-Account-Quota-Used (otherwise sum of ApiUsage for the billing month)
-quota       = X-Account-Quota if known, otherwise MonthlyQuota
+quota       = X-Account-Quota if known, otherwise plan fallback (2500)
 reserve     = ceil(quota * ReservePercent / 100)
 spendable   = max(0, quota - used - reserve)          // for scheduled jobs
 spendableManual = max(0, quota - used)                // for manual operations
@@ -1152,13 +1152,13 @@ Active profile in `localStorage` `pickarr.profileId`; the client sends it as `X-
 | `Pickarr__Models__DownloadBaseUrl` | (model repo) | Download mirror. |
 | `Pickarr__Reco__MaxThreads` | `2` | ONNX thread cap (wins if lower than the setting). |
 
-§12.2 keys, except the operational state `catalog.initialImportStarted`, are declared with flat `SCREAMING_SNAKE` names derived from the key (`.` and camelCase → `_`). Examples: `WATCHMODE_API_KEY`, `WATCHMODE_QUOTA`, `TMDB_API_KEY`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. The legacy `Pickarr__Settings__` form with each `.` replaced by `__` remains accepted. If both are set, the flat name wins. Sonarr and Radarr defaults are passed as `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` or as JSON in `SONARR_DEFAULTS` (and the Radarr equivalents).
+§12.2 keys, except the operational state `catalog.initialImportStarted`, are declared with flat `SCREAMING_SNAKE` names derived from the key (`.` and camelCase → `_`). Examples: `WATCHMODE_API_KEY`, `WATCHMODE_RESERVE_PERCENT`, `TMDB_API_KEY`, `SONARR_URL`, `SONARR_API_KEY`, `RADARR_URL`, `RECO_ENABLED`, `RECO_WEIGHTS_LIKE`. The legacy `Pickarr__Settings__` form with each `.` replaced by `__` remains accepted. If both are set, the flat name wins. Sonarr and Radarr defaults are passed as `SONARR_DEFAULTS_QUALITY_PROFILE_ID` / `SONARR_DEFAULTS_ROOT_FOLDER_PATH` or as JSON in `SONARR_DEFAULTS` (and the Radarr equivalents).
 
 If the variable is set and non-empty, that value is effective for the whole run: it wins over the saved value and a UI update does not replace it. Secrets declared this way are not written to the database and APIs continue to expose only `isSet`. An unparseable number or boolean, or an unknown nested key, prevents startup. Booleans are `true` or `false`; numbers use a decimal point. Without the variable, the database value (or the default) remains.
 
 ### 12.2 Application settings (`Settings` table)
 
-Keys with their defaults: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.quota=2500`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (like Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, plus reco keys: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*` (including `reco.weights.watched=0.35`), `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (full list in `recommendations.md` §16).
+Keys with their defaults: `watchmode.apiKey`, `watchmode.plan=free`, `watchmode.reservePercent=10`, `watchmode.maxCreditsPerRun=80`, `watchmode.rateLimitPerSecond=1`, `watchmode.billingDay=1`, `tmdb.apiKey`, `sonarr.url`, `sonarr.apiKey`, `sonarr.defaults`, `sonarr.syncIntervalMinutes=15`, `radarr.*` (like Sonarr), `webhooks.token`, `catalog.newWindowDays=14`, `catalog.leavingWindowDays=30`, `catalog.removedWindowDays=30`, `catalog.removalConfirmations=2`, `catalog.maxRemovalRatio=0.10`, `catalog.staleWarningDays=21`, `ui.language=en`, plus reco keys: `reco.enabled=true`, `reco.useImplicit=true`, `reco.excludeInLibrary=true`, `reco.n0=30`, `reco.weights.*` (including `reco.weights.watched=0.35`), `reco.embeddings.*`, `reco.mmr.lambda=0.7`, `reco.explore.rate=0.1`, `reco.ml.minRatings=100`, `reco.events.enabled=false` (full list in `recommendations.md` §16). Monthly Watchmode quota is not a settings key: free plan = 2500; paid plan uses API headers.
 
 When settings relevant to schedules change, `SettingsService` emits an event that triggers `ScheduleReconciler`.
 

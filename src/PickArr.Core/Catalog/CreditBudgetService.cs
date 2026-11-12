@@ -67,8 +67,10 @@ public sealed class CreditBudgetService(
         var usage = await usageReader.GetWatchmodeUsageAsync(cancellationToken);
         var (observedUsed, observedQuota) = observation.Snapshot();
         var used = observedUsed ?? usage.Used;
-        var configuredQuota = await GetIntAsync(SettingsKeys.WatchmodeQuota, 2500, cancellationToken);
-        var quota = observedQuota ?? usage.QuotaLimit ?? configuredQuota;
+        var plan = await GetStringAsync(SettingsKeys.WatchmodePlan, CatalogOffers.WatchmodePlanFree, cancellationToken);
+        var fallbackQuota = CatalogOffers.FallbackQuotaForPlan(plan);
+        // Monthly quota comes from the Watchmode plan (API headers when known), not a UI setting.
+        var quota = observedQuota ?? usage.QuotaLimit ?? fallbackQuota;
         var reservePercent = await GetIntAsync(SettingsKeys.WatchmodeReservePercent, 10, cancellationToken);
         var maxPerRun = await GetIntAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, 80, cancellationToken);
         return (used, quota, reservePercent, maxPerRun);
@@ -83,5 +85,16 @@ public sealed class CreditBudgetService(
         }
 
         return JsonSerializer.Deserialize<int>(raw, JsonOptions);
+    }
+
+    private async Task<string> GetStringAsync(string key, string defaultValue, CancellationToken cancellationToken)
+    {
+        var raw = await settingsStore.GetRawAsync(key, cancellationToken);
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            return defaultValue;
+        }
+
+        return JsonSerializer.Deserialize<string>(raw, JsonOptions) ?? defaultValue;
     }
 }

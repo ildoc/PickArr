@@ -80,7 +80,7 @@ Explicit votes on a title (per profile): **Love**, **Like**, **Dislike**, **Not 
 
 ## First-run setup
 
-Until `setup.completed` is set, every route redirects to `/setup`. The wizard is blocking and saves each step. It covers: admin name/color; Watchmode and TMDB keys (required, with connection tests), Watchmode plan/budget, recommendations toggle; at least one catalog provider+country; optional Sonarr/Radarr (test required when filled). Finish sets the flag and queues the first catalog import.
+Until `setup.completed` is set, every route redirects to `/setup`. The wizard is blocking and saves each step. It covers: admin name/color; Watchmode and TMDB keys (required, with connection tests), Watchmode plan, recommendations toggle; at least one catalog provider+country; optional Sonarr/Radarr (test required when filled). Finish sets the flag and queues the first catalog import. Reserve percent and max credits per run stay under Settings → Connections → Watchmode → Advanced (defaults are fine for most installs).
 
 ## Administration
 

@@ -73,6 +73,18 @@ public sealed class CatalogCreditEstimateTests
     }
 
     [Fact]
+    public void Paid_plan_does_not_flag_over_quota_from_the_free_cap()
+    {
+        var result = CatalogCreditEstimate.Calculate(
+            [new CatalogCountryCost(true, 400, 3, false, "US")],
+            used: 2400,
+            quota: 2500,
+            freePlan: false);
+
+        result.OverQuota.ShouldBeFalse();
+    }
+
+    [Fact]
     public void A_catalog_that_is_already_full_does_not_count_toward_the_fill()
     {
         var result = CatalogCreditEstimate.Calculate(

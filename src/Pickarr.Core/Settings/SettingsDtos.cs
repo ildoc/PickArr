@@ -140,7 +140,6 @@ public sealed class WatchmodeUpdateDto
 {
     public string? ApiKey { get; init; }
     public string? Plan { get; init; }
-    public int? Quota { get; init; }
     public int? ReservePercent { get; init; }
     public int? MaxCreditsPerRun { get; init; }
 }

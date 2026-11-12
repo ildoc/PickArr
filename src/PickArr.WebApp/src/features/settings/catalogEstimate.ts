@@ -47,7 +47,8 @@ export function estimateCatalog(input: EstimateInput): CatalogEstimate {
     catalogs: selected.length,
     fill,
     monthly,
-    overQuota: input.used + monthly > input.quota || input.used + fill > input.quota,
+    overQuota:
+      input.freePlan && (input.used + monthly > input.quota || input.used + fill > input.quota),
     overCountryLimit: input.freePlan && countries > input.freeCountryLimit,
   }
 }

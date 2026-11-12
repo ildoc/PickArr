@@ -19,21 +19,25 @@ public sealed class EnvironmentSettingSourceTests
             .Select(field => (string)field.GetRawConstantValue()!)
             .ToList();
 
-        var runtimeFlags = new HashSet<string>(StringComparer.Ordinal)
+        var notEnvironmentDeclared = new HashSet<string>(StringComparer.Ordinal)
         {
             SettingsKeys.CatalogInitialImportStarted,
             SettingsKeys.SetupCompleted,
+            // Plan-derived monthly quota; not a user/env setting (FR-SET-04).
+            SettingsKeys.WatchmodeQuota,
         };
 
         keys.ShouldContain(SettingsKeys.CatalogInitialImportStarted);
         keys.ShouldContain(SettingsKeys.SetupCompleted);
-        foreach (var key in keys.Where(key => !runtimeFlags.Contains(key)))
+        keys.ShouldContain(SettingsKeys.WatchmodeQuota);
+        foreach (var key in keys.Where(key => !notEnvironmentDeclared.Contains(key)))
         {
             SettingEnvironmentCatalog.CanonicalKeys.ShouldContain(key);
         }
 
         SettingEnvironmentCatalog.CanonicalKeys.ShouldNotContain(SettingsKeys.CatalogInitialImportStarted);
         SettingEnvironmentCatalog.CanonicalKeys.ShouldNotContain(SettingsKeys.SetupCompleted);
+        SettingEnvironmentCatalog.CanonicalKeys.ShouldNotContain(SettingsKeys.WatchmodeQuota);
     }
 
     [Fact]
@@ -59,7 +63,7 @@ public sealed class EnvironmentSettingSourceTests
         var source = Create(new Dictionary<string, string?>
         {
             ["Pickarr:Settings:watchmode:apiKey"] = "secret-key",
-            ["Pickarr:Settings:watchmode:quota"] = "1200",
+            ["Pickarr:Settings:watchmode:reservePercent"] = "15",
             ["Pickarr:Settings:reco:enabled"] = "false",
             ["Pickarr:Settings:reco:weights:dislike"] = "-1.5",
             ["Pickarr:Settings:sonarr:url"] = "http://sonarr:8989/",
@@ -69,8 +73,8 @@ public sealed class EnvironmentSettingSourceTests
 
         source.TryGet(SettingsKeys.WatchmodeApiKey, out var apiKey).ShouldBeTrue();
         apiKey.ShouldBe("\"secret-key\"");
-        source.TryGet(SettingsKeys.WatchmodeQuota, out var quota).ShouldBeTrue();
-        quota.ShouldBe("1200");
+        source.TryGet(SettingsKeys.WatchmodeReservePercent, out var reserve).ShouldBeTrue();
+        reserve.ShouldBe("15");
         source.TryGet(SettingsKeys.RecoEnabled, out var enabled).ShouldBeTrue();
         enabled.ShouldBe("false");
         source.TryGet(SettingsKeys.RecoWeightDislike, out var dislike).ShouldBeTrue();
@@ -88,7 +92,7 @@ public sealed class EnvironmentSettingSourceTests
         var source = Create(new Dictionary<string, string?>
         {
             ["WATCHMODE_API_KEY"] = "secret-key",
-            ["WATCHMODE_QUOTA"] = "1200",
+            ["WATCHMODE_RESERVE_PERCENT"] = "15",
             ["RECO_ENABLED"] = "false",
             ["RECO_WEIGHTS_DISLIKE"] = "-1.5",
             ["SONARR_URL"] = "http://sonarr:8989/",
@@ -100,8 +104,8 @@ public sealed class EnvironmentSettingSourceTests
 
         source.TryGet(SettingsKeys.WatchmodeApiKey, out var apiKey).ShouldBeTrue();
         apiKey.ShouldBe("\"secret-key\"");
-        source.TryGet(SettingsKeys.WatchmodeQuota, out var quota).ShouldBeTrue();
-        quota.ShouldBe("1200");
+        source.TryGet(SettingsKeys.WatchmodeReservePercent, out var reserve).ShouldBeTrue();
+        reserve.ShouldBe("15");
         source.TryGet(SettingsKeys.RecoEnabled, out var enabled).ShouldBeTrue();
         enabled.ShouldBe("false");
         source.TryGet(SettingsKeys.RecoWeightDislike, out var dislike).ShouldBeTrue();
@@ -162,10 +166,10 @@ public sealed class EnvironmentSettingSourceTests
     {
         var error = Should.Throw<InvalidOperationException>(() => Create(new Dictionary<string, string?>
         {
-            ["Pickarr:Settings:watchmode:quota"] = "many",
+            ["Pickarr:Settings:watchmode:reservePercent"] = "many",
         }));
 
-        error.Message.ShouldContain(SettingsKeys.WatchmodeQuota);
+        error.Message.ShouldContain(SettingsKeys.WatchmodeReservePercent);
         error.Message.ShouldNotContain("many");
     }
 

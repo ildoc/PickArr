@@ -3,11 +3,23 @@ namespace Pickarr.Core.Catalog;
 public static class CatalogOffers
 {
     public const int FreeMonthlyQuota = 2500;
+    public const string WatchmodePlanFree = "free";
+    public const string WatchmodePlanPaid = "paid";
     public const int FreeCountryLimit = 3;
     public const int CreditsPerCall = 1;
     public const int DefaultPagesPerCountry = 32;
     public const int FullSyncsPerMonth = 4;
     public const int DailyRunsPerMonth = 30;
+
+    /// <summary>
+    /// Free plan: fixed <see cref="FreeMonthlyQuota"/>.
+    /// Paid plan: live <c>X-Account-Quota</c> when known; otherwise this value as a temporary floor.
+    /// </summary>
+    public static int FallbackQuotaForPlan(string? plan) =>
+        IsPaidPlan(plan) ? FreeMonthlyQuota : FreeMonthlyQuota;
+
+    public static bool IsPaidPlan(string? plan) =>
+        string.Equals(plan, WatchmodePlanPaid, StringComparison.OrdinalIgnoreCase);
 
     public static readonly IReadOnlyList<CatalogProviderOffer> Providers =
     [
@@ -88,7 +100,7 @@ public static class CatalogCreditEstimate
             selected.Count,
             fill,
             monthly,
-            used + monthly > quota || used + fill > quota,
+            freePlan && (used + monthly > quota || used + fill > quota),
             freePlan && distinctCountries > CatalogOffers.FreeCountryLimit);
     }
 }

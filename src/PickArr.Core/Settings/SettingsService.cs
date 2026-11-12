@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Pickarr.Core.Abstractions;
+using Pickarr.Core.Catalog;
 using Pickarr.Core.Recommendations;
 
 namespace Pickarr.Core.Settings;
@@ -19,13 +20,18 @@ public sealed class SettingsService(ISettingsStore store)
             .OrderBy(key => key, StringComparer.Ordinal)
             .ToArray();
 
+        var watchmodePlan = await GetOrDefaultAsync(
+            SettingsKeys.WatchmodePlan,
+            CatalogOffers.WatchmodePlanFree,
+            cancellationToken);
+
         return new SettingsResponse
         {
             Watchmode = new WatchmodeSettingsDto
             {
                 ApiKey = await SecretAsync(SettingsKeys.WatchmodeApiKey, cancellationToken),
-                Plan = await GetOrDefaultAsync(SettingsKeys.WatchmodePlan, "free", cancellationToken),
-                Quota = await GetOrDefaultAsync(SettingsKeys.WatchmodeQuota, 2500, cancellationToken),
+                Plan = watchmodePlan,
+                Quota = CatalogOffers.FallbackQuotaForPlan(watchmodePlan),
                 ReservePercent = await GetOrDefaultAsync(SettingsKeys.WatchmodeReservePercent, 10, cancellationToken),
                 MaxCreditsPerRun = await GetOrDefaultAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, 80, cancellationToken),
             },
@@ -111,7 +117,6 @@ public sealed class SettingsService(ISettingsStore store)
     [
         SettingsKeys.WatchmodeApiKey,
         SettingsKeys.WatchmodePlan,
-        SettingsKeys.WatchmodeQuota,
         SettingsKeys.WatchmodeReservePercent,
         SettingsKeys.WatchmodeMaxCreditsPerRun,
         SettingsKeys.TmdbApiKey,
@@ -134,11 +139,12 @@ public sealed class SettingsService(ISettingsStore store)
             if (wm.Plan is not null)
             {
                 await store.SetAsync(SettingsKeys.WatchmodePlan, ToJson(wm.Plan), isSecret: false, cancellationToken);
-            }
-
-            if (wm.Quota is { } quota)
-            {
-                await store.SetAsync(SettingsKeys.WatchmodeQuota, ToJson(quota), isSecret: false, cancellationToken);
+                // Quota is plan-derived, not user-editable; keep the stored fallback in sync for legacy readers.
+                await store.SetAsync(
+                    SettingsKeys.WatchmodeQuota,
+                    ToJson(CatalogOffers.FallbackQuotaForPlan(wm.Plan)),
+                    isSecret: false,
+                    cancellationToken);
             }
 
             if (wm.ReservePercent is { } reserve)

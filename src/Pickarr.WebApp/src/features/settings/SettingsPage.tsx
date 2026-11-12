@@ -40,7 +40,6 @@ export function SettingsPage() {
   const [watchmodeKey, setWatchmodeKey] = useState('')
   const [tmdbApiKey, setTmdbApiKey] = useState('')
   const [plan, setPlan] = useState('free')
-  const [quota, setQuota] = useState(2500)
   const [reservePercent, setReservePercent] = useState(10)
   const [maxCreditsPerRun, setMaxCreditsPerRun] = useState(80)
   const [recoEnabled, setRecoEnabled] = useState(true)
@@ -90,7 +89,6 @@ export function SettingsPage() {
     })
     setRecoEnabled(settings.data.reco.enabled !== false)
     setPlan(settings.data.watchmode.plan || 'free')
-    setQuota(settings.data.watchmode.quota)
     setReservePercent(settings.data.watchmode.reservePercent)
     setMaxCreditsPerRun(settings.data.watchmode.maxCreditsPerRun)
   }, [settings.data])
@@ -137,7 +135,6 @@ export function SettingsPage() {
         watchmode: {
           apiKey: watchmodeKey.length > 0 ? watchmodeKey : undefined,
           plan,
-          quota,
           reservePercent,
           maxCreditsPerRun,
         },
@@ -321,50 +318,19 @@ export function SettingsPage() {
               <p className="text-xs text-[var(--muted)]">{t('settings.envLocked')}</p>
             )}
           </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="block space-y-1 text-sm">
-              <span className="text-[var(--muted)]">{t('settings.watchmodePlan')}</span>
-              <select
-                disabled={locked('watchmode.plan')}
-                value={plan}
-                onChange={(e) => setPlan(e.target.value)}
-                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-              >
-                <option value="free">{t('settings.planFree')}</option>
-                <option value="paid">{t('settings.planPaid')}</option>
-              </select>
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="text-[var(--muted)]">{t('settings.watchmodeQuota')}</span>
-              <input
-                type="number"
-                disabled={locked('watchmode.quota')}
-                value={quota}
-                onChange={(e) => setQuota(Number(e.target.value))}
-                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="text-[var(--muted)]">{t('settings.watchmodeReserve')}</span>
-              <input
-                type="number"
-                disabled={locked('watchmode.reservePercent')}
-                value={reservePercent}
-                onChange={(e) => setReservePercent(Number(e.target.value))}
-                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-              />
-            </label>
-            <label className="block space-y-1 text-sm">
-              <span className="text-[var(--muted)]">{t('settings.watchmodeMaxCredits')}</span>
-              <input
-                type="number"
-                disabled={locked('watchmode.maxCreditsPerRun')}
-                value={maxCreditsPerRun}
-                onChange={(e) => setMaxCreditsPerRun(Number(e.target.value))}
-                className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
-              />
-            </label>
-          </div>
+          <label className="block space-y-1 text-sm">
+            <span className="text-[var(--muted)]">{t('settings.watchmodePlan')}</span>
+            <select
+              disabled={locked('watchmode.plan')}
+              value={plan}
+              onChange={(e) => setPlan(e.target.value)}
+              className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
+            >
+              <option value="free">{t('settings.planFree')}</option>
+              <option value="paid">{t('settings.planPaid')}</option>
+            </select>
+            <p className="text-xs text-[var(--muted)]">{t('settings.watchmodeQuotaHint')}</p>
+          </label>
           <div className="flex flex-wrap items-center gap-3">
             <button
               type="button"
@@ -376,6 +342,33 @@ export function SettingsPage() {
             </button>
             {watchmodeTest && <span className="text-sm text-[var(--muted)]">{watchmodeTest}</span>}
           </div>
+          <details className="rounded-md border border-white/10 bg-[var(--surface)]/40 px-3 py-2">
+            <summary className="cursor-pointer text-sm font-medium text-[var(--muted)]">
+              {t('settings.watchmodeAdvanced')}
+            </summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="block space-y-1 text-sm">
+                <span className="text-[var(--muted)]">{t('settings.watchmodeReserve')}</span>
+                <input
+                  type="number"
+                  disabled={locked('watchmode.reservePercent')}
+                  value={reservePercent}
+                  onChange={(e) => setReservePercent(Number(e.target.value))}
+                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
+                />
+              </label>
+              <label className="block space-y-1 text-sm">
+                <span className="text-[var(--muted)]">{t('settings.watchmodeMaxCredits')}</span>
+                <input
+                  type="number"
+                  disabled={locked('watchmode.maxCreditsPerRun')}
+                  value={maxCreditsPerRun}
+                  onChange={(e) => setMaxCreditsPerRun(Number(e.target.value))}
+                  className="w-full rounded-md border border-white/10 bg-[var(--surface)] px-3 py-2 disabled:opacity-60"
+                />
+              </label>
+            </div>
+          </details>
         </section>
 
         <section className="space-y-3 rounded-xl border border-white/10 bg-[var(--surface-2)] p-5">

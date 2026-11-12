@@ -16,7 +16,6 @@ public sealed class CreditBudgetServiceTests
         var run = NewRun();
         var store = new FakeSyncRunStore(run);
         var settings = new FakeSettingsStore();
-        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "100", false);
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
@@ -39,7 +38,6 @@ public sealed class CreditBudgetServiceTests
         var run = NewRun(triggeredBy: SyncRunTriggers.Manual);
         var store = new FakeSyncRunStore(run);
         var settings = new FakeSettingsStore();
-        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "100", false);
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
@@ -59,7 +57,6 @@ public sealed class CreditBudgetServiceTests
         var run = NewRun();
         var store = new FakeSyncRunStore(run);
         var settings = new FakeSettingsStore();
-        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "2500", false);
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
@@ -82,7 +79,6 @@ public sealed class CreditBudgetServiceTests
         var run = NewRun();
         var store = new FakeSyncRunStore(run);
         var settings = new FakeSettingsStore();
-        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "2500", false);
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "80", false);
 
@@ -106,7 +102,6 @@ public sealed class CreditBudgetServiceTests
     public async Task GetSnapshotAsync_exposes_spendable_windows()
     {
         var settings = new FakeSettingsStore();
-        await settings.SetAsync(SettingsKeys.WatchmodeQuota, "100", false);
         await settings.SetAsync(SettingsKeys.WatchmodeReservePercent, "10", false);
         await settings.SetAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, "50", false);
 

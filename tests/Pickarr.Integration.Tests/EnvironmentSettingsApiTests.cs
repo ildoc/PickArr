@@ -14,7 +14,7 @@ public sealed class EnvSettingsApiFactory : ApiFactory
     protected override void ConfigureApplication(IWebHostBuilder builder)
     {
         builder.UseSetting("Pickarr:Settings:watchmode:apiKey", "env-watchmode-key");
-        builder.UseSetting("Pickarr:Settings:watchmode:quota", "1200");
+        builder.UseSetting("Pickarr:Settings:watchmode:reservePercent", "5");
         builder.UseSetting("Pickarr:Settings:sonarr:url", "http://sonarr.internal:8989/");
         builder.UseSetting("Pickarr:Settings:reco:enabled", "false");
     }
@@ -45,25 +45,27 @@ public sealed class EnvironmentSettingsApiTests
 
         var json = JsonSerializer.Deserialize<JsonElement>(body);
         json.GetProperty("watchmode").GetProperty("apiKey").GetProperty("isSet").GetBoolean().ShouldBeTrue();
-        json.GetProperty("watchmode").GetProperty("quota").GetInt32().ShouldBe(1200);
+        json.GetProperty("watchmode").GetProperty("quota").GetInt32().ShouldBe(2500);
+        json.GetProperty("watchmode").GetProperty("reservePercent").GetInt32().ShouldBe(5);
         json.GetProperty("sonarr").GetProperty("url").GetString().ShouldBe("http://sonarr.internal:8989");
         json.GetProperty("reco").GetProperty("enabled").GetBoolean().ShouldBeFalse();
 
         var put = await _client.PutAsJsonAsync("/api/v1/settings", new
         {
-            watchmode = new { quota = 10, apiKey = "typed-in-the-ui" },
+            watchmode = new { reservePercent = 99, apiKey = "typed-in-the-ui" },
         });
         put.StatusCode.ShouldBe(HttpStatusCode.OK);
         var saved = await put.Content.ReadAsStringAsync();
         saved.ShouldNotContain("env-watchmode-key");
         saved.ShouldNotContain("typed-in-the-ui");
         var after = JsonSerializer.Deserialize<JsonElement>(saved);
-        after.GetProperty("watchmode").GetProperty("quota").GetInt32().ShouldBe(1200);
+        after.GetProperty("watchmode").GetProperty("reservePercent").GetInt32().ShouldBe(5);
+        after.GetProperty("watchmode").GetProperty("quota").GetInt32().ShouldBe(2500);
         after.GetProperty("watchmode").GetProperty("apiKey").GetProperty("isSet").GetBoolean().ShouldBeTrue();
 
         using var scope = _factory.Services.CreateScope();
         var stored = scope.ServiceProvider.GetRequiredService<ProtectedSettingsStore>();
         (await stored.GetRawAsync(SettingsKeys.WatchmodeApiKey)).ShouldBeNull();
-        (await stored.GetRawAsync(SettingsKeys.WatchmodeQuota)).ShouldBe("2500");
+        (await stored.GetRawAsync(SettingsKeys.WatchmodeReservePercent)).ShouldBe("10");
     }
 }

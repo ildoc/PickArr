@@ -58,7 +58,7 @@ describe('estimateCatalog', () => {
     expect(result.overCountryLimit).toBe(false)
   })
 
-  it('flags a selection that would pass the monthly quota', () => {
+  it('flags a selection that would pass the monthly quota on the free plan', () => {
     const result = estimateCatalog({
       ...base,
       used: 2400,
@@ -66,5 +66,16 @@ describe('estimateCatalog', () => {
     })
 
     expect(result.overQuota).toBe(true)
+  })
+
+  it('does not flag over-quota on the paid plan', () => {
+    const result = estimateCatalog({
+      ...base,
+      freePlan: false,
+      used: 2400,
+      countries: [{ code: 'US', selected: true, pages: 400, incrementalPages: 3, fullyImported: false }],
+    })
+
+    expect(result.overQuota).toBe(false)
   })
 })

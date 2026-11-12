@@ -26,7 +26,6 @@ internal static class SettingEnvironmentCatalog
     {
         [SettingsKeys.WatchmodeApiKey] = SettingValueKind.String,
         [SettingsKeys.WatchmodePlan] = SettingValueKind.String,
-        [SettingsKeys.WatchmodeQuota] = SettingValueKind.Int32,
         [SettingsKeys.WatchmodeReservePercent] = SettingValueKind.Int32,
         [SettingsKeys.WatchmodeMaxCreditsPerRun] = SettingValueKind.Int32,
         [SettingsKeys.WatchmodeBillingDayOfMonth] = SettingValueKind.Int32,

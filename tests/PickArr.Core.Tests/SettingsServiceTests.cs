@@ -13,7 +13,6 @@ public sealed class SettingsServiceTests
         var store = Substitute.For<ISettingsStore>();
         store.IsSetAsync(SettingsKeys.WatchmodeApiKey, Arg.Any<CancellationToken>()).Returns(true);
         store.GetRawAsync(SettingsKeys.WatchmodePlan, Arg.Any<CancellationToken>()).Returns("\"free\"");
-        store.GetRawAsync(SettingsKeys.WatchmodeQuota, Arg.Any<CancellationToken>()).Returns("2500");
         store.GetRawAsync(SettingsKeys.WatchmodeReservePercent, Arg.Any<CancellationToken>()).Returns("10");
         store.GetRawAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, Arg.Any<CancellationToken>()).Returns("80");
         store.GetRawAsync(SettingsKeys.UiLanguage, Arg.Any<CancellationToken>()).Returns("\"en\"");
@@ -100,5 +99,45 @@ public sealed class SettingsServiceTests
             Arg.Is<string>(v => v.Contains("secret-key")),
             true,
             Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task UpdateAsync_syncs_plan_derived_quota_fallback()
+    {
+        var store = Substitute.For<ISettingsStore>();
+        var sut = new SettingsService(store);
+
+        await sut.UpdateAsync(new UpdateSettingsRequest
+        {
+            Watchmode = new WatchmodeUpdateDto { Plan = "paid" },
+        });
+
+        await store.Received(1).SetAsync(
+            SettingsKeys.WatchmodePlan,
+            Arg.Is<string>(v => v.Contains("paid", StringComparison.OrdinalIgnoreCase)),
+            false,
+            Arg.Any<CancellationToken>());
+        await store.Received(1).SetAsync(
+            SettingsKeys.WatchmodeQuota,
+            "2500",
+            false,
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task GetAsync_exposes_plan_derived_quota_not_stored_value()
+    {
+        var store = Substitute.For<ISettingsStore>();
+        store.GetRawAsync(SettingsKeys.WatchmodePlan, Arg.Any<CancellationToken>()).Returns("\"free\"");
+        store.GetRawAsync(SettingsKeys.WatchmodeQuota, Arg.Any<CancellationToken>()).Returns("999");
+        store.GetRawAsync(SettingsKeys.WatchmodeReservePercent, Arg.Any<CancellationToken>()).Returns("10");
+        store.GetRawAsync(SettingsKeys.WatchmodeMaxCreditsPerRun, Arg.Any<CancellationToken>()).Returns("80");
+        store.GetRawAsync(SettingsKeys.UiLanguage, Arg.Any<CancellationToken>()).Returns("\"en\"");
+        store.GetRawAsync("sonarr.syncIntervalMinutes", Arg.Any<CancellationToken>()).Returns("15");
+        store.GetRawAsync("radarr.syncIntervalMinutes", Arg.Any<CancellationToken>()).Returns("15");
+
+        var result = await new SettingsService(store).GetAsync();
+
+        result.Watchmode.Quota.ShouldBe(2500);
     }
 }
