@@ -20,7 +20,7 @@ vi.mock('../../api/settings', () => ({
 import { clearRating, setRating } from '../../api/ratings'
 import { fetchSettings } from '../../api/settings'
 
-function renderButtons(rating: 'love' | 'like' | 'dislike' | null) {
+function renderButtons(rating: 'love' | 'like' | 'dislike' | 'not_interested' | null) {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
@@ -74,6 +74,14 @@ describe('RatingButtons', () => {
     renderButtons(null)
     await user.click(await screen.findByRole('button', { name: 'Not interested' }))
     expect(setRating).toHaveBeenCalledWith(7, 'not_interested')
+  })
+
+  it('fills the circular button when a rating is active', async () => {
+    renderButtons('not_interested')
+    const button = await screen.findByRole('button', { name: 'Not interested' })
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(button.className).toContain('bg-slate-500')
+    expect(button.className).toContain('text-white')
   })
 
   it('hides when recommendations are disabled', async () => {

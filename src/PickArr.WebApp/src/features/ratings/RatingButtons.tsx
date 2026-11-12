@@ -11,6 +11,20 @@ function stopCardNavigation(e: SyntheticEvent) {
   e.stopPropagation()
 }
 
+const compactActive: Record<RatingValue, string> = {
+  love: 'bg-amber-500 text-white hover:bg-amber-400',
+  like: 'bg-emerald-600 text-white hover:bg-emerald-500',
+  dislike: 'bg-rose-600 text-white hover:bg-rose-500',
+  not_interested: 'bg-slate-500 text-white hover:bg-slate-400',
+}
+
+const dialogActive: Record<RatingValue, string> = {
+  love: 'bg-amber-500 text-white hover:bg-amber-400',
+  like: 'bg-emerald-600 text-white hover:bg-emerald-500',
+  dislike: 'bg-rose-600 text-white hover:bg-rose-500',
+  not_interested: 'bg-slate-500 text-white hover:bg-slate-400',
+}
+
 export function RatingButtons({
   titleId,
   rating,
@@ -38,58 +52,29 @@ export function RatingButtons({
   if (variant === 'dialog') {
     return (
       <div className={`flex flex-wrap items-center gap-2 ${className}`}>
-        <button
-          type="button"
-          aria-pressed={rating === 'love'}
-          aria-busy={mutation.isPending}
-          onClick={() => toggle('love')}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-            rating === 'love'
-              ? 'bg-amber-500 text-white hover:bg-amber-400'
-              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
-          }`}
-        >
-          {t('ratings.love')}
-        </button>
-        <button
-          type="button"
-          aria-pressed={rating === 'like'}
-          aria-busy={mutation.isPending}
-          onClick={() => toggle('like')}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-            rating === 'like'
-              ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
-          }`}
-        >
-          {t('ratings.like')}
-        </button>
-        <button
-          type="button"
-          aria-pressed={rating === 'dislike'}
-          aria-busy={mutation.isPending}
-          onClick={() => toggle('dislike')}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-            rating === 'dislike'
-              ? 'bg-rose-600 text-white hover:bg-rose-500'
-              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
-          }`}
-        >
-          {t('ratings.dislike')}
-        </button>
-        <button
-          type="button"
-          aria-pressed={rating === 'not_interested'}
-          aria-busy={mutation.isPending}
-          onClick={() => toggle('not_interested')}
-          className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
-            rating === 'not_interested'
-              ? 'bg-zinc-500 text-white hover:bg-zinc-400'
-              : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
-          }`}
-        >
-          {t('ratings.notInterested')}
-        </button>
+        {(
+          [
+            ['love', t('ratings.love')],
+            ['like', t('ratings.like')],
+            ['dislike', t('ratings.dislike')],
+            ['not_interested', t('ratings.notInterested')],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={rating === value}
+            aria-busy={mutation.isPending}
+            onClick={() => toggle(value)}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+              rating === value
+                ? dialogActive[value]
+                : 'bg-white/10 text-[var(--text)] hover:bg-white/15'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
     )
   }
@@ -101,58 +86,31 @@ export function RatingButtons({
       onPointerDown={stopCardNavigation}
       onKeyDown={(e) => e.stopPropagation()}
     >
-      <button
-        type="button"
-        aria-pressed={rating === 'love'}
-        aria-label={t('ratings.love')}
-        title={t('ratings.love')}
-        aria-busy={mutation.isPending}
-        onClick={() => toggle('love')}
-        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
-          rating === 'love' ? 'text-amber-400' : 'text-white/50'
-        }`}
-      >
-        ★
-      </button>
-      <button
-        type="button"
-        aria-pressed={rating === 'like'}
-        aria-label={t('ratings.like')}
-        title={t('ratings.like')}
-        aria-busy={mutation.isPending}
-        onClick={() => toggle('like')}
-        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
-          rating === 'like' ? 'text-emerald-400' : 'text-white/50'
-        }`}
-      >
-        ▲
-      </button>
-      <button
-        type="button"
-        aria-pressed={rating === 'dislike'}
-        aria-label={t('ratings.dislike')}
-        title={t('ratings.dislike')}
-        aria-busy={mutation.isPending}
-        onClick={() => toggle('dislike')}
-        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
-          rating === 'dislike' ? 'text-rose-400' : 'text-white/50'
-        }`}
-      >
-        ▼
-      </button>
-      <button
-        type="button"
-        aria-pressed={rating === 'not_interested'}
-        aria-label={t('ratings.notInterested')}
-        title={t('ratings.notInterested')}
-        aria-busy={mutation.isPending}
-        onClick={() => toggle('not_interested')}
-        className={`rounded-full p-1.5 text-sm leading-none transition hover:bg-white/10 ${
-          rating === 'not_interested' ? 'text-zinc-300' : 'text-white/50'
-        }`}
-      >
-        ✕
-      </button>
+      {(
+        [
+          ['love', t('ratings.love'), '★'],
+          ['like', t('ratings.like'), '▲'],
+          ['dislike', t('ratings.dislike'), '▼'],
+          ['not_interested', t('ratings.notInterested'), '✕'],
+        ] as const
+      ).map(([value, label, symbol]) => (
+        <button
+          key={value}
+          type="button"
+          aria-pressed={rating === value}
+          aria-label={label}
+          title={label}
+          aria-busy={mutation.isPending}
+          onClick={() => toggle(value)}
+          className={`rounded-full p-1.5 text-sm leading-none transition ${
+            rating === value
+              ? compactActive[value]
+              : 'text-white/70 hover:bg-white/15 hover:text-white'
+          }`}
+        >
+          {symbol}
+        </button>
+      ))}
     </div>
   )
 }
